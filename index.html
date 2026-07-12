@@ -5,19 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>현장 물류 계산기</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f7f9fa; color: #333; padding-bottom: 70px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f7f9fa; color: #333; padding-bottom: 90px; }
         .container { max-width: 500px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         h2 { margin-top: 0; color: #111; }
         .input-group { margin-bottom: 15px; position: relative; }
         label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
         input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; background: #fff; }
         
-        /* 토글 버튼 스타일 (O/X 대체) */
         .toggle-container { display: flex; gap: 10px; margin-top: 5px; }
         .toggle-btn { flex: 1; padding: 10px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; color: #666; }
         .toggle-btn.active { background: #007aff; color: white; border-color: #007aff; }
 
-        /* 검색 드롭다운 목록 */
         .search-dropdown { position: absolute; top: 100%; left: 0; width: 100%; max-height: 150px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; z-index: 100; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .search-item { padding: 10px; cursor: pointer; font-size: 15px; border-bottom: 1px solid #f1f1f1; }
         .search-item:hover { background: #f0f7ff; }
@@ -25,11 +23,10 @@
         button { width: 100%; background-color: #007aff; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         button:hover { background-color: #0056b3; }
         
-        /* 토스트 팝업 스타일 */
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 20px; font-size: 15px; font-weight: 600; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 9999; }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 14px 26px; border-radius: 24px; font-size: 15px; font-weight: 600; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         #toast.show { opacity: 1; }
 
-        .result-box { margin-top: 20px; padding: 15px; background: #eef4ff; border-radius: 6px; font-weight: 600; line-height: 1.6; font-size: 15px; }
+        .result-box { margin-top: 20px; padding: 15px 15px 25px 15px; background: #eef4ff; border-radius: 6px; font-weight: 600; line-height: 1.7; font-size: 15px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .conditional-fields { display: none; }
@@ -55,13 +52,13 @@
         <div class="input-group">
             <label>입력 기준 선택</label>
             <div class="toggle-container">
-                <button type="button" id="calcModeEa" class="toggle-btn active" onclick="setCalcMode('EA')">개수(반제품) 기준</button>
-                <button type="button" id="calcModeSet" class="toggle-btn" onclick="setCalcMode('SET')">세트/단케이스 기준</button>
+                <button type="button" id="calcModeSet" class="toggle-btn active" onclick="setCalcMode('SET')">세트/단케이스 기준</button>
+                <button type="button" id="calcModeEa" class="toggle-btn" onclick="setCalcMode('EA')">개수(반제품) 기준</button>
             </div>
         </div>
         <div class="input-group">
             <label for="inputQty">입력 수량</label>
-            <input type="number" id="inputQty" placeholder="수량을 입력하세요" onblur="autoCalculate()">
+            <input type="number" id="inputQty" placeholder="수량을 입력하세요" onchange="autoCalculate()" onkeydown="handleCalcKey(event)">
         </div>
         <button onclick="calculateUnits()">환산하기</button>
         <div id="calcResult" class="result-box">결과가 여기에 표시됩니다.</div>
@@ -103,9 +100,9 @@
         </div>
         <div class="input-group">
             <label for="regInnerToUnit">단케이스당 반제품 수</label>
-            <input type="number" id="regInnerToUnit" placeholder="예: 10" onblur="autoSaveProduct()">
+            <input type="number" id="regInnerToUnit" placeholder="예: 10" onchange="autoSaveProduct()" onkeydown="handleRegKey(event)">
         </div>
-        <button onclick="saveProductConfig()">제품 등록하기</button>
+        <button onclick="saveProductConfig(false)">제품 등록하기</button>
     </div>
 
     <nav class="bottom-nav">
@@ -125,7 +122,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         let productList = [];
-        let currentCalcMode = 'EA';
+        let currentCalcMode = 'SET'; // 기본값 세트/단케이스 기준
 
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -139,7 +136,7 @@
             const toast = document.getElementById('toast');
             toast.innerText = message;
             toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+            setTimeout(() => { toast.classList.remove('show'); }, 2200);
         }
 
         function selectSetOption(val) {
@@ -159,15 +156,16 @@
 
         function setCalcMode(mode) {
             currentCalcMode = mode;
-            if (mode === 'EA') {
-                document.getElementById('calcModeEa').classList.add('active');
-                document.getElementById('calcModeSet').classList.remove('active');
-                document.querySelector('label[for="inputQty"]').innerText = '입력 수량 (반제품 개수)';
-            } else {
+            if (mode === 'SET') {
                 document.getElementById('calcModeSet').classList.add('active');
                 document.getElementById('calcModeEa').classList.remove('active');
                 document.querySelector('label[for="inputQty"]').innerText = '입력 수량 (세트/단케이스 개수)';
+            } else {
+                document.getElementById('calcModeEa').classList.add('active');
+                document.getElementById('calcModeSet').classList.remove('active');
+                document.querySelector('label[for="inputQty"]').innerText = '입력 수량 (반제품 개수)';
             }
+            autoCalculate();
         }
 
         async function saveProductConfig(isAuto = false) {
@@ -217,6 +215,12 @@
             }
         }
 
+        function handleRegKey(e) {
+            if (e.key === 'Enter') {
+                autoSaveProduct();
+            }
+        }
+
         async function loadProductList() {
             productList = [];
             const snapshot = await db.collection('products').get();
@@ -225,7 +229,6 @@
             });
         }
 
-        // 실시간 검색 필터
         function filterProducts() {
             const keyword = document.getElementById('productSearchInput').value.toLowerCase();
             const dropdown = document.getElementById('productSearchDropdown');
@@ -265,6 +268,17 @@
             }
         }
 
+        function handleCalcKey(e) {
+            if (e.key === 'Enter') {
+                autoCalculate();
+            }
+        }
+
+        // 소수점 1자리 표기, 0으로 떨어지면 소수점 제거 포맷팅
+        function formatVal(val, decimals = 1) {
+            return Number(val.toFixed(decimals)).toString();
+        }
+
         function calculateUnits() {
             const selectedId = document.getElementById('selectedProductId').value;
             const rawQty = Number(document.getElementById('inputQty').value);
@@ -276,21 +290,19 @@
                 return;
             }
 
-            // 개수 기준(반제품)으로 환산 총량 구하기
             let cToI = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
-            let innerPerCarton = cToI * p.innerToUnit; // 1카톤당 반제품 수
-            let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit; // 세트 또는 단케이스당 반제품 수
+            let innerPerCarton = cToI * p.innerToUnit; 
+            let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit; 
 
             let totalEa = (currentCalcMode === 'EA') ? rawQty : (rawQty * unitPerSet);
-
             let unitsPerPallet = p.palletToCarton * innerPerCarton;
             
-            let totalPallets = totalEa / unitsPerPallet;
-            let totalCartons = totalEa / innerPerCarton;
-            let totalSets = (p.hasSet === 'O') ? (totalEa / (p.setToInner * p.innerToUnit)) : 0;
-            let totalInners = totalEa / p.innerToUnit;
+            let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
+            let totalCartons = formatVal(totalEa / innerPerCarton, 1);
+            let totalSets = (p.hasSet === 'O') ? formatVal(totalEa / (p.setToInner * p.innerToUnit), 1) : 0;
+            let totalInners = formatVal(totalEa / p.innerToUnit, 1);
 
-            let fullPallets = Math.floor(totalPallets);
+            let fullPallets = Math.floor(totalEa / unitsPerPallet);
             let rem = totalEa % unitsPerPallet;
             let fullCartons = Math.floor(rem / innerPerCarton);
             rem %= innerPerCarton;
@@ -298,12 +310,12 @@
             let units = rem % p.innerToUnit;
 
             let resultHtml = `<strong>[${p.name}] 환산 결과</strong><br>`;
-            resultHtml += `파레트: <strong>${totalPallets.toFixed(2)}</strong> 개<br>`;
-            resultHtml += `카톤: <strong>${totalCartons.toFixed(1)}</strong> 카톤<br>`;
+            resultHtml += `파레트: <strong>${totalPallets}</strong> 파레트<br>`;
+            resultHtml += `카톤: <strong>${totalCartons}</strong> 카톤<br>`;
             if (p.hasSet === 'O') {
-                resultHtml += `세트케이스: <strong>${totalSets.toFixed(1)}</strong> 세트<br>`;
+                resultHtml += `세트케이스: <strong>${totalSets}</strong> 세트케이스<br>`;
             }
-            resultHtml += `단케이스: <strong>${totalInners.toFixed(1)}</strong> 단케이스<br>`;
+            resultHtml += `단케이스: <strong>${totalInners}</strong> 단케이스<br>`;
             resultHtml += `반제품: <strong>${totalEa.toLocaleString()}</strong> 개의 반제품<br><br>`;
             resultHtml += `👉 파레트 ${fullPallets}개 / 카톤 ${fullCartons}개 / 단케이스 ${fullInners}개 / 잔여 ${units}개`;
 
