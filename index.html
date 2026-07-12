@@ -58,7 +58,7 @@
         </div>
         <div class="input-group">
             <label for="inputQty">입력 수량</label>
-            <input type="number" id="inputQty" placeholder="수량을 입력하세요" onchange="autoCalculate()" onkeydown="handleCalcKey(event)">
+            <input type="number" id="inputQty" placeholder="수량을 입력하세요" onkeydown="handleCalcKey(event)">
         </div>
         <button onclick="calculateUnits()">환산하기</button>
         <div id="calcResult" class="result-box">결과가 여기에 표시됩니다.</div>
@@ -100,9 +100,9 @@
         </div>
         <div class="input-group">
             <label for="regInnerToUnit">단케이스당 반제품 수</label>
-            <input type="number" id="regInnerToUnit" placeholder="예: 10" onchange="autoSaveProduct()" onkeydown="handleRegKey(event)">
+            <input type="number" id="regInnerToUnit" placeholder="예: 10" onkeydown="handleRegKey(event)">
         </div>
-        <button onclick="saveProductConfig(false)">제품 등록하기</button>
+        <button onclick="saveProductConfig()">제품 등록하기</button>
     </div>
 
     <nav class="bottom-nav">
@@ -122,7 +122,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         let productList = [];
-        let currentCalcMode = 'SET'; // 기본값 세트/단케이스 기준
+        let currentCalcMode = 'SET'; 
 
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -133,6 +133,7 @@
         }
 
         function showToast(message) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             const toast = document.getElementById('toast');
             toast.innerText = message;
             toast.classList.add('show');
@@ -168,7 +169,8 @@
             autoCalculate();
         }
 
-        async function saveProductConfig(isAuto = false) {
+        // 버튼 클릭 시에만 수동 저장 (중복 호출 및 자동이탈 저장 방지)
+        async function saveProductConfig() {
             const name = document.getElementById('regProductName').value;
             const hasSet = document.getElementById('hasSetValue').value;
             const pToC = document.getElementById('regPalletToCarton').value;
@@ -180,13 +182,13 @@
                 data.cartonToSet = Number(document.getElementById('regCartonToSet').value);
                 data.setToInner = Number(document.getElementById('regSetToInner').value);
                 if (!name || !pToC || !data.cartonToSet || !data.setToInner || !innerToUnit) {
-                    if (!isAuto) showToast('모든 항목을 입력해 줘!');
+                    showToast('모든 항목을 입력해 줘!');
                     return;
                 }
             } else {
                 data.cartonToInner = Number(document.getElementById('regCartonToInnerX').value);
                 if (!name || !pToC || !data.cartonToInner || !innerToUnit) {
-                    if (!isAuto) showToast('모든 항목을 입력해 줘!');
+                    showToast('모든 항목을 입력해 줘!');
                     return;
                 }
             }
@@ -206,18 +208,9 @@
             }
         }
 
-        function autoSaveProduct() {
-            const name = document.getElementById('regProductName').value;
-            const pToC = document.getElementById('regPalletToCarton').value;
-            const innerToUnit = document.getElementById('regInnerToUnit').value;
-            if (name && pToC && innerToUnit) {
-                saveProductConfig(true);
-            }
-        }
-
         function handleRegKey(e) {
             if (e.key === 'Enter') {
-                autoSaveProduct();
+                saveProductConfig();
             }
         }
 
@@ -270,11 +263,10 @@
 
         function handleCalcKey(e) {
             if (e.key === 'Enter') {
-                autoCalculate();
+                calculateUnits();
             }
         }
 
-        // 소수점 1자리 표기, 0으로 떨어지면 소수점 제거 포맷팅
         function formatVal(val, decimals = 1) {
             return Number(val.toFixed(decimals)).toString();
         }
@@ -302,13 +294,6 @@
             let totalSets = (p.hasSet === 'O') ? formatVal(totalEa / (p.setToInner * p.innerToUnit), 1) : 0;
             let totalInners = formatVal(totalEa / p.innerToUnit, 1);
 
-            let fullPallets = Math.floor(totalEa / unitsPerPallet);
-            let rem = totalEa % unitsPerPallet;
-            let fullCartons = Math.floor(rem / innerPerCarton);
-            rem %= innerPerCarton;
-            let fullInners = Math.floor(rem / p.innerToUnit);
-            let units = rem % p.innerToUnit;
-
             let resultHtml = `<strong>[${p.name}] 환산 결과</strong><br>`;
             resultHtml += `파레트: <strong>${totalPallets}</strong> 파레트<br>`;
             resultHtml += `카톤: <strong>${totalCartons}</strong> 카톤<br>`;
@@ -316,10 +301,10 @@
                 resultHtml += `세트케이스: <strong>${totalSets}</strong> 세트케이스<br>`;
             }
             resultHtml += `단케이스: <strong>${totalInners}</strong> 단케이스<br>`;
-            resultHtml += `반제품: <strong>${totalEa.toLocaleString()}</strong> 개의 반제품<br><br>`;
-            resultHtml += `👉 파레트 ${fullPallets}개 / 카톤 ${fullCartons}개 / 단케이스 ${fullInners}개 / 잔여 ${units}개`;
+            resultHtml += `반제품: <strong>${totalEa.toLocaleString()}</strong> 개의 반제품`;
 
             resultBox.innerHTML = resultHtml;
+            resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         loadProductList();
