@@ -23,8 +23,10 @@
         button { width: 100%; background-color: #007aff; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         button:hover { background-color: #0056b3; }
         
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 14px 26px; border-radius: 24px; font-size: 15px; font-weight: 600; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        #toast.show { opacity: 1; }
+        /* 키보드 영향 없는 인라인 고정형 상태 메시지 */
+        .status-msg { margin-top: 12px; padding: 10px; border-radius: 6px; font-size: 14px; font-weight: 600; text-align: center; display: none; }
+        .status-msg.success { background: #e1f5fe; color: #0288d1; display: block; }
+        .status-msg.error { background: #ffebee; color: #c62828; display: block; }
 
         .result-box { margin-top: 20px; padding: 15px 15px 25px 15px; background: #eef4ff; border-radius: 6px; font-weight: 600; line-height: 1.7; font-size: 15px; }
         .tab-content { display: none; }
@@ -38,8 +40,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-
-    <div id="toast">알림 메시지</div>
 
     <div id="calcTab" class="container tab-content active">
         <h2>현장 물류 계산기</h2>
@@ -103,6 +103,7 @@
             <input type="number" id="regInnerToUnit" placeholder="예: 10" onkeydown="handleRegKey(event)">
         </div>
         <button onclick="saveProductConfig()">제품 등록하기</button>
+        <div id="regStatusMsg" class="status-msg"></div>
     </div>
 
     <nav class="bottom-nav">
@@ -132,12 +133,12 @@
             if (tabId === 'calcTab') loadProductList();
         }
 
-        function showToast(message) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            const toast = document.getElementById('toast');
-            toast.innerText = message;
-            toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 2200);
+        function showRegStatus(message, isSuccess = true) {
+            const msgBox = document.getElementById('regStatusMsg');
+            msgBox.className = `status-msg ${isSuccess ? 'success' : 'error'}`;
+            msgBox.innerText = message;
+            msgBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            setTimeout(() => { msgBox.style.display = 'none'; }, 3000);
         }
 
         function selectSetOption(val) {
@@ -169,7 +170,6 @@
             autoCalculate();
         }
 
-        // 버튼 클릭 시에만 수동 저장 (중복 호출 및 자동이탈 저장 방지)
         async function saveProductConfig() {
             const name = document.getElementById('regProductName').value;
             const hasSet = document.getElementById('hasSetValue').value;
@@ -182,20 +182,20 @@
                 data.cartonToSet = Number(document.getElementById('regCartonToSet').value);
                 data.setToInner = Number(document.getElementById('regSetToInner').value);
                 if (!name || !pToC || !data.cartonToSet || !data.setToInner || !innerToUnit) {
-                    showToast('모든 항목을 입력해 줘!');
+                    showRegStatus('모든 항목을 입력해 줘!', false);
                     return;
                 }
             } else {
                 data.cartonToInner = Number(document.getElementById('regCartonToInnerX').value);
                 if (!name || !pToC || !data.cartonToInner || !innerToUnit) {
-                    showToast('모든 항목을 입력해 줘!');
+                    showRegStatus('모든 항목을 입력해 줘!', false);
                     return;
                 }
             }
 
             try {
                 await db.collection('products').add(data);
-                showToast(`[${name}] 등록 완료!`);
+                showRegStatus(`[${name}] 등록 완료!`, true);
                 document.getElementById('regProductName').value = '';
                 document.getElementById('regPalletToCarton').value = '';
                 document.getElementById('regCartonToSet').value = '';
@@ -204,7 +204,7 @@
                 document.getElementById('regInnerToUnit').value = '';
                 loadProductList();
             } catch (e) {
-                showToast('등록 실패!');
+                showRegStatus('등록 실패!', false);
             }
         }
 
@@ -295,13 +295,13 @@
             let totalInners = formatVal(totalEa / p.innerToUnit, 1);
 
             let resultHtml = `<strong>[${p.name}] 환산 결과</strong><br>`;
-            resultHtml += `파레트: <strong>${totalPallets}</strong> 파레트<br>`;
-            resultHtml += `카톤: <strong>${totalCartons}</strong> 카톤<br>`;
+            resultHtml += `파레트 : <strong>${totalPallets}</strong> 개<br>`;
+            resultHtml += `카톤 : <strong>${totalCartons}</strong> 개<br>`;
             if (p.hasSet === 'O') {
-                resultHtml += `세트케이스: <strong>${totalSets}</strong> 세트케이스<br>`;
+                resultHtml += `세트케이스 : <strong>${totalSets}</strong> 개<br>`;
             }
-            resultHtml += `단케이스: <strong>${totalInners}</strong> 단케이스<br>`;
-            resultHtml += `반제품: <strong>${totalEa.toLocaleString()}</strong> 개의 반제품`;
+            resultHtml += `단케이스 : <strong>${totalInners}</strong> 개<br>`;
+            resultHtml += `반제품 : <strong>${totalEa.toLocaleString()}</strong> 개`;
 
             resultBox.innerHTML = resultHtml;
             resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
