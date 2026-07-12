@@ -5,124 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>현장 물류 계산기</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f7f9fa;
-            color: #333;
-            padding-bottom: 70px;
-        }
-        .container {
-            max-width: 500px;
-            margin: 20px auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f7f9fa; color: #333; padding-bottom: 70px; }
+        .container { max-width: 500px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         h2 { margin-top: 0; color: #111; }
-        .input-group {
-            margin-bottom: 15px;
-        }
+        .input-group { margin-bottom: 15px; position: relative; }
         label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            background: #fff;
-        }
-        .radio-group {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            font-size: 16px;
-            margin-top: 5px;
-        }
-        .radio-group label {
-            font-weight: normal;
-            display: inline;
-            cursor: pointer;
-        }
-        button {
-            width: 100%;
-            background-color: #007aff;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; background: #fff; }
+        
+        /* 토글 버튼 스타일 (O/X 대체) */
+        .toggle-container { display: flex; gap: 10px; margin-top: 5px; }
+        .toggle-btn { flex: 1; padding: 10px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; color: #666; }
+        .toggle-btn.active { background: #007aff; color: white; border-color: #007aff; }
+
+        /* 검색 드롭다운 목록 */
+        .search-dropdown { position: absolute; top: 100%; left: 0; width: 100%; max-height: 150px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; z-index: 100; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .search-item { padding: 10px; cursor: pointer; font-size: 15px; border-bottom: 1px solid #f1f1f1; }
+        .search-item:hover { background: #f0f7ff; }
+
+        button { width: 100%; background-color: #007aff; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         button:hover { background-color: #0056b3; }
-        .result-box {
-            margin-top: 20px;
-            padding: 15px;
-            background: #eef4ff;
-            border-radius: 6px;
-            font-weight: 600;
-            line-height: 1.5;
-        }
+        
+        /* 토스트 팝업 스타일 */
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 20px; font-size: 15px; font-weight: 600; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 9999; }
+        #toast.show { opacity: 1; }
+
+        .result-box { margin-top: 20px; padding: 15px; background: #eef4ff; border-radius: 6px; font-weight: 600; line-height: 1.6; font-size: 15px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .conditional-fields { display: none; }
-
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            background: #fff;
-            border-top: 1px solid #ddd;
-            display: flex;
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
-            z-index: 1000;
-        }
-        .nav-item {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: 600;
-            color: #666;
-            cursor: pointer;
-            background: none;
-            border: none;
-            margin: 0;
-            padding: 0;
-        }
-        .nav-item.active {
-            color: #007aff;
-            background: #f0f7ff;
-        }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; border-top: 1px solid #ddd; display: flex; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); z-index: 1000; }
+        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; color: #666; cursor: pointer; background: none; border: none; }
+        .nav-item.active { color: #007aff; background: #f0f7ff; }
     </style>
-
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
+    <div id="toast">알림 메시지</div>
+
     <div id="calcTab" class="container tab-content active">
         <h2>현장 물류 계산기</h2>
         <div class="input-group">
-            <label for="productSelect">제품 선택</label>
-            <select id="productSelect">
-                <option value="">제품을 선택하세요</option>
-            </select>
+            <label for="productSearchInput">제품 검색</label>
+            <input type="text" id="productSearchInput" placeholder="제품명을 입력해 검색하세요" oninput="filterProducts()" autocomplete="off">
+            <div id="productSearchDropdown" class="search-dropdown"></div>
+            <input type="hidden" id="selectedProductId">
         </div>
         <div class="input-group">
-            <label for="inputQty">입력 수량 (반제품 기준 개수)</label>
-            <input type="number" id="inputQty" placeholder="수량을 입력하세요">
+            <label>입력 기준 선택</label>
+            <div class="toggle-container">
+                <button type="button" id="calcModeEa" class="toggle-btn active" onclick="setCalcMode('EA')">개수(반제품) 기준</button>
+                <button type="button" id="calcModeSet" class="toggle-btn" onclick="setCalcMode('SET')">세트/단케이스 기준</button>
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="inputQty">입력 수량</label>
+            <input type="number" id="inputQty" placeholder="수량을 입력하세요" onblur="autoCalculate()">
         </div>
         <button onclick="calculateUnits()">환산하기</button>
-        
         <div id="calcResult" class="result-box">결과가 여기에 표시됩니다.</div>
     </div>
 
@@ -134,19 +75,16 @@
         </div>
         <div class="input-group">
             <label>세트케이스 유무</label>
-            <div class="radio-group">
-                <input type="radio" id="hasSetO" name="hasSet" value="O" onclick="toggleSetFields('O')">
-                <label for="hasSetO">O (있음)</label>
-                <input type="radio" id="hasSetX" name="hasSet" value="X" onclick="toggleSetFields('X')" checked>
-                <label for="hasSetX">X (없음)</label>
+            <div class="toggle-container">
+                <button type="button" id="setBtnO" class="toggle-btn" onclick="selectSetOption('O')">있음 (O)</button>
+                <button type="button" id="setBtnX" class="toggle-btn active" onclick="selectSetOption('X')">없음 (X)</button>
             </div>
+            <input type="hidden" id="hasSetValue" value="X">
         </div>
-
         <div class="input-group">
             <label for="regPalletToCarton">파레트당 카톤 수</label>
             <input type="number" id="regPalletToCarton" placeholder="예: 24">
         </div>
-
         <div id="setFieldsO" class="conditional-fields">
             <div class="input-group">
                 <label for="regCartonToSet">카톤당 세트케이스 수</label>
@@ -157,21 +95,17 @@
                 <input type="number" id="regSetToInner" placeholder="예: 6">
             </div>
         </div>
-
         <div id="setFieldsX" class="conditional-fields" style="display:block;">
             <div class="input-group">
                 <label for="regCartonToInnerX">카톤당 단케이스 수</label>
                 <input type="number" id="regCartonToInnerX" placeholder="예: 30">
             </div>
         </div>
-
         <div class="input-group">
             <label for="regInnerToUnit">단케이스당 반제품 수</label>
-            <input type="number" id="regInnerToUnit" placeholder="예: 10">
+            <input type="number" id="regInnerToUnit" placeholder="예: 10" onblur="autoSaveProduct()">
         </div>
-
         <button onclick="saveProductConfig()">제품 등록하기</button>
-        <div id="regResult" class="result-box" style="display:none;"></div>
     </div>
 
     <nav class="bottom-nav">
@@ -188,147 +122,192 @@
             messagingSenderId: "307386603286",
             appId: "1:307386603286:web:6a55d51ee4264812ece237"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         let productList = [];
+        let currentCalcMode = 'EA';
 
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
-
-            if (tabId === 'calcTab') {
-                loadProductList();
-            }
+            if (tabId === 'calcTab') loadProductList();
         }
 
-        function toggleSetFields(type) {
-            if (type === 'O') {
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        }
+
+        function selectSetOption(val) {
+            document.getElementById('hasSetValue').value = val;
+            if (val === 'O') {
+                document.getElementById('setBtnO').classList.add('active');
+                document.getElementById('setBtnX').classList.remove('active');
                 document.getElementById('setFieldsO').style.display = 'block';
                 document.getElementById('setFieldsX').style.display = 'none';
             } else {
+                document.getElementById('setBtnX').classList.add('active');
+                document.getElementById('setBtnO').classList.remove('active');
                 document.getElementById('setFieldsO').style.display = 'none';
                 document.getElementById('setFieldsX').style.display = 'block';
             }
         }
 
-        async function saveProductConfig() {
+        function setCalcMode(mode) {
+            currentCalcMode = mode;
+            if (mode === 'EA') {
+                document.getElementById('calcModeEa').classList.add('active');
+                document.getElementById('calcModeSet').classList.remove('active');
+                document.querySelector('label[for="inputQty"]').innerText = '입력 수량 (반제품 개수)';
+            } else {
+                document.getElementById('calcModeSet').classList.add('active');
+                document.getElementById('calcModeEa').classList.remove('active');
+                document.querySelector('label[for="inputQty"]').innerText = '입력 수량 (세트/단케이스 개수)';
+            }
+        }
+
+        async function saveProductConfig(isAuto = false) {
             const name = document.getElementById('regProductName').value;
-            const hasSet = document.querySelector('input[name="hasSet"]:checked').value;
+            const hasSet = document.getElementById('hasSetValue').value;
             const pToC = document.getElementById('regPalletToCarton').value;
             const innerToUnit = document.getElementById('regInnerToUnit').value;
-            const regResult = document.getElementById('regResult');
 
-            let cartonToSet = 0;
-            let setToInner = 0;
-            let cartonToInner = 0;
+            let data = { name, hasSet, palletToCarton: Number(pToC), innerToUnit: Number(innerToUnit), timestamp: new Date() };
 
             if (hasSet === 'O') {
-                cartonToSet = document.getElementById('regCartonToSet').value;
-                setToInner = document.getElementById('regSetToInner').value;
-                if (!name || !pToC || !cartonToSet || !setToInner || !innerToUnit) {
-                    regResult.style.display = 'block';
-                    regResult.innerText = '모든 항목을 입력해 줘!';
+                data.cartonToSet = Number(document.getElementById('regCartonToSet').value);
+                data.setToInner = Number(document.getElementById('regSetToInner').value);
+                if (!name || !pToC || !data.cartonToSet || !data.setToInner || !innerToUnit) {
+                    if (!isAuto) showToast('모든 항목을 입력해 줘!');
                     return;
                 }
             } else {
-                cartonToInner = document.getElementById('regCartonToInnerX').value;
-                if (!name || !pToC || !cartonToInner || !innerToUnit) {
-                    regResult.style.display = 'block';
-                    regResult.innerText = '모든 항목을 입력해 줘!';
+                data.cartonToInner = Number(document.getElementById('regCartonToInnerX').value);
+                if (!name || !pToC || !data.cartonToInner || !innerToUnit) {
+                    if (!isAuto) showToast('모든 항목을 입력해 줘!');
                     return;
                 }
             }
 
             try {
-                await db.collection('products').add({
-                    name: name,
-                    hasSet: hasSet,
-                    palletToCarton: Number(pToC),
-                    cartonToSet: Number(cartonToSet),
-                    setToInner: Number(setToInner),
-                    cartonToInner: Number(cartonToInner),
-                    innerToUnit: Number(innerToUnit),
-                    timestamp: new Date()
-                });
-
-                regResult.style.display = 'block';
-                regResult.innerText = `[${name}] 등록 완료!`;
-                
+                await db.collection('products').add(data);
+                showToast(`[${name}] 등록 완료!`);
                 document.getElementById('regProductName').value = '';
                 document.getElementById('regPalletToCarton').value = '';
                 document.getElementById('regCartonToSet').value = '';
                 document.getElementById('regSetToInner').value = '';
                 document.getElementById('regCartonToInnerX').value = '';
                 document.getElementById('regInnerToUnit').value = '';
-            } catch (error) {
-                console.error("등록 에러: ", error);
-                regResult.style.display = 'block';
-                regResult.innerText = '등록 실패!';
+                loadProductList();
+            } catch (e) {
+                showToast('등록 실패!');
+            }
+        }
+
+        function autoSaveProduct() {
+            const name = document.getElementById('regProductName').value;
+            const pToC = document.getElementById('regPalletToCarton').value;
+            const innerToUnit = document.getElementById('regInnerToUnit').value;
+            if (name && pToC && innerToUnit) {
+                saveProductConfig(true);
             }
         }
 
         async function loadProductList() {
-            const select = document.getElementById('productSelect');
-            select.innerHTML = '<option value="">제품을 선택하세요</option>';
             productList = [];
+            const snapshot = await db.collection('products').get();
+            snapshot.forEach(doc => {
+                productList.push({ id: doc.id, ...doc.data() });
+            });
+        }
 
-            try {
-                const snapshot = await db.collection('products').get();
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    productList.push({ id: doc.id, ...data });
-                    
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.innerText = data.name;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error("제품 목록 로드 실패: ", error);
+        // 실시간 검색 필터
+        function filterProducts() {
+            const keyword = document.getElementById('productSearchInput').value.toLowerCase();
+            const dropdown = document.getElementById('productSearchDropdown');
+            dropdown.innerHTML = '';
+            
+            if (!keyword) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
+            if (filtered.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            filtered.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'search-item';
+                item.innerText = p.name;
+                item.onclick = () => {
+                    document.getElementById('productSearchInput').value = p.name;
+                    document.getElementById('selectedProductId').value = p.id;
+                    dropdown.style.display = 'none';
+                    autoCalculate();
+                };
+                dropdown.appendChild(item);
+            });
+            dropdown.style.display = 'block';
+        }
+
+        function autoCalculate() {
+            const qty = document.getElementById('inputQty').value;
+            const prodId = document.getElementById('selectedProductId').value;
+            if (qty && prodId) {
+                calculateUnits();
             }
         }
 
         function calculateUnits() {
-            const selectedId = document.getElementById('productSelect').value;
-            const qty = Number(document.getElementById('inputQty').value);
+            const selectedId = document.getElementById('selectedProductId').value;
+            const rawQty = Number(document.getElementById('inputQty').value);
             const resultBox = document.getElementById('calcResult');
-
-            if (!selectedId) {
-                resultBox.innerText = '제품을 선택해 줘!';
-                return;
-            }
-            if (!qty || qty <= 0) {
-                resultBox.innerText = '유효한 수량을 입력해 줘!';
-                return;
-            }
-
             const p = productList.find(item => item.id === selectedId);
-            if (!p) return;
-
-            let cToI = p.hasSet === 'O' ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
-            const cartonToUnit = cToI * p.innerToUnit;
-            const unitsPerPallet = p.palletToCarton * cartonToUnit;
-
-            const totalPallets = qty / unitsPerPallet;
-            const fullPallets = Math.floor(totalPallets);
             
-            const remPallets = qty % unitsPerPallet;
-            const totalCartons = remPallets / cartonToUnit;
-            const fullCartons = Math.floor(totalCartons);
-            
-            const remCartons = remPallets % cartonToUnit;
-            const fullInners = Math.floor(remCartons / p.innerToUnit);
-            const finalUnits = remCartons % p.innerToUnit;
+            if (!p || !rawQty) {
+                resultBox.innerText = '제품과 유효한 수량을 확인해 줘!';
+                return;
+            }
 
-            resultBox.innerHTML = `
-                <strong>[${p.name}] 환산 결과</strong><br>
-                입력 수량: ${qty.toLocaleString()} 개<br>
-                👉 <strong>${totalPallets.toFixed(2)} 파레트</strong><br>
-                (상세: ${fullPallets} 파레트 + ${fullCartons} 카톤 + ${fullInners} 단케이스 + ${finalUnits} 개)
-            `;
+            // 개수 기준(반제품)으로 환산 총량 구하기
+            let cToI = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
+            let innerPerCarton = cToI * p.innerToUnit; // 1카톤당 반제품 수
+            let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit; // 세트 또는 단케이스당 반제품 수
+
+            let totalEa = (currentCalcMode === 'EA') ? rawQty : (rawQty * unitPerSet);
+
+            let unitsPerPallet = p.palletToCarton * innerPerCarton;
+            
+            let totalPallets = totalEa / unitsPerPallet;
+            let totalCartons = totalEa / innerPerCarton;
+            let totalSets = (p.hasSet === 'O') ? (totalEa / (p.setToInner * p.innerToUnit)) : 0;
+            let totalInners = totalEa / p.innerToUnit;
+
+            let fullPallets = Math.floor(totalPallets);
+            let rem = totalEa % unitsPerPallet;
+            let fullCartons = Math.floor(rem / innerPerCarton);
+            rem %= innerPerCarton;
+            let fullInners = Math.floor(rem / p.innerToUnit);
+            let units = rem % p.innerToUnit;
+
+            let resultHtml = `<strong>[${p.name}] 환산 결과</strong><br>`;
+            resultHtml += `파레트: <strong>${totalPallets.toFixed(2)}</strong> 개<br>`;
+            resultHtml += `카톤: <strong>${totalCartons.toFixed(1)}</strong> 카톤<br>`;
+            if (p.hasSet === 'O') {
+                resultHtml += `세트케이스: <strong>${totalSets.toFixed(1)}</strong> 세트<br>`;
+            }
+            resultHtml += `단케이스: <strong>${totalInners.toFixed(1)}</strong> 단케이스<br>`;
+            resultHtml += `반제품: <strong>${totalEa.toLocaleString()}</strong> 개의 반제품<br><br>`;
+            resultHtml += `👉 파레트 ${fullPallets}개 / 카톤 ${fullCartons}개 / 단케이스 ${fullInners}개 / 잔여 ${units}개`;
+
+            resultBox.innerHTML = resultHtml;
         }
 
         loadProductList();
