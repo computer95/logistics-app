@@ -182,20 +182,20 @@
                 data.cartonToSet = Number(document.getElementById('regCartonToSet').value);
                 data.setToInner = Number(document.getElementById('regSetToInner').value);
                 if (!name || !pToC || !data.cartonToSet || !data.setToInner || !innerToUnit) {
-                    showRegStatus('⚠️ 모든 항목을 입력해 줘!', false);
+                    showRegStatus('⚠️ 모든 항목을 빠짐없이 입력해 주세요.', false);
                     return;
                 }
             } else {
                 data.cartonToInner = Number(document.getElementById('regCartonToInnerX').value);
                 if (!name || !pToC || !data.cartonToInner || !innerToUnit) {
-                    showRegStatus('⚠️ 모든 항목을 입력해 줘!', false);
+                    showRegStatus('⚠️ 모든 항목을 빠짐없이 입력해 주세요.', false);
                     return;
                 }
             }
 
             try {
                 await db.collection('products').add(data);
-                showRegStatus(`✅ [${name}] 등록 완료!`, true);
+                showRegStatus(`✅ [${name}] 등록이 완료되었습니다.`, true);
                 document.getElementById('regProductName').value = '';
                 document.getElementById('regPalletToCarton').value = '';
                 document.getElementById('regCartonToSet').value = '';
@@ -204,7 +204,7 @@
                 document.getElementById('regInnerToUnit').value = '';
                 loadProductList();
             } catch (e) {
-                showRegStatus('❌ 등록 실패!', false);
+                showRegStatus('❌ 등록에 실패했습니다.', false);
             }
         }
 
@@ -278,7 +278,7 @@
             const p = productList.find(item => item.id === selectedId);
             
             if (!p || !rawQty) {
-                resultBox.innerText = '⚠️ 제품과 유효한 수량을 확인해 줘!';
+                resultBox.innerText = '⚠️ 제품과 올바른 수량을 다시 확인해 주세요.';
                 return;
             }
 
@@ -294,7 +294,7 @@
             let totalSets = (p.hasSet === 'O') ? formatVal(totalEa / (p.setToInner * p.innerToUnit), 1) : 0;
             let totalInners = formatVal(totalEa / p.innerToUnit, 1);
 
-            let resultHtml = `<strong>📊 [${p.name}] 환산 결과</strong><br>`;
+            let resultHtml = `<strong>📊 [${p.name}] 환산 결과</strong><br><br>`;
             resultHtml += `🅿️ 파레트 : <strong>${totalPallets}</strong> 개<br>`;
             resultHtml += `📦 카톤 : <strong>${totalCartons}</strong> 개<br>`;
             if (p.hasSet === 'O') {
