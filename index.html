@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>물류 계산기</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        h2 { margin-top: 0; color: #111; }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #0056b3; }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #eef4ff;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>현장 물류 계산기</h2>
+        <div class="input-group">
+            <label for="itemCode">품목 코드/이름</label>
+            <input type="text" id="itemCode" placeholder="품목을 입력하세요">
+        </div>
+        <div class="input-group">
+            <label for="quantity">수량</label>
+            <input type="number" id="quantity" placeholder="수량을 입력하세요">
+        </div>
+        <button onclick="calculateData()">확인 및 전송</button>
+        
+        <div id="result">결과가 여기에 표시됩니다.</div>
+    </div>
+
+    <script>
+        // PWA 서비스 워커 등록
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+
+        function calculateData() {
+            const item = document.getElementById('itemCode').value;
+            const qty = document.getElementById('quantity').value;
+            
+            const resultDiv = document.getElementById('result');
+            if(!item || !qty) {
+                resultDiv.innerText = '품목과 수량을 모두 입력해 줘!';
+                return;
+            }
+            
+            resultDiv.innerText = `입력 완료: [${item}] ${qty}개 (추후 API 연동 예정)`;
+        }
+    </script>
+
+</body>
+</html>
