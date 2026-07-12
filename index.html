@@ -281,4 +281,57 @@
                     const data = doc.data();
                     productList.push({ id: doc.id, ...data });
                     
-                    const option = document.createElement('option
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.innerText = data.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("제품 목록 로드 실패: ", error);
+            }
+        }
+
+        function calculateUnits() {
+            const selectedId = document.getElementById('productSelect').value;
+            const qty = Number(document.getElementById('inputQty').value);
+            const resultBox = document.getElementById('calcResult');
+
+            if (!selectedId) {
+                resultBox.innerText = '제품을 선택해 줘!';
+                return;
+            }
+            if (!qty || qty <= 0) {
+                resultBox.innerText = '유효한 수량을 입력해 줘!';
+                return;
+            }
+
+            const p = productList.find(item => item.id === selectedId);
+            if (!p) return;
+
+            let cToI = p.hasSet === 'O' ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
+            const cartonToUnit = cToI * p.innerToUnit;
+            const unitsPerPallet = p.palletToCarton * cartonToUnit;
+
+            const totalPallets = qty / unitsPerPallet;
+            const fullPallets = Math.floor(totalPallets);
+            
+            const remPallets = qty % unitsPerPallet;
+            const totalCartons = remPallets / cartonToUnit;
+            const fullCartons = Math.floor(totalCartons);
+            
+            const remCartons = remPallets % cartonToUnit;
+            const fullInners = Math.floor(remCartons / p.innerToUnit);
+            const finalUnits = remCartons % p.innerToUnit;
+
+            resultBox.innerHTML = `
+                <strong>[${p.name}] 환산 결과</strong><br>
+                입력 수량: ${qty.toLocaleString()} 개<br>
+                👉 <strong>${totalPallets.toFixed(2)} 파레트</strong><br>
+                (상세: ${fullPallets} 파레트 + ${fullCartons} 카톤 + ${fullInners} 단케이스 + ${finalUnits} 개)
+            `;
+        }
+
+        loadProductList();
+    </script>
+</body>
+</html>
