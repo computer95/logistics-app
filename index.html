@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>물류 계산기</title>
-    <link rel="manifest" href="/manifest.json">
+    <title>현장 물류 계산기</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             background-color: #f7f9fa;
             color: #333;
+            padding-bottom: 70px; /* 하단 메뉴바 공간 확보 */
         }
         .container {
             max-width: 500px;
-            margin: 0 auto;
+            margin: 20px auto;
             background: #fff;
             padding: 20px;
             border-radius: 12px;
@@ -26,13 +26,14 @@
             margin-bottom: 15px;
         }
         label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
-        input {
+        input, select {
             width: 100%;
             padding: 10px;
             box-sizing: border-box;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 16px;
+            background: #fff;
         }
         button {
             width: 100%;
@@ -47,12 +48,48 @@
             margin-top: 10px;
         }
         button:hover { background-color: #0056b3; }
-        #result {
+        .result-box {
             margin-top: 20px;
             padding: 15px;
             background: #eef4ff;
             border-radius: 6px;
             font-weight: 600;
+            line-height: 1.5;
+        }
+        /* 탭 화면 제어 클래스 */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* 하단 메뉴바 스타일 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+        .nav-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            background: none;
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-item.active {
+            color: #007aff;
+            background: #f0f7ff;
         }
     </style>
 
@@ -61,27 +98,48 @@
 </head>
 <body>
 
-    <div class="container">
+    <div id="calcTab" class="container tab-content active">
         <h2>현장 물류 계산기</h2>
         <div class="input-group">
-            <label for="itemCode">품목 코드/이름</label>
-            <input type="text" id="itemCode" placeholder="품목을 입력하세요">
+            <label for="productSelect">제품 선택</label>
+            <select id="productSelect" onchange="onProductChange()">
+                <option value="">제품을 선택하세요</option>
+            </select>
         </div>
         <div class="input-group">
-            <label for="quantity">수량</label>
-            <input type="number" id="quantity" placeholder="수량을 입력하세요">
+            <label for="inputQty">입력 수량 (개 기준)</label>
+            <input type="number" id="inputQty" placeholder="수량을 입력하세요">
         </div>
-        <button onclick="calculateData()">확인 및 전송</button>
+        <button onclick="calculateUnits()">환산하기</button>
         
-        <div id="result">결과가 여기에 표시됩니다.</div>
+        <div id="calcResult" class="result-box">결과가 여기에 표시됩니다.</div>
     </div>
 
-    <script>
-        // PWA 서비스 워커 등록
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
-        }
+    <div id="registerTab" class="container tab-content">
+        <h2>제품 구성 단위 등록</h2>
+        <div class="input-group">
+            <label for="regProductName">제품 이름</label>
+            <input type="text" id="regProductName" placeholder="예: A제품">
+        </div>
+        <div class="input-group">
+            <label for="regPalletToCarton">1 파레트당 카톤 수</label>
+            <input type="number" id="regPalletToCarton" placeholder="예: 24">
+        </div>
+        <div class="input-group">
+            <label for="regCartonToUnit">1 카톤당 최소 단위 수 (개/인케이스)</label>
+            <input type="number" id="regCartonToUnit" placeholder="예: 60">
+        </div>
+        <button onclick="saveProductConfig()">제품 등록하기</button>
+        
+        <div id="regResult" class="result-box" style="display:none;"></div>
+    </div>
 
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('calcTab', this)">계산기</button>
+        <button class="nav-item" onclick="switchTab('registerTab', this)">제품등록</button>
+    </nav>
+
+    <script>
         // 파이어베이스 설정값 초기화
         const firebaseConfig = {
             apiKey: "AIzaSyAxsMwsCYRP4AlCcUDVdg_xVb2yq3aREhg",
@@ -92,38 +150,121 @@
             appId: "1:307386603286:web:6a55d51ee4264812ece237"
         };
 
-        // Firebase 연결 시작
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        async function calculateData() {
-            const item = document.getElementById('itemCode').value;
-            const qty = document.getElementById('quantity').value;
-            const resultDiv = document.getElementById('result');
+        // 전역으로 제품 데이터 저장할 변수
+        let productList = [];
 
-            if(!item || !qty) {
-                resultDiv.innerText = '품목과 수량을 모두 입력해 줘!';
+        // 탭 전환 함수
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
+
+            if (tabId === 'calcTab') {
+                loadProductList(); // 계산기 탭 올 때마다 제품 리스트 갱신
+            }
+        }
+
+        // 파이어베이스에 제품 구성 정보 저장
+        async function saveProductConfig() {
+            const name = document.getElementById('regProductName').value;
+            const pToC = document.getElementById('regPalletToCarton').value;
+            const cToU = document.getElementById('regCartonToUnit').value;
+            const regResult = document.getElementById('regResult');
+
+            if (!name || !pToC || !cToU) {
+                regResult.style.display = 'block';
+                regResult.innerText = '모든 항목을 입력해 줘!';
                 return;
             }
-            
+
             try {
-                // Firestore의 'logistics'라는 이름의 데이터베이스 테이블(컬렉션)에 저장
-                await db.collection('logistics').add({
-                    itemCode: item,
-                    quantity: Number(qty),
+                await db.collection('products').add({
+                    name: name,
+                    palletToCarton: Number(pToC),
+                    cartonToUnit: Number(cToU),
                     timestamp: new Date()
                 });
 
-                resultDiv.innerText = `저장 완료! [${item}] ${qty}개 데이터가 파이어베이스에 전송됐어!`;
+                regResult.style.display = 'block';
+                regResult.innerText = `[${name}] 등록 완료!`;
                 
                 // 입력창 초기화
-                document.getElementById('itemCode').value = '';
-                document.getElementById('quantity').value = '';
+                document.getElementById('regProductName').value = '';
+                document.getElementById('regPalletToCarton').value = '';
+                document.getElementById('regCartonToUnit').value = '';
             } catch (error) {
-                console.error("저장 중 에러 발생: ", error);
-                resultDiv.innerText = '전송 실패! 콘솔창을 확인해 줘.';
+                console.error("등록 에러: ", error);
+                regResult.style.display = 'block';
+                regResult.innerText = '등록 실패! 콘솔창 확인해 줘.';
             }
         }
+
+        // Firestore에서 제품 리스트 불러와서 드롭다운 채우기
+        async function loadProductList() {
+            const select = document.getElementById('productSelect');
+            select.innerHTML = '<option value="">제품을 선택하세요</option>';
+            productList = [];
+
+            try {
+                const snapshot = await db.collection('products').get();
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    productList.push({ id: doc.id, ...data });
+                    
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.innerText = data.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("제품 목록 불러오기 실패: ", error);
+            }
+        }
+
+        // 선택된 제품의 환산 로직 수행
+        function calculateUnits() {
+            const selectedId = document.getElementById('productSelect').value;
+            const qty = Number(document.getElementById('inputQty').value);
+            const resultBox = document.getElementById('calcResult');
+
+            if (!selectedId) {
+                resultBox.innerText = '제품을 선택해 줘!';
+                return;
+            }
+            if (!qty || qty <= 0) {
+                resultBox.innerText = '유효한 수량을 입력해 줘!';
+                return;
+            }
+
+            const product = productList.find(p => p.id === selectedId);
+            if (!product) return;
+
+            // 환산 계산 로직
+            const unitsPerPallet = product.palletToCarton * product.cartonToUnit; // 1파레트당 총 개수
+            const totalPallets = qty / unitsPerPallet;
+            const fullPallets = Math.floor(totalPallets);
+            
+            const remainderAfterPallets = qty % unitsPerPallet;
+            const totalCartons = remainderAfterPallets / product.cartonToUnit;
+            const fullCartons = Math.floor(totalCartons);
+            
+            const finalUnits = remainderAfterPallets % product.cartonToUnit;
+
+            resultBox.innerHTML = `
+                <strong>[${product.name}] 환산 결과</strong><br>
+                입력 수량: ${qty.toLocaleString()} 개<br>
+                👉 <strong>${totalPallets.toFixed(2)} 파레트</strong><br>
+                (상세: ${fullPallets} 파레트 + ${fullCartons} 카톤 + ${finalUnits} 개)
+            `;
+        }
+
+        // 초기 실행 시 제품 목록 로드
+        loadProductList();
     </script>
 
 </body>
