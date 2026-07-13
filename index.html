@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>현장 물류 계산기 v4.1</title>
+    <title>현장 물류 계산기 v4.2</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f7f9fa; color: #333; padding-bottom: 90px; }
         .container { max-width: 500px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
@@ -11,7 +11,7 @@
         .input-group { margin-bottom: 15px; position: relative; }
         label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
         input, select, textarea { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: #fff; }
-        textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+        textarea { resize: vertical; min-height: 70px; font-family: inherit; font-size: 14px; }
         
         .toggle-container { display: flex; gap: 10px; margin-top: 5px; }
         .toggle-btn { flex: 1; padding: 12px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; color: #666; }
@@ -24,7 +24,7 @@
         button.main-btn { width: 100%; background-color: #007aff; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         button.main-btn:hover { background-color: #0056b3; }
         
-        .sub-btn { padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; border: none; }
+        .sub-btn { padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; border: none; }
         .edit-btn { background: #ff9500; color: white; }
         .del-btn { background: #ff3b30; color: white; }
         .add-action-btn { background: #34c759; color: white; font-size: 14px; padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
@@ -54,11 +54,12 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
         .modal-box { background: #fff; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 
-        .diet-card { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+        /* 식단표 스타일 최적화 */
+        .diet-card { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
         .diet-card.today { background: #f0f7ff; border-color: #007aff; box-shadow: 0 2px 6px rgba(0,122,255,0.1); }
         .diet-day { font-weight: bold; font-size: 15px; color: #111; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
-        .diet-badge { background: #007aff; color: white; font-size: 11px; padding: 2px 6px; border-radius: 4px; }
-        .diet-menu { font-size: 14px; color: #444; line-height: 1.5; }
+        .diet-badge { background: #007aff; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+        .diet-menu { font-size: 13.5px; color: #444; line-height: 1.5; white-space: pre-line; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -90,41 +91,41 @@
 
     <div id="dietTab" class="container tab-content">
         <h2>
-            🍚 식단표
-            <button class="sub-btn edit-btn" style="font-size: 12px; padding: 4px 8px;" onclick="toggleDietEdit()">식단 수정</button>
+            🍚 식단표 (07-13 ~ 07-17)
+            <button class="sub-btn edit-btn" onclick="toggleDietEdit()">식단 수정</button>
         </h2>
-        <p style="font-size: 13px; color: #666; margin-bottom: 15px;">이번 주 구내식당 식단 안내입니다.</p>
+        <p style="font-size: 12.5px; color: #666; margin-bottom: 12px;">이번 주 구내식당 중식 식단 안내입니다.</p>
         
-        <div id="dietEditBox" style="background:#f8f9fa; border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:15px; display:none;">
-            <p style="font-size:12px; color:#666; margin-top:0;">* 사진 복사한 텍스트를 각 요일에 붙여넣으세요.</p>
-            <div class="input-group"><label>월요일</label><textarea id="editDiet_mon" onfocus="this.select()"></textarea></div>
-            <div class="input-group"><label>화요일</label><textarea id="editDiet_tue" onfocus="this.select()"></textarea></div>
-            <div class="input-group"><label>수요일</label><textarea id="editDiet_wed" onfocus="this.select()"></textarea></div>
-            <div class="input-group"><label>목요일</label><textarea id="editDiet_thu" onfocus="this.select()"></textarea></div>
-            <div class="input-group"><label>금요일</label><textarea id="editDiet_fri" onfocus="this.select()"></textarea></div>
+        <div id="dietEditBox" style="background:#f8f9fa; border:1px solid #007aff; padding:12px; border-radius:8px; margin-bottom:15px; display:none;">
+            <p style="font-size:11.5px; color:#007aff; margin-top:0; font-weight:bold;">* 사진 텍스트를 복사해서 각 요일에 붙여넣으세요 (줄바꿈 포함)</p>
+            <div class="input-group"><label>07-13 (월)</label><textarea id="editDiet_mon" onfocus="this.select()"></textarea></div>
+            <div class="input-group"><label>07-14 (화)</label><textarea id="editDiet_tue" onfocus="this.select()"></textarea></div>
+            <div class="input-group"><label>07-15 (수)</label><textarea id="editDiet_wed" onfocus="this.select()"></textarea></div>
+            <div class="input-group"><label>07-16 (목)</label><textarea id="editDiet_thu" onfocus="this.select()"></textarea></div>
+            <div class="input-group"><label>07-17 (금)</label><textarea id="editDiet_fri" onfocus="this.select()"></textarea></div>
             <button class="main-btn" style="padding:10px; font-size:14px; background:#34c759;" onclick="saveDietTable()">식단 저장하기</button>
         </div>
 
         <div id="dietListContainer">
             <div class="diet-card" id="diet_mon">
-                <div class="diet-day">월요일 <span class="diet-badge" style="display:none;" id="badge_mon">오늘</span></div>
-                <div class="diet-menu" id="menu_mon">흑미밥, 김치찌개, 계란후라이, 멸치볶음</div>
+                <div class="diet-day">07-13 (월) <span class="diet-badge" style="display:none;" id="badge_mon">오늘</span></div>
+                <div class="diet-menu" id="menu_mon">쌀밥&#10;참치김치찌개&#10;고추잡채&꽃빵&#10;느타리버섯볶음&#10;돌김자반&#10;깍두기</div>
             </div>
             <div class="diet-card" id="diet_tue">
-                <div class="diet-day">화요일 <span class="diet-badge" style="display:none;" id="badge_tue">오늘</span></div>
-                <div class="diet-menu" id="menu_tue">현미밥, 된장찌개, 제육볶음, 상추쌈</div>
+                <div class="diet-day">07-14 (화) <span class="diet-badge" style="display:none;" id="badge_tue">오늘</span></div>
+                <div class="diet-menu" id="menu_tue">쌀밥&#10;소고기무국&#10;코다리강정&#10;양념두부조림&#10;참나물겉절이&#10;포기김치</div>
             </div>
             <div class="diet-card" id="diet_wed">
-                <div class="diet-day">수요일 <span class="diet-badge" style="display:none;" id="badge_wed">오늘</span></div>
-                <div class="diet-menu" id="menu_wed">쌀밥, 부대찌개, 어묵볶음, 깍두기</div>
+                <div class="diet-day">07-15 (수) <span class="diet-badge" style="display:none;" id="badge_wed">오늘</span></div>
+                <div class="diet-menu" id="menu_wed">쌀밥&#10;**초복**&#10;삼계탕&#10;김치전&#10;수제양파장아찌&#10;석박지</div>
             </div>
             <div class="diet-card" id="diet_thu">
-                <div class="diet-day">목요일 <span class="diet-badge" style="display:none;" id="badge_thu">오늘</span></div>
-                <div class="diet-menu" id="menu_thu">차돌된장밥, 닭갈비, 샐러드, 단무지</div>
+                <div class="diet-day">07-16 (목) <span class="diet-badge" style="display:none;" id="badge_thu">오늘</span></div>
+                <div class="diet-menu" id="menu_thu">쌀밥&#10;오이냉국&#10;미트볼라따뚜이&#10;천사채마요무침&#10;고사리들깨볶음&#10;포기김치</div>
             </div>
             <div class="diet-card" id="diet_fri">
-                <div class="diet-day">금요일 <span class="diet-badge" style="display:none;" id="badge_fri">오늘</span></div>
-                <div class="diet-menu" id="menu_fri">김밥 & 떡볶이, 우동, 만두튀김</div>
+                <div class="diet-day">07-17 (금) <span class="diet-badge" style="display:none;" id="badge_fri">오늘</span></div>
+                <div class="diet-menu" id="menu_fri">제헌절</div>
             </div>
         </div>
     </div>
@@ -238,7 +239,7 @@
             box.style.display = (box.style.display === 'block') ? 'none' : 'block';
             if (box.style.display === 'block') {
                 ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
-                    document.getElementById(`editDiet_${d}`).value = document.getElementById(`menu_${d}`).innerText;
+                    document.getElementById(`editDiet_${d}`).value = document.getElementById(`menu_${d}`).innerHTML.replace(/<br\s*[\/]?>/gi, '\n');
                 });
             }
         }
@@ -246,8 +247,9 @@
         function saveDietTable() {
             ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
                 const val = document.getElementById(`editDiet_${d}`).value;
-                document.getElementById(`menu_${d}`).innerText = val;
-                localStorage.setItem(`diet_${d}`, val);
+                const formattedVal = val.replace(/\n/g, '<br>');
+                document.getElementById(`menu_${d}`).innerHTML = formattedVal;
+                localStorage.setItem(`diet_v4_${d}`, formattedVal);
             });
             toggleDietEdit();
             alert('✅ 식단이 저장되었습니다.');
@@ -255,8 +257,8 @@
 
         function loadDietFromStorage() {
             ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
-                const saved = localStorage.getItem(`diet_${d}`);
-                if (saved) document.getElementById(`menu_${d}`).innerText = saved;
+                const saved = localStorage.getItem(`diet_v4_${d}`);
+                if (saved) document.getElementById(`menu_${d}`).innerHTML = saved;
             });
         }
 
