@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>현장 물류 계산기 v4.3</title>
+    <title>현장 물류 계산기 v4.4</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f7f9fa; color: #333; padding-bottom: 90px; }
         .container { max-width: 500px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
@@ -24,10 +24,10 @@
         button.main-btn { width: 100%; background-color: #007aff; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         button.main-btn:hover { background-color: #0056b3; }
         
-        .sub-btn { padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; border: none; }
+        .sub-btn { padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; }
         .edit-btn { background: #ff9500; color: white; }
         .del-btn { background: #ff3b30; color: white; }
-        .add-action-btn { background: #34c759; color: white; font-size: 14px; padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+        .add-action-btn { background: #34c759; color: white; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
 
         .status-msg { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; display: none; }
         .status-msg.success { background: #e1f5fe; color: #0288d1; display: block; }
@@ -45,10 +45,17 @@
 
         .password-screen { text-align: center; padding: 30px 10px; }
         .password-screen input { text-align: center; letter-spacing: 5px; font-size: 24px; margin-bottom: 15px; }
-        .product-card { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; margin-bottom: 12px; }
-        .product-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .product-card-title { font-weight: bold; font-size: 16px; color: #111; }
-        .product-card-body { font-size: 13px; color: #555; margin-bottom: 10px; line-height: 1.5; }
+        
+        /* 세련되게 바뀐 제품 관리 표/카드 스타일 */
+        .product-card { background: #fcfcfc; border: 1px solid #e1e4e8; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        .product-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .product-name-txt { font-weight: bold; font-size: 15px; color: #111; }
+        
+        .spec-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; background: #f4f6f8; border-radius: 6px; overflow: hidden; text-align: center; }
+        .spec-table th { background: #e9ecf0; color: #444; padding: 6px 2px; font-weight: 600; border-bottom: 1px solid #ddd; }
+        .spec-table td { padding: 7px 2px; color: #333; font-weight: 500; }
+        .spec-table tr:not(:last-child) td { border-bottom: 1px solid #e1e4e8; }
+
         .edit-form-box { background: #fff; border: 1px solid #007aff; border-radius: 8px; padding: 12px; margin-top: 10px; display: none; }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -58,7 +65,7 @@
         .diet-card.today { background: #f0f7ff; border-color: #007aff; box-shadow: 0 2px 6px rgba(0,122,255,0.1); }
         .diet-day { font-weight: bold; font-size: 15px; color: #111; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
         .diet-badge { background: #007aff; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
-        .diet-menu { font-size: 13.5px; color: #444; line-height: 1.5; white-space: pre-line; }
+        .diet-menu { font-size: 13.5px; color: #444; line-height: 1.5; white-space: pre-line; min-height: 20px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -108,23 +115,23 @@
         <div id="dietListContainer">
             <div class="diet-card" id="diet_mon">
                 <div class="diet-day"><span id="dayLabel_mon">월요일</span> <span class="diet-badge" style="display:none;" id="badge_mon">오늘</span></div>
-                <div class="diet-menu" id="menu_mon">공백</div>
+                <div class="diet-menu" id="menu_mon"></div>
             </div>
             <div class="diet-card" id="diet_tue">
                 <div class="diet-day"><span id="dayLabel_tue">화요일</span> <span class="diet-badge" style="display:none;" id="badge_tue">오늘</span></div>
-                <div class="diet-menu" id="menu_tue">공백</div>
+                <div class="diet-menu" id="menu_tue"></div>
             </div>
             <div class="diet-card" id="diet_wed">
                 <div class="diet-day"><span id="dayLabel_wed">수요일</span> <span class="diet-badge" style="display:none;" id="badge_wed">오늘</span></div>
-                <div class="diet-menu" id="menu_wed">공백</div>
+                <div class="diet-menu" id="menu_wed"></div>
             </div>
             <div class="diet-card" id="diet_thu">
                 <div class="diet-day"><span id="dayLabel_thu">목요일</span> <span class="diet-badge" style="display:none;" id="badge_thu">오늘</span></div>
-                <div class="diet-menu" id="menu_thu">공백</div>
+                <div class="diet-menu" id="menu_thu"></div>
             </div>
             <div class="diet-card" id="diet_fri">
                 <div class="diet-day"><span id="dayLabel_fri">금요일</span> <span class="diet-badge" style="display:none;" id="badge_fri">오늘</span></div>
-                <div class="diet-menu" id="menu_fri">공백</div>
+                <div class="diet-menu" id="menu_fri"></div>
             </div>
         </div>
     </div>
@@ -144,8 +151,12 @@
                 <button class="add-action-btn" onclick="openAddModal()">+ 새 제품 추가</button>
             </h2>
             
-            <div style="margin-top: 15px;">
-                <label style="margin-bottom: 10px; font-size: 14px; color: #666;">등록된 품목 리스트 (가나다순)</label>
+            <div class="input-group" style="margin-top: 15px; margin-bottom: 12px;">
+                <input type="text" id="adminFilterInput" placeholder="🔍 등록된 품목 검색" oninput="filterAdminList()" autocomplete="off">
+            </div>
+
+            <div>
+                <label style="margin-bottom: 8px; font-size: 13px; color: #666;">등록된 품목 리스트 (가나다순)</label>
                 <div id="productListContainer">데이터를 불러오는 중...</div>
             </div>
         </div>
@@ -221,15 +232,12 @@
 
         initDietSystem();
 
-        // 날짜 계산 및 주차 초기화 메인 로직
         function initDietSystem() {
             const weekDates = getThisWeekDates();
-            const mondayKey = weekDates[0].dateStr; // 이번 주 월요일 고유 식별자
+            const mondayKey = weekDates[0].dateStr; 
 
-            // 상단 타이틀 설정 (예: (07-20 ~ 07-24))
             document.getElementById('dietPeriodTitle').innerText = `(${weekDates[0].formatted} ~ ${weekDates[4].formatted})`;
 
-            // 각 요일 라벨 및 수정창 라벨 세팅
             const daysKeyMap = ['mon', 'tue', 'wed', 'thu', 'fri'];
             weekDates.forEach((w, idx) => {
                 const k = daysKeyMap[idx];
@@ -237,12 +245,10 @@
                 document.getElementById(`editLabel_${k}`).innerText = `${w.formatted} (${w.dayName})`;
             });
 
-            // 주차 변경 감지 및 초기화 실행
             const savedMondayKey = localStorage.getItem('diet_current_monday');
             if (savedMondayKey !== mondayKey) {
-                // 새로운 주 진입: 기존 식단 데이터 싹 비우기
                 daysKeyMap.forEach(k => {
-                    localStorage.removeItem(`diet_v5_${k}`);
+                    localStorage.removeItem(`diet_v6_${k}`);
                 });
                 localStorage.setItem('diet_current_monday', mondayKey);
             }
@@ -251,12 +257,9 @@
             loadDietFromStorage();
         }
 
-        // 현재 날짜 기준으로 이번 주 월~금 날짜 계산 함수
         function getThisWeekDates() {
             const now = new Date();
             const day = now.getDay();
-            // 월요일 기준 계산 (일요일이면 지난 월요일이 아니라 이번 주 월요일로 당기거나 다음 주 계산 처리)
-            // 일요일(0)인 경우 다음 주 월요일로 넘겨줄지, 이번 주 월요일로 할지 결정 (일요일이 되면 다음 주를 보여주도록 처리)
             const diffToMonday = (day === 0) ? 1 : (1 - day); 
             const monday = new Date(now.setDate(now.getDate() + diffToMonday));
             
@@ -300,7 +303,7 @@
             if (box.style.display === 'block') {
                 ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
                     const currentText = document.getElementById(`menu_${d}`).innerHTML;
-                    document.getElementById(`editDiet_${d}`).value = (currentText === '공백') ? '' : currentText.replace(/<br\s*[\/]?>/gi, '\n');
+                    document.getElementById(`editDiet_${d}`).value = (currentText === '') ? '' : currentText.replace(/<br\s*[\/]?>/gi, '\n');
                 });
             }
         }
@@ -308,9 +311,9 @@
         function saveDietTable() {
             ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
                 const val = document.getElementById(`editDiet_${d}`).value.trim();
-                const formattedVal = val ? val.replace(/\n/g, '<br>') : '공백';
+                const formattedVal = val ? val.replace(/\n/g, '<br>') : '';
                 document.getElementById(`menu_${d}`).innerHTML = formattedVal;
-                localStorage.setItem(`diet_v5_${d}`, formattedVal);
+                localStorage.setItem(`diet_v6_${d}`, formattedVal);
             });
             toggleDietEdit();
             alert('✅ 식단이 저장되었습니다.');
@@ -318,12 +321,8 @@
 
         function loadDietFromStorage() {
             ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
-                const saved = localStorage.getItem(`diet_v5_${d}`);
-                if (saved) {
-                    document.getElementById(`menu_${d}`).innerHTML = saved;
-                } else {
-                    document.getElementById(`menu_${d}`).innerHTML = '공백';
-                }
+                const saved = localStorage.getItem(`diet_v6_${d}`);
+                document.getElementById(`menu_${d}`).innerHTML = saved ? saved : '';
             });
         }
 
@@ -443,32 +442,55 @@
 
         async function renderProductAdminList() {
             await loadProductList();
+            drawAdminListHtml(productList);
+        }
+
+        function filterAdminList() {
+            const keyword = document.getElementById('adminFilterInput').value.toLowerCase();
+            const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
+            drawAdminListHtml(filtered);
+        }
+
+        function drawAdminListHtml(list) {
             const container = document.getElementById('productListContainer');
-            if (productList.length === 0) {
-                container.innerHTML = '<p style="color:#666; font-size:14px; text-align:center;">등록된 제품이 없습니다.</p>';
+            if (list.length === 0) {
+                container.innerHTML = '<p style="color:#666; font-size:13px; text-align:center; padding:15px;">검색된 품목이 없습니다.</p>';
                 return;
             }
 
             let html = '';
-            productList.forEach(p => {
-                let desc = `파레트당 카톤: ${p.palletToCarton} | `;
-                if (p.hasSet === 'O') {
-                    desc += `카톤당 세트: ${p.cartonToSet} | 세트당 단: ${p.setToInner} | `;
-                } else {
-                    desc += `카톤당 단: ${p.cartonToInner} | `;
-                }
-                desc += `단당 반제품: ${p.innerToUnit}`;
+            list.forEach(p => {
+                let cartonVal = (p.hasSet === 'O') ? `${p.cartonToSet}개/세트` : `${p.cartonToInner}개`;
+                let setVal = (p.hasSet === 'O') ? `${p.setToInner}개` : '-';
 
                 html += `
                     <div class="product-card" id="card_${p.id}">
-                        <div class="product-card-header">
-                            <span class="product-card-title">${p.name}</span>
+                        <div class="product-top-row">
+                            <span class="product-name-txt">${p.name}</span>
                             <div>
                                 <button class="sub-btn edit-btn" onclick="toggleEditForm('${p.id}')">수정</button>
                                 <button class="sub-btn del-btn" onclick="deleteProduct('${p.id}', '${p.name}')">삭제</button>
                             </div>
                         </div>
-                        <div class="product-card-body">${desc}</div>
+                        
+                        <table class="spec-table">
+                            <thead>
+                                <tr>
+                                    <th>파레트/카톤</th>
+                                    <th>카톤/세트(단)</th>
+                                    <th>세트/단</th>
+                                    <th>단/반제품</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>${p.palletToCarton}박스</td>
+                                    <td>${cartonVal}</td>
+                                    <td>${setVal}</td>
+                                    <td>${p.innerToUnit}개</td>
+                                </tr>
+                            </tbody>
+                        </table>
                         
                         <div class="edit-form-box" id="editForm_${p.id}">
                             <div class="input-group">
