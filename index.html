@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>현장 물류 계산기 v4.4</title>
+    <title>현장 물류 계산기 v4.5</title>
+    <link rel="apple-touch-icon" href="https://api.iconify.design/fluent-emoji:package.svg">
+    <link rel="icon" type="image/svg+xml" href="https://api.iconify.design/fluent-emoji:package.svg">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f7f9fa; color: #333; padding-bottom: 90px; }
         .container { max-width: 500px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
@@ -46,7 +48,6 @@
         .password-screen { text-align: center; padding: 30px 10px; }
         .password-screen input { text-align: center; letter-spacing: 5px; font-size: 24px; margin-bottom: 15px; }
         
-        /* 세련되게 바뀐 제품 관리 표/카드 스타일 */
         .product-card { background: #fcfcfc; border: 1px solid #e1e4e8; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
         .product-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .product-name-txt { font-weight: bold; font-size: 15px; color: #111; }
@@ -147,7 +148,7 @@
 
         <div id="adminContent" style="display:none;">
             <h2>
-                ⚙️ 제품 관리
+                📦 제품 관리
                 <button class="add-action-btn" onclick="openAddModal()">+ 새 제품 추가</button>
             </h2>
             
@@ -165,7 +166,7 @@
     <div id="addProductModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #34c759; margin-bottom: 15px;">
-                ➕ 새 제품 추가하기
+                📦 새 제품 추가하기
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;" onclick="closeAddModal()">닫기</button>
             </h2>
             <div class="input-group">
@@ -466,7 +467,7 @@
                 html += `
                     <div class="product-card" id="card_${p.id}">
                         <div class="product-top-row">
-                            <span class="product-name-txt">${p.name}</span>
+                            <span class="product-name-txt">📦 ${p.name}</span>
                             <div>
                                 <button class="sub-btn edit-btn" onclick="toggleEditForm('${p.id}')">수정</button>
                                 <button class="sub-btn del-btn" onclick="deleteProduct('${p.id}', '${p.name}')">삭제</button>
@@ -608,7 +609,7 @@
             filtered.forEach(p => {
                 const item = document.createElement('div');
                 item.className = 'search-item';
-                item.innerText = p.name;
+                item.innerText = `📦 ${p.name}`;
                 item.onclick = () => {
                     document.getElementById('productSearchInput').value = p.name;
                     document.getElementById('selectedProductId').value = p.id;
