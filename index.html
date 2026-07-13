@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>현장 물류 계산기 v4.2</title>
+    <title>현장 물류 계산기 v4.3</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f7f9fa; color: #333; padding-bottom: 90px; }
         .container { max-width: 500px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
@@ -54,7 +54,6 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
         .modal-box { background: #fff; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 
-        /* 식단표 스타일 최적화 */
         .diet-card { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
         .diet-card.today { background: #f0f7ff; border-color: #007aff; box-shadow: 0 2px 6px rgba(0,122,255,0.1); }
         .diet-day { font-weight: bold; font-size: 15px; color: #111; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
@@ -91,41 +90,41 @@
 
     <div id="dietTab" class="container tab-content">
         <h2>
-            🍚 식단표 (07-13 ~ 07-17)
+            🍚 식단표 <span id="dietPeriodTitle" style="font-size:14px; font-weight:normal; color:#666;"></span>
             <button class="sub-btn edit-btn" onclick="toggleDietEdit()">식단 수정</button>
         </h2>
         <p style="font-size: 12.5px; color: #666; margin-bottom: 12px;">이번 주 구내식당 중식 식단 안내입니다.</p>
         
         <div id="dietEditBox" style="background:#f8f9fa; border:1px solid #007aff; padding:12px; border-radius:8px; margin-bottom:15px; display:none;">
-            <p style="font-size:11.5px; color:#007aff; margin-top:0; font-weight:bold;">* 사진 텍스트를 복사해서 각 요일에 붙여넣으세요 (줄바꿈 포함)</p>
-            <div class="input-group"><label>07-13 (월)</label><textarea id="editDiet_mon" onfocus="this.select()"></textarea></div>
-            <div class="input-group"><label>07-14 (화)</label><textarea id="editDiet_tue" onfocus="this.select()"></textarea></div>
-            <div class="input-group"><label>07-15 (수)</label><textarea id="editDiet_wed" onfocus="this.select()"></textarea></div>
-            <div class="input-group"><label>07-16 (목)</label><textarea id="editDiet_thu" onfocus="this.select()"></textarea></div>
-            <div class="input-group"><label>07-17 (금)</label><textarea id="editDiet_fri" onfocus="this.select()"></textarea></div>
+            <p style="font-size:11.5px; color:#007aff; margin-top:0; font-weight:bold;">* 복사한 텍스트를 각 요일에 붙여넣으세요 (줄바꿈 포함)</p>
+            <div class="input-group"><label id="editLabel_mon">월요일</label><textarea id="editDiet_mon" onfocus="this.select()"></textarea></div>
+            <div class="input-group"><label id="editLabel_tue">화요일</label><textarea id="editDiet_tue" onfocus="this.select()"></textarea></div>
+            <div class="input-group"><label id="editLabel_wed">수요일</label><textarea id="editDiet_wed" onfocus="this.select()"></textarea></div>
+            <div class="input-group"><label id="editLabel_thu">목요일</label><textarea id="editDiet_thu" onfocus="this.select()"></textarea></div>
+            <div class="input-group"><label id="editLabel_fri">금요일</label><textarea id="editDiet_fri" onfocus="this.select()"></textarea></div>
             <button class="main-btn" style="padding:10px; font-size:14px; background:#34c759;" onclick="saveDietTable()">식단 저장하기</button>
         </div>
 
         <div id="dietListContainer">
             <div class="diet-card" id="diet_mon">
-                <div class="diet-day">07-13 (월) <span class="diet-badge" style="display:none;" id="badge_mon">오늘</span></div>
-                <div class="diet-menu" id="menu_mon">쌀밥&#10;참치김치찌개&#10;고추잡채&꽃빵&#10;느타리버섯볶음&#10;돌김자반&#10;깍두기</div>
+                <div class="diet-day"><span id="dayLabel_mon">월요일</span> <span class="diet-badge" style="display:none;" id="badge_mon">오늘</span></div>
+                <div class="diet-menu" id="menu_mon">공백</div>
             </div>
             <div class="diet-card" id="diet_tue">
-                <div class="diet-day">07-14 (화) <span class="diet-badge" style="display:none;" id="badge_tue">오늘</span></div>
-                <div class="diet-menu" id="menu_tue">쌀밥&#10;소고기무국&#10;코다리강정&#10;양념두부조림&#10;참나물겉절이&#10;포기김치</div>
+                <div class="diet-day"><span id="dayLabel_tue">화요일</span> <span class="diet-badge" style="display:none;" id="badge_tue">오늘</span></div>
+                <div class="diet-menu" id="menu_tue">공백</div>
             </div>
             <div class="diet-card" id="diet_wed">
-                <div class="diet-day">07-15 (수) <span class="diet-badge" style="display:none;" id="badge_wed">오늘</span></div>
-                <div class="diet-menu" id="menu_wed">쌀밥&#10;**초복**&#10;삼계탕&#10;김치전&#10;수제양파장아찌&#10;석박지</div>
+                <div class="diet-day"><span id="dayLabel_wed">수요일</span> <span class="diet-badge" style="display:none;" id="badge_wed">오늘</span></div>
+                <div class="diet-menu" id="menu_wed">공백</div>
             </div>
             <div class="diet-card" id="diet_thu">
-                <div class="diet-day">07-16 (목) <span class="diet-badge" style="display:none;" id="badge_thu">오늘</span></div>
-                <div class="diet-menu" id="menu_thu">쌀밥&#10;오이냉국&#10;미트볼라따뚜이&#10;천사채마요무침&#10;고사리들깨볶음&#10;포기김치</div>
+                <div class="diet-day"><span id="dayLabel_thu">목요일</span> <span class="diet-badge" style="display:none;" id="badge_thu">오늘</span></div>
+                <div class="diet-menu" id="menu_thu">공백</div>
             </div>
             <div class="diet-card" id="diet_fri">
-                <div class="diet-day">07-17 (금) <span class="diet-badge" style="display:none;" id="badge_fri">오늘</span></div>
-                <div class="diet-menu" id="menu_fri">제헌절</div>
+                <div class="diet-day"><span id="dayLabel_fri">금요일</span> <span class="diet-badge" style="display:none;" id="badge_fri">오늘</span></div>
+                <div class="diet-menu" id="menu_fri">공백</div>
             </div>
         </div>
     </div>
@@ -220,18 +219,79 @@
         let currentCalcMode = 'SET'; 
         let isAdminAuthenticated = false;
 
-        highlightTodayDiet();
-        loadDietFromStorage();
+        initDietSystem();
 
-        function highlightTodayDiet() {
-            const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-            const todayIndex = new Date().getDay();
-            const todayKey = days[todayIndex];
-            
-            if (todayKey && document.getElementById(`diet_${todayKey}`)) {
-                document.getElementById(`diet_${todayKey}`).classList.add('today');
-                document.getElementById(`badge_${todayKey}`).style.display = 'inline-block';
+        // 날짜 계산 및 주차 초기화 메인 로직
+        function initDietSystem() {
+            const weekDates = getThisWeekDates();
+            const mondayKey = weekDates[0].dateStr; // 이번 주 월요일 고유 식별자
+
+            // 상단 타이틀 설정 (예: (07-20 ~ 07-24))
+            document.getElementById('dietPeriodTitle').innerText = `(${weekDates[0].formatted} ~ ${weekDates[4].formatted})`;
+
+            // 각 요일 라벨 및 수정창 라벨 세팅
+            const daysKeyMap = ['mon', 'tue', 'wed', 'thu', 'fri'];
+            weekDates.forEach((w, idx) => {
+                const k = daysKeyMap[idx];
+                document.getElementById(`dayLabel_${k}`).innerText = `${w.formatted} (${w.dayName})`;
+                document.getElementById(`editLabel_${k}`).innerText = `${w.formatted} (${w.dayName})`;
+            });
+
+            // 주차 변경 감지 및 초기화 실행
+            const savedMondayKey = localStorage.getItem('diet_current_monday');
+            if (savedMondayKey !== mondayKey) {
+                // 새로운 주 진입: 기존 식단 데이터 싹 비우기
+                daysKeyMap.forEach(k => {
+                    localStorage.removeItem(`diet_v5_${k}`);
+                });
+                localStorage.setItem('diet_current_monday', mondayKey);
             }
+
+            highlightTodayDiet(weekDates);
+            loadDietFromStorage();
+        }
+
+        // 현재 날짜 기준으로 이번 주 월~금 날짜 계산 함수
+        function getThisWeekDates() {
+            const now = new Date();
+            const day = now.getDay();
+            // 월요일 기준 계산 (일요일이면 지난 월요일이 아니라 이번 주 월요일로 당기거나 다음 주 계산 처리)
+            // 일요일(0)인 경우 다음 주 월요일로 넘겨줄지, 이번 주 월요일로 할지 결정 (일요일이 되면 다음 주를 보여주도록 처리)
+            const diffToMonday = (day === 0) ? 1 : (1 - day); 
+            const monday = new Date(now.setDate(now.getDate() + diffToMonday));
+            
+            const week = [];
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+            for (let i = 0; i < 5; i++) {
+                const tempDate = new Date(monday);
+                tempDate.setDate(monday.getDate() + i);
+                
+                const m = String(tempDate.getMonth() + 1).padStart(2, '0');
+                const d = String(tempDate.getDate()).padStart(2, '0');
+                const dateStr = `${tempDate.getFullYear()}-${m}-${d}`;
+                const formatted = `${m}-${d}`;
+                const dayName = dayNames[tempDate.getDay()];
+                
+                week.push({ dateStr, formatted, dayName });
+            }
+            return week;
+        }
+
+        function highlightTodayDiet(weekDates) {
+            const daysKeyMap = ['mon', 'tue', 'wed', 'thu', 'fri'];
+            const todayObj = new Date();
+            const tm = String(todayObj.getMonth() + 1).padStart(2, '0');
+            const td = String(todayObj.getDate()).padStart(2, '0');
+            const todayFormatted = `${tm}-${td}`;
+
+            weekDates.forEach((w, idx) => {
+                const k = daysKeyMap[idx];
+                if (w.formatted === todayFormatted) {
+                    document.getElementById(`diet_${k}`).classList.add('today');
+                    document.getElementById(`badge_${k}`).style.display = 'inline-block';
+                }
+            });
         }
 
         function toggleDietEdit() {
@@ -239,17 +299,18 @@
             box.style.display = (box.style.display === 'block') ? 'none' : 'block';
             if (box.style.display === 'block') {
                 ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
-                    document.getElementById(`editDiet_${d}`).value = document.getElementById(`menu_${d}`).innerHTML.replace(/<br\s*[\/]?>/gi, '\n');
+                    const currentText = document.getElementById(`menu_${d}`).innerHTML;
+                    document.getElementById(`editDiet_${d}`).value = (currentText === '공백') ? '' : currentText.replace(/<br\s*[\/]?>/gi, '\n');
                 });
             }
         }
 
         function saveDietTable() {
             ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
-                const val = document.getElementById(`editDiet_${d}`).value;
-                const formattedVal = val.replace(/\n/g, '<br>');
+                const val = document.getElementById(`editDiet_${d}`).value.trim();
+                const formattedVal = val ? val.replace(/\n/g, '<br>') : '공백';
                 document.getElementById(`menu_${d}`).innerHTML = formattedVal;
-                localStorage.setItem(`diet_v4_${d}`, formattedVal);
+                localStorage.setItem(`diet_v5_${d}`, formattedVal);
             });
             toggleDietEdit();
             alert('✅ 식단이 저장되었습니다.');
@@ -257,8 +318,12 @@
 
         function loadDietFromStorage() {
             ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
-                const saved = localStorage.getItem(`diet_v4_${d}`);
-                if (saved) document.getElementById(`menu_${d}`).innerHTML = saved;
+                const saved = localStorage.getItem(`diet_v5_${d}`);
+                if (saved) {
+                    document.getElementById(`menu_${d}`).innerHTML = saved;
+                } else {
+                    document.getElementById(`menu_${d}`).innerHTML = '공백';
+                }
             });
         }
 
