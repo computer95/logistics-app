@@ -82,14 +82,13 @@
         <div id="passwordScreen" class="password-screen">
             <h2>🔒 관리자 인증</h2>
             <p style="font-size: 14px; color: #666; margin-bottom: 20px;">제품관리를 위해 비밀번호를 입력하세요.</p>
-            <input type="password" id="adminPasswordInput" maxlength="4" placeholder="••••" onkeydown="handlePasswordKey(event)">
+            <input type="password" id="adminPasswordInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" onkeydown="handlePasswordKey(event)">
             <button class="main-btn" onclick="checkAdminPassword()">확인</button>
             <div id="pwErrorMsg" class="status-msg error" style="margin-top: 15px; display: none; ">비밀번호가 틀렸습니다. </div>
         </div>
 
         <div id="adminContent" style="display:none;">
             <h2>⚙️ 제품 관리 (등록/수정/삭제)</h2>
-            
             <div style="margin-top: 15px;">
                 <label style="margin-bottom: 10px; font-size: 15px; color: #007aff;">등록된 품목 리스트</label>
                 <div id="productListContainer">데이터를 불러오는 중...</div>
