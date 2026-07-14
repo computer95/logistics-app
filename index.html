@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>현장 물류 계산기 v4.6</title>
+    <title>현장 물류 계산기 v4.7</title>
     <link rel="apple-touch-icon" href="https://api.iconify.design/fluent-emoji:package.svg">
     <link rel="icon" type="image/svg+xml" href="https://api.iconify.design/fluent-emoji:package.svg">
     <style>
@@ -19,7 +19,7 @@
         .toggle-btn { flex: 1; padding: 12px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; color: #666; }
         .toggle-btn.active { background: #007aff; color: white; border-color: #007aff; }
 
-        .search-dropdown { position: absolute; top: 100%; left: 0; width: 100%; max-height: 150px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; z-index: 100; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .search-dropdown { position: absolute; top: 100%; left: 0; width: 100%; max-height: 180px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; z-index: 100; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .search-item { padding: 12px; cursor: pointer; font-size: 15px; border-bottom: 1px solid #f1f1f1; }
         .search-item:hover { background: #f0f7ff; }
 
@@ -60,7 +60,6 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
         .modal-box { background: #fff; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 
-        /* 포장일지 스타일 추가 */
         .log-card { background: #fcfcfc; border: 1px solid #e1e4e8; border-left: 5px solid #ccc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; }
         .log-card.status-none { border-left-color: #ccc; }
         .log-card.status-progress { border-left-color: #007aff; background: #f8fbff; }
@@ -107,7 +106,6 @@
         <div id="calcResult" class="result-box">결과가 여기에 표시됩니다.</div>
     </div>
 
-    <!-- 포장일지 탭 신규 추가 -->
     <div id="logTab" class="container tab-content">
         <h2>
             📋 포장일지 <span id="logCountLabel" style="font-size:13px; font-weight:normal; color:#666;">(0건)</span>
@@ -122,7 +120,7 @@
             🍚 식단표 <span id="dietPeriodTitle" style="font-size:14px; font-weight:normal; color:#666;"></span>
             <button class="sub-btn edit-btn" onclick="toggleDietEdit()">식단 수정</button>
         </h2>
-        <p style="font-size: 12.5px; color: #666; margin-bottom: 12px;">이번 주 구내식당 중식 식단 안내입니다. (PC/모바일 연동)</p>
+        <p style="font-size: 12.5px; color: #666; margin-bottom: 12px;">이번 주 구내식당 중식 식단 안내입니다.</p>
         
         <div id="dietEditBox" style="background:#f8f9fa; border:1px solid #007aff; padding:12px; border-radius:8px; margin-bottom:15px; display:none;">
             <p style="font-size:11.5px; color:#007aff; margin-top:0; font-weight:bold;">* 복사한 텍스트를 각 요일에 붙여넣으세요 (줄바꿈 포함)</p>
@@ -135,26 +133,11 @@
         </div>
 
         <div id="dietListContainer">
-            <div class="diet-card" id="diet_mon">
-                <div class="diet-day"><span id="dayLabel_mon">월요일</span> <span class="diet-badge" style="display:none;" id="badge_mon">오늘</span></div>
-                <div class="diet-menu" id="menu_mon">불러오는 중...</div>
-            </div>
-            <div class="diet-card" id="diet_tue">
-                <div class="diet-day"><span id="dayLabel_tue">화요일</span> <span class="diet-badge" style="display:none;" id="badge_tue">오늘</span></div>
-                <div class="diet-menu" id="menu_tue">불러오는 중...</div>
-            </div>
-            <div class="diet-card" id="diet_wed">
-                <div class="diet-day"><span id="dayLabel_wed">수요일</span> <span class="diet-badge" style="display:none;" id="badge_wed">오늘</span></div>
-                <div class="diet-menu" id="menu_wed">불러오는 중...</div>
-            </div>
-            <div class="diet-card" id="diet_thu">
-                <div class="diet-day"><span id="dayLabel_thu">목요일</span> <span class="diet-badge" style="display:none;" id="badge_thu">오늘</span></div>
-                <div class="diet-menu" id="menu_thu">불러오는 중...</div>
-            </div>
-            <div class="diet-card" id="diet_fri">
-                <div class="diet-day"><span id="dayLabel_fri">금요일</span> <span class="diet-badge" style="display:none;" id="badge_fri">오늘</span></div>
-                <div class="diet-menu" id="menu_fri">불러오는 중...</div>
-            </div>
+            <div class="diet-card" id="diet_mon"><div class="diet-day"><span id="dayLabel_mon">월요일</span> <span class="diet-badge" style="display:none;" id="badge_mon">오늘</span></div><div class="diet-menu" id="menu_mon">불러오는 중...</div></div>
+            <div class="diet-card" id="diet_tue"><div class="diet-day"><span id="dayLabel_tue">화요일</span> <span class="diet-badge" style="display:none;" id="badge_tue">오늘</span></div><div class="diet-menu" id="menu_tue">불러오는 중...</div></div>
+            <div class="diet-card" id="diet_wed"><div class="diet-day"><span id="dayLabel_wed">수요일</span> <span class="diet-badge" style="display:none;" id="badge_wed">오늘</span></div><div class="diet-menu" id="menu_wed">불러오는 중...</div></div>
+            <div class="diet-card" id="diet_thu"><div class="diet-day"><span id="dayLabel_thu">목요일</span> <span class="diet-badge" style="display:none;" id="badge_thu">오늘</span></div><div class="diet-menu" id="menu_thu">불러오는 중...</div></div>
+            <div class="diet-card" id="diet_fri"><div class="diet-day"><span id="dayLabel_fri">금요일</span> <span class="diet-badge" style="display:none;" id="badge_fri">오늘</span></div><div class="diet-menu" id="menu_fri">불러오는 중...</div></div>
         </div>
     </div>
 
@@ -172,11 +155,9 @@
                 📦 제품 관리
                 <button class="add-action-btn" onclick="openAddModal()">+ 새 제품 추가</button>
             </h2>
-            
             <div class="input-group" style="margin-top: 15px; margin-bottom: 12px;">
                 <input type="text" id="adminFilterInput" placeholder="🔍 등록된 품목 검색" oninput="filterAdminList()" autocomplete="off">
             </div>
-
             <div>
                 <label id="listCountLabel" style="margin-bottom: 8px; font-size: 13px; color: #666;">등록된 품목 리스트 (0)</label>
                 <div id="productListContainer">데이터를 불러오는 중...</div>
@@ -184,33 +165,25 @@
         </div>
     </div>
 
-    <!-- 포장일지 등록 모달 -->
     <div id="addLogModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #007aff; margin-bottom: 15px;">
-                📋 출고 일정 및 작업 등록
+                📋 출고 일정 등록
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;" onclick="closeAddLogModal()">닫기</button>
             </h2>
             <div class="input-group">
-                <label>제품 선택</label>
-                <select id="logModalProductSelect"></select>
+                <label>제품 검색 및 선택</label>
+                <input type="text" id="logModalProductSearch" placeholder="제품명을 입력해 검색하세요" oninput="filterLogModalProducts()" autocomplete="off">
+                <div id="logModalProductDropdown" class="search-dropdown"></div>
+                <input type="hidden" id="logModalSelectedProductId">
             </div>
             <div class="input-group">
-                <label>출고일 (예: 7/16 출고)</label>
-                <input type="text" id="logModalDueDate" placeholder="예: 7/16 출고" onfocus="this.select()">
+                <label>출고일 선택</label>
+                <input type="date" id="logModalDueDate">
             </div>
             <div class="input-group">
                 <label>목표 수량 (set 또는 개)</label>
                 <input type="number" id="logModalTargetQty" placeholder="예: 5000" onfocus="this.select()">
-            </div>
-            <div class="input-group">
-                <label>작업 상태</label>
-                <select id="logModalStatus">
-                    <option value="none">진행 전</option>
-                    <option value="progress">진행 중</option>
-                    <option value="done">완료 (달성)</option>
-                    <option value="hold">보류</option>
-                </select>
             </div>
             <div class="input-group">
                 <label>특이사항 / 메모</label>
@@ -220,80 +193,51 @@
         </div>
     </div>
 
-    <!-- 포장일지 상세 모달 -->
     <div id="detailLogModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #007aff; margin-bottom: 10px;">
-                📋 상세 작업 현황
+                📋 상세 작업 현황 및 로그
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;" onclick="closeDetailLogModal()">닫기</button>
             </h2>
             <input type="hidden" id="detailLogId">
-            <div id="detailLogContent" style="font-size: 14px; line-height: 1.6; margin-bottom: 15px;"></div>
+            <div id="detailLogSummary" style="font-size: 14px; line-height: 1.6; margin-bottom: 12px;"></div>
             
-            <div style="background:#f4f6f8; padding:12px; border-radius:8px; margin-bottom:15px;">
-                <label style="font-size:13px; font-weight:bold; margin-bottom:5px;">오늘 작업량 추가 입력</label>
-                <div style="display:flex; gap:8px;">
-                    <input type="number" id="addTodayWorkQty" placeholder="추가 수량 입력" onfocus="this.select()">
-                    <button class="main-btn" style="margin-top:0; padding:8px 12px; width:auto;" onclick="updateProgressQty()">누적 반영</button>
+            <div style="background:#f4f6f8; padding:12px; border-radius:8px; margin-bottom:12px;">
+                <label style="font-size:13px; font-weight:bold; margin-bottom:5px;">작업 실적 추가</label>
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <input type="date" id="workLogDate" style="flex:1;">
+                    <input type="number" id="workLogQty" placeholder="수량" style="flex:1;" onfocus="this.select()">
                 </div>
+                <button class="main-btn" style="margin-top:0; padding:8px;" onclick="addWorkLogEntry()">내역 추가하기</button>
+            </div>
+
+            <div style="max-height: 130px; overflow-y: auto; background: #fafafa; border:1px solid #e1e4e8; border-radius:6px; padding:8px; margin-bottom:12px; font-size:13px;" id="workLogHistoryContainer">
+                기록된 작업 내역이 없습니다.
             </div>
 
             <div style="display:flex; justify-content:space-between;">
                 <button class="sub-btn del-btn" style="padding:8px 12px;" onclick="deletePackingLog()">일정 삭제</button>
-                <button class="sub-btn edit-btn" style="padding:8px 12px;" onclick="changeLogStatus()">상태 변경</button>
             </div>
         </div>
     </div>
 
-    <!-- 새 제품 추가 모달 -->
     <div id="addProductModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #34c759; margin-bottom: 15px;">
                 📦 새 제품 추가하기
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;" onclick="closeAddModal()">닫기</button>
             </h2>
-            <div class="input-group">
-                <label for="regProductName">제품이름</label>
-                <input type="text" id="regProductName" placeholder="예: A제품" onfocus="this.select()">
-            </div>
-            <div class="input-group">
-                <label>세트케이스 유무</label>
-                <div class="toggle-container">
-                    <button type="button" id="setBtnO" class="toggle-btn" onclick="selectSetOption('O', 'reg')">있음 (O)</button>
-                    <button type="button" id="setBtnX" class="toggle-btn active" onclick="selectSetOption('X', 'reg')">없음 (X)</button>
-                </div>
-                <input type="hidden" id="hasSetValue" value="X">
-            </div>
-            <div class="input-group">
-                <label for="regPalletToCarton">파레트당 카톤 수</label>
-                <input type="number" id="regPalletToCarton" placeholder="예: 24" onfocus="this.select()">
-            </div>
-            <div id="setFieldsO" class="conditional-fields">
-                <div class="input-group">
-                    <label for="regCartonToSet">카톤당 세트케이스 수</label>
-                    <input type="number" id="regCartonToSet" placeholder="예: 5" onfocus="this.select()">
-                </div>
-                <div class="input-group">
-                    <label for="regSetToInner">세트케이스당 단케이스 수</label>
-                    <input type="number" id="regSetToInner" placeholder="예: 6" onfocus="this.select()">
-                </div>
-            </div>
-            <div id="setFieldsX" class="conditional-fields" style="display:block;">
-                <div class="input-group">
-                    <label for="regCartonToInnerX">카톤당 단케이스 수</label>
-                    <input type="number" id="regCartonToInnerX" placeholder="예: 30" onfocus="this.select()">
-                </div>
-            </div>
-            <div class="input-group">
-                <label for="regInnerToUnit">단케이스당 반제품 수</label>
-                <input type="number" id="regInnerToUnit" placeholder="예: 10" onfocus="this.select()" onkeydown="handleRegKey(event)">
-            </div>
+            <div class="input-group"><label for="regProductName">제품이름</label><input type="text" id="regProductName" placeholder="예: A제품" onfocus="this.select()"></div>
+            <div class="input-group"><label>세트케이스 유무</label><div class="toggle-container"><button type="button" id="setBtnO" class="toggle-btn" onclick="selectSetOption('O', 'reg')">있음 (O)</button><button type="button" id="setBtnX" class="toggle-btn active" onclick="selectSetOption('X', 'reg')">없음 (X)</button></div><input type="hidden" id="hasSetValue" value="X"></div>
+            <div class="input-group"><label for="regPalletToCarton">파레트당 카톤 수</label><input type="number" id="regPalletToCarton" placeholder="예: 24" onfocus="this.select()"></div>
+            <div id="setFieldsO" class="conditional-fields"><div class="input-group"><label for="regCartonToSet">카톤당 세트케이스 수</label><input type="number" id="regCartonToSet" placeholder="예: 5" onfocus="this.select()"></div><div class="input-group"><label for="regSetToInner">세트케이스당 단케이스 수</label><input type="number" id="regSetToInner" placeholder="예: 6" onfocus="this.select()"></div></div>
+            <div id="setFieldsX" class="conditional-fields" style="display:block;"><div class="input-group"><label for="regCartonToInnerX">카톤당 단케이스 수</label><input type="number" id="regCartonToInnerX" placeholder="예: 30" onfocus="this.select()"></div></div>
+            <div class="input-group"><label for="regInnerToUnit">단케이스당 반제품 수</label><input type="number" id="regInnerToUnit" placeholder="예: 10" onfocus="this.select()" onkeydown="handleRegKey(event)"></div>
             <button class="main-btn" style="background-color: #34c759;" onclick="saveProductConfig()">등록 완료</button>
             <div id="regStatusMsg" class="status-msg"></div>
         </div>
     </div>
 
-    <!-- 제품 수정 모달 -->
     <div id="editProductModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #ff9500; margin-bottom: 15px;">
@@ -301,42 +245,12 @@
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;" onclick="closeEditModal()">닫기</button>
             </h2>
             <input type="hidden" id="editTargetId">
-            <div class="input-group">
-                <label>제품이름</label>
-                <input type="text" id="editModalName" onfocus="this.select()">
-            </div>
-            <div class="input-group">
-                <label>세트케이스 유무</label>
-                <div class="toggle-container">
-                    <button type="button" id="editModalSetBtnO" class="toggle-btn" onclick="selectModalSetOption('O')">있음 (O)</button>
-                    <button type="button" id="editModalSetBtnX" class="toggle-btn active" onclick="selectModalSetOption('X')">없음 (X)</button>
-                </div>
-                <input type="hidden" id="editModalHasSetValue" value="X">
-            </div>
-            <div class="input-group">
-                <label>파레트당 카톤 수</label>
-                <input type="number" id="editModalPtoC" onfocus="this.select()">
-            </div>
-            <div id="editModalSetFieldsO" class="conditional-fields">
-                <div class="input-group">
-                    <label>카톤당 세트케이스 수</label>
-                    <input type="number" id="editModalCtoS" onfocus="this.select()">
-                </div>
-                <div class="input-group">
-                    <label>세트케이스당 단케이스 수</label>
-                    <input type="number" id="editModalStoI" onfocus="this.select()">
-                </div>
-            </div>
-            <div id="editModalSetFieldsX" class="conditional-fields" style="display:block;">
-                <div class="input-group">
-                    <label>카톤당 단케이스 수</label>
-                    <input type="number" id="editModalCtoIX" onfocus="this.select()">
-                </div>
-            </div>
-            <div class="input-group">
-                <label>단케이스당 반제품 수</label>
-                <input type="number" id="editModalItoU" onfocus="this.select()" onkeydown="handleEditModalKey(event)">
-            </div>
+            <div class="input-group"><label>제품이름</label><input type="text" id="editModalName" onfocus="this.select()"></div>
+            <div class="input-group"><label>세트케이스 유무</label><div class="toggle-container"><button type="button" id="editModalSetBtnO" class="toggle-btn" onclick="selectModalSetOption('O')">있음 (O)</button><button type="button" id="editModalSetBtnX" class="toggle-btn active" onclick="selectModalSetOption('X')">없음 (X)</button></div><input type="hidden" id="editModalHasSetValue" value="X"></div>
+            <div class="input-group"><label>파레트당 카톤 수</label><input type="number" id="editModalPtoC" onfocus="this.select()"></div>
+            <div id="editModalSetFieldsO" class="conditional-fields"><div class="input-group"><label>카톤당 세트케이스 수</label><input type="number" id="editModalCtoS" onfocus="this.select()"></div><div class="input-group"><label>세트케이스당 단케이스 수</label><input type="number" id="editModalStoI" onfocus="this.select()"></div></div>
+            <div id="editModalSetFieldsX" class="conditional-fields" style="display:block;"><div class="input-group"><label>카톤당 단케이스 수</label><input type="number" id="editModalCtoIX" onfocus="this.select()"></div></div>
+            <div class="input-group"><label>단케이스당 반제품 수</label><input type="number" id="editModalItoU" onfocus="this.select()" onkeydown="handleEditModalKey(event)"></div>
             <button class="main-btn" style="background-color: #ff9500;" onclick="updateProductModalSave()">수정 완료 저장</button>
         </div>
     </div>
@@ -357,9 +271,7 @@
             messagingSenderId: "307386603286",
             appId: "1:307386603286:web:6a55d51ee4264812ece237"
         };
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         let productList = [];
         let packingLogsList = [];
@@ -437,18 +349,13 @@
                 dietData[d] = val ? val.replace(/\n/g, '<br>') : '';
             });
             try {
-                await db.collection('diets').doc(currentMondayKey).set({
-                    ...dietData,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                await db.collection('diets').doc(currentMondayKey).set({ ...dietData, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
                 ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
                     document.getElementById(`menu_${d}`).innerHTML = dietData[d] || '<span style="color:#aaa;">식단 미등록</span>';
                 });
                 toggleDietEdit();
                 alert('✅ 식단이 저장되었습니다.');
-            } catch (e) {
-                alert('❌ 식단 저장 중 오류가 발생했습니다.');
-            }
+            } catch (e) { alert('❌ 식단 저장 중 오류'); }
         }
 
         async function loadDietFromFirestore() {
@@ -468,15 +375,10 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
-            if (tabId === 'calcTab') {
-                loadProductList();
-            } else if (tabId === 'logTab') {
-                loadPackingLogs();
-            } else if (tabId === 'dietTab') {
-                loadDietFromFirestore();
-            } else if (tabId === 'manageTab') {
-                if (isAdminAuthenticated) renderProductAdminList();
-            }
+            if (tabId === 'calcTab') loadProductList();
+            else if (tabId === 'logTab') loadPackingLogs();
+            else if (tabId === 'dietTab') loadDietFromFirestore();
+            else if (tabId === 'manageTab') { if (isAdminAuthenticated) renderProductAdminList(); }
         }
 
         // --- 포장일지 로직 ---
@@ -504,9 +406,10 @@
             let html = '';
             packingLogsList.forEach(log => {
                 let percent = log.targetQty > 0 ? Math.round((log.currentQty / log.targetQty) * 100) : 0;
-                let statusClass = `status-${log.status || 'none'}`;
-                let badgeClass = `badge-${log.status || 'none'}`;
-                let statusText = log.status === 'progress' ? '진행 중' : log.status === 'done' ? '완료' : log.status === 'hold' ? '보류' : '진행 전';
+                let autoStatus = log.currentQty >= log.targetQty ? 'done' : log.currentQty > 0 ? 'progress' : 'none';
+                let statusClass = `status-${autoStatus}`;
+                let badgeClass = `badge-${autoStatus}`;
+                let statusText = autoStatus === 'progress' ? '진행 중' : autoStatus === 'done' ? '완료' : '진행 전';
 
                 html += `
                     <div class="log-card ${statusClass}" onclick="openDetailLogModal('${log.id}')">
@@ -514,7 +417,7 @@
                             <span style="font-weight:bold; font-size:15px;">📦 ${log.productName}</span>
                             <span class="log-badge ${badgeClass}">${statusText}</span>
                         </div>
-                        <div style="font-size:13px; color:#55n; display:flex; justify-content:space-between;">
+                        <div style="font-size:13px; color:#555; display:flex; justify-content:space-between;">
                             <span>진행률: <strong>${percent}%</strong> (${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()})</span>
                             <span style="color:#666;">📅 ${log.dueDate}</span>
                         </div>
@@ -525,28 +428,45 @@
         }
 
         function openAddLogModal() {
-            const selectEl = document.getElementById('logModalProductSelect');
-            selectEl.innerHTML = '';
-            productList.forEach(p => {
-                let opt = document.createElement('option');
-                opt.value = p.id;
-                opt.innerText = p.name;
-                selectEl.appendChild(opt);
-            });
+            document.getElementById('logModalProductSearch').value = '';
+            document.getElementById('logModalSelectedProductId').value = '';
+            document.getElementById('logModalDueDate').value = new Date().toISOString().substring(0, 10);
+            document.getElementById('logModalTargetQty').value = '';
+            document.getElementById('logModalMemo').value = '';
             document.getElementById('addLogModal').style.display = 'flex';
         }
         function closeAddLogModal() { document.getElementById('addLogModal').style.display = 'none'; }
 
+        function filterLogModalProducts() {
+            const keyword = document.getElementById('logModalProductSearch').value.toLowerCase();
+            const dropdown = document.getElementById('logModalProductDropdown');
+            dropdown.innerHTML = '';
+            if (!keyword) { dropdown.style.display = 'none'; return; }
+            const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
+            if (filtered.length === 0) { dropdown.style.display = 'none'; return; }
+            filtered.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'search-item';
+                item.innerText = `📦 ${p.name}`;
+                item.onclick = () => {
+                    document.getElementById('logModalProductSearch').value = p.name;
+                    document.getElementById('logModalSelectedProductId').value = p.id;
+                    dropdown.style.display = 'none';
+                };
+                dropdown.appendChild(item);
+            });
+            dropdown.style.display = 'block';
+        }
+
         async function savePackingLog() {
-            const productId = document.getElementById('logModalProductSelect').value;
+            const productId = document.getElementById('logModalSelectedProductId').value;
             const pObj = productList.find(x => x.id === productId);
             const dueDate = document.getElementById('logModalDueDate').value;
             const targetQty = Number(document.getElementById('logModalTargetQty').value);
-            const status = document.getElementById('logModalStatus').value;
             const memo = document.getElementById('logModalMemo').value;
 
             if (!pObj || !dueDate || !targetQty) {
-                alert('필수 항목을 모두 입력해 주세요.');
+                alert('제품, 출고일, 목표수량을 모두 확인해 주세요.');
                 return;
             }
 
@@ -557,70 +477,79 @@
                     dueDate,
                     targetQty,
                     currentQty: 0,
-                    status,
+                    workLogs: [], // 날짜별 로그 배열
                     memo,
                     createdAt: new Date()
                 });
                 alert('✅ 일정이 등록되었습니다.');
                 closeAddLogModal();
                 loadPackingLogs();
-            } catch (e) {
-                alert('❌ 등록 실패');
-            }
+            } catch (e) { alert('❌ 등록 실패'); }
         }
 
-        function openDetailLogModal(id) {
+        async function openDetailLogModal(id) {
             const log = packingLogsList.find(x => x.id === id);
             if (!log) return;
             document.getElementById('detailLogId').value = log.id;
-            let percent = log.targetQty > 0 ? Math.round((log.currentQty / log.targetQty) * 100) : 0;
+            document.getElementById('workLogDate').value = new Date().toISOString().substring(0, 10);
+            document.getElementById('workLogQty').value = '';
             
-            document.getElementById('detailLogContent').innerHTML = `
+            let percent = log.targetQty > 0 ? Math.round((log.currentQty / log.targetQty) * 100) : 0;
+            document.getElementById('detailLogSummary').innerHTML = `
                 <strong>제품명:</strong> ${log.productName}<br>
                 <strong>출고일:</strong> ${log.dueDate}<br>
                 <strong>진행상황:</strong> ${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()} (${percent}%)<br>
                 <strong>메모:</strong> ${log.memo || '없음'}
             `;
+            renderWorkLogHistory(log.workLogs || []);
             document.getElementById('detailLogModal').style.display = 'flex';
         }
         function closeDetailLogModal() { document.getElementById('detailLogModal').style.display = 'none'; }
 
-        async function updateProgressQty() {
+        function renderWorkLogHistory(logs) {
+            const container = document.getElementById('workLogHistoryContainer');
+            if (!logs || logs.length === 0) {
+                container.innerHTML = '기록된 작업 내역이 없습니다.';
+                return;
+            }
+            let html = '';
+            // 최신 날짜순 정렬
+            logs.sort((a, b) => b.date.localeCompare(a.date)).forEach((item, idx) => {
+                html += `<div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #eee;">
+                    <span>📅 ${item.date}</span>
+                    <strong>+${Number(item.qty).toLocaleString()} set</strong>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        async function addWorkLogEntry() {
             const id = document.getElementById('detailLogId').value;
-            const addQty = Number(document.getElementById('addTodayWorkQty').value);
-            if (!addQty) return;
+            const date = document.getElementById('workLogDate').value;
+            const qty = Number(document.getElementById('workLogQty').value);
+            if (!date || !qty) { alert('날짜와 수량을 입력해 주세요.'); return; }
+
             const log = packingLogsList.find(x => x.id === id);
             if (!log) return;
 
-            let newQty = log.currentQty + addQty;
-            let newStatus = log.status;
-            if (newQty >= log.targetQty && newStatus !== 'done') {
-                newStatus = 'done'; // 자동 완료 처리나 현장 취향대로 조정 가능
-            }
+            let updatedLogs = log.workLogs || [];
+            updatedLogs.push({ date, qty });
+            
+            let newCurrentQty = updatedLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
 
             try {
                 await db.collection('packing_logs').doc(id).update({
-                    currentQty: newQty,
-                    status: newStatus
+                    workLogs: updatedLogs,
+                    currentQty: newCurrentQty
                 });
-                alert('✅ 누적 수량이 반영되었습니다.');
-                document.getElementById('addTodayWorkQty').value = '';
-                closeDetailLogModal();
+                alert('✅ 작업 내역이 추가되었습니다.');
+                // 실시간 갱신
+                const latestLog = packingLogsList.find(x => x.id === id);
+                latestLog.workLogs = updatedLogs;
+                latestLog.currentQty = newCurrentQty;
+                openDetailLogModal(id);
                 loadPackingLogs();
             } catch(e) { alert('업데이트 실패'); }
-        }
-
-        async function changeLogStatus() {
-            const id = document.getElementById('detailLogId').value;
-            const log = packingLogsList.find(x => x.id === id);
-            if (!log) return;
-            let nextStatus = log.status === 'none' ? 'progress' : log.status === 'progress' ? 'done' : log.status === 'done' ? 'hold' : 'none';
-            try {
-                await db.collection('packing_logs').doc(id).update({ status: nextStatus });
-                alert(`✅ 상태가 변경되었습니다.`);
-                closeDetailLogModal();
-                loadPackingLogs();
-            } catch(e) { alert('변경 실패'); }
         }
 
         async function deletePackingLog() {
@@ -637,16 +566,14 @@
 
         function checkAdminPassword() {
             const inputEl = document.getElementById('adminPasswordInput');
-            const inputVal = inputEl.value;
-            if (inputVal === "3417") {
+            if (inputEl.value === "3417") {
                 isAdminAuthenticated = true;
                 document.getElementById('passwordScreen').style.display = 'none';
                 document.getElementById('adminContent').style.display = 'block';
                 renderProductAdminList();
             } else {
                 document.getElementById('pwErrorMsg').style.display = 'block';
-                inputEl.value = ''; 
-                inputEl.focus();
+                inputEl.value = ''; inputEl.focus();
                 setTimeout(() => { document.getElementById('pwErrorMsg').style.display = 'none'; }, 2500);
             }
         }
@@ -703,27 +630,17 @@
             if (hasSet === 'O') {
                 data.cartonToSet = Number(document.getElementById('regCartonToSet').value);
                 data.setToInner = Number(document.getElementById('regSetToInner').value);
-                if (!name || !pToC || !data.cartonToSet || !data.setToInner || !innerToUnit) {
-                    showRegStatus('⚠️ 모든 항목을 입력해 주세요.', false); return;
-                }
             } else {
                 data.cartonToInner = Number(document.getElementById('regCartonToInnerX').value);
-                if (!name || !pToC || !data.cartonToInner || !innerToUnit) {
-                    showRegStatus('⚠️ 모든 항목을 입력해 주세요.', false); return;
-                }
             }
 
             try {
                 await db.collection('products').add(data);
                 alert(`✅ [${name}] 등록이 완료되었습니다.`);
-                document.getElementById('regProductName').value = '';
-                document.getElementById('regPalletToCarton').value = '';
                 closeAddModal();
                 loadProductList();
                 renderProductAdminList();
-            } catch (e) {
-                showRegStatus('❌ 등록에 실패했습니다.', false);
-            }
+            } catch (e) { showRegStatus('❌ 등록 실패', false); }
         }
         function handleRegKey(e) { if (e.key === 'Enter') saveProductConfig(); }
 
@@ -740,16 +657,13 @@
 
         function filterAdminList() {
             const keyword = document.getElementById('adminFilterInput').value.toLowerCase();
-            const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
-            drawAdminListHtml(filtered);
+            drawAdminListHtml(productList.filter(p => p.name.toLowerCase().includes(keyword)));
         }
 
         function drawAdminListHtml(list) {
             const container = document.getElementById('productListContainer');
             document.getElementById('listCountLabel').innerText = `등록된 품목 리스트 (${list.length})`;
-            if (list.length === 0) {
-                container.innerHTML = '<p style="color:#666; font-size:13px; text-align:center; padding:15px;">검색된 품목이 없습니다.</p>'; return;
-            }
+            if (list.length === 0) { container.innerHTML = '<p style="color:#666; font-size:13px; text-align:center; padding:15px;">검색된 품목이 없습니다.</p>'; return; }
             let html = '';
             list.forEach(p => {
                 let cartonVal = (p.hasSet === 'O') ? `${p.cartonToSet}개/세트` : `${p.cartonToInner}개`;
@@ -812,7 +726,7 @@
                 alert(`✅ [${name}] 수정 완료!`);
                 closeEditModal();
                 renderProductAdminList();
-            } catch (e) { alert('❌ 수정에 실패했습니다.'); }
+            } catch (e) { alert('❌ 수정 실패'); }
         }
 
         async function deleteProduct(id, name) {
@@ -821,7 +735,7 @@
                     await db.collection('products').doc(id).delete();
                     alert(`🗑️ [${name}] 삭제되었습니다.`);
                     renderProductAdminList();
-                } catch (e) { alert('❌ 삭제에 실패했습니다.'); }
+                } catch (e) { alert('❌ 삭제 실패'); }
             }
         }
 
@@ -868,9 +782,7 @@
             const rawQty = Number(document.getElementById('inputQty').value);
             const resultBox = document.getElementById('calcResult');
             const p = productList.find(item => item.id === selectedId);
-            if (!p || !rawQty) {
-                resultBox.innerText = '⚠️ 제품과 올바른 수량을 다시 확인해 주세요.'; return;
-            }
+            if (!p || !rawQty) { resultBox.innerText = '⚠️ 제품과 올바른 수량을 다시 확인해 주세요.'; return; }
             let cToI = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
             let innerPerCarton = cToI * p.innerToUnit; 
             let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit; 
