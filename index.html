@@ -101,7 +101,7 @@
             🍚 식단표 <span id="dietPeriodTitle" style="font-size:14px; font-weight:normal; color:#666;"></span>
             <button class="sub-btn edit-btn" onclick="toggleDietEdit()">식단 수정</button>
         </h2>
-        <p style="font-size: 12.5px; color: #666; margin-bottom: 12px;">이번 주 구내식당 중식 식단 안내입니다.</p>
+        <p style="font-size: 12.5px; color: #666; margin-bottom: 12px;">이번 주 구내식당 중식 식단 안내입니다. (PC/모바일 연동)</p>
         
         <div id="dietEditBox" style="background:#f8f9fa; border:1px solid #007aff; padding:12px; border-radius:8px; margin-bottom:15px; display:none;">
             <p style="font-size:11.5px; color:#007aff; margin-top:0; font-weight:bold;">* 복사한 텍스트를 각 요일에 붙여넣으세요 (줄바꿈 포함)</p>
@@ -116,23 +116,23 @@
         <div id="dietListContainer">
             <div class="diet-card" id="diet_mon">
                 <div class="diet-day"><span id="dayLabel_mon">월요일</span> <span class="diet-badge" style="display:none;" id="badge_mon">오늘</span></div>
-                <div class="diet-menu" id="menu_mon"></div>
+                <div class="diet-menu" id="menu_mon">불러오는 중...</div>
             </div>
             <div class="diet-card" id="diet_tue">
                 <div class="diet-day"><span id="dayLabel_tue">화요일</span> <span class="diet-badge" style="display:none;" id="badge_tue">오늘</span></div>
-                <div class="diet-menu" id="menu_tue"></div>
+                <div class="diet-menu" id="menu_tue">불러오는 중...</div>
             </div>
             <div class="diet-card" id="diet_wed">
                 <div class="diet-day"><span id="dayLabel_wed">수요일</span> <span class="diet-badge" style="display:none;" id="badge_wed">오늘</span></div>
-                <div class="diet-menu" id="menu_wed"></div>
+                <div class="diet-menu" id="menu_wed">불러오는 중...</div>
             </div>
             <div class="diet-card" id="diet_thu">
                 <div class="diet-day"><span id="dayLabel_thu">목요일</span> <span class="diet-badge" style="display:none;" id="badge_thu">오늘</span></div>
-                <div class="diet-menu" id="menu_thu"></div>
+                <div class="diet-menu" id="menu_thu">불러오는 중...</div>
             </div>
             <div class="diet-card" id="diet_fri">
                 <div class="diet-day"><span id="dayLabel_fri">금요일</span> <span class="diet-badge" style="display:none;" id="badge_fri">오늘</span></div>
-                <div class="diet-menu" id="menu_fri"></div>
+                <div class="diet-menu" id="menu_fri">불러오는 중...</div>
             </div>
         </div>
     </div>
@@ -225,17 +225,20 @@
             messagingSenderId: "307386603286",
             appId: "1:307386603286:web:6a55d51ee4264812ece237"
         };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.firestore();
         let productList = [];
         let currentCalcMode = 'SET'; 
         let isAdminAuthenticated = false;
+        let currentMondayKey = '';
 
         initDietSystem();
 
         function initDietSystem() {
             const weekDates = getThisWeekDates();
-            const mondayKey = weekDates[0].dateStr; 
+            currentMondayKey = weekDates[0].dateStr; 
 
             document.getElementById('dietPeriodTitle').innerText = `(${weekDates[0].formatted} ~ ${weekDates[4].formatted})`;
 
@@ -246,16 +249,8 @@
                 document.getElementById(`editLabel_${k}`).innerText = `${w.formatted} (${w.dayName})`;
             });
 
-            const savedMondayKey = localStorage.getItem('diet_current_monday');
-            if (savedMondayKey !== mondayKey) {
-                daysKeyMap.forEach(k => {
-                    localStorage.removeItem(`diet_v6_${k}`);
-                });
-                localStorage.setItem('diet_current_monday', mondayKey);
-            }
-
             highlightTodayDiet(weekDates);
-            loadDietFromStorage();
+            loadDietFromFirestore();
         }
 
         function getThisWeekDates() {
@@ -304,27 +299,58 @@
             if (box.style.display === 'block') {
                 ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
                     const currentText = document.getElementById(`menu_${d}`).innerHTML;
-                    document.getElementById(`editDiet_${d}`).value = (currentText === '') ? '' : currentText.replace(/<br\s*[\/]?>/gi, '\n');
+                    document.getElementById(`editDiet_${d}`).value = (currentText === '' || currentText === '등록된 식단이 없습니다.') ? '' : currentText.replace(/<br\s*[\/]?>/gi, '\n');
                 });
             }
         }
 
-        function saveDietTable() {
+        async function saveDietTable() {
+            const dietData = {};
             ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
                 const val = document.getElementById(`editDiet_${d}`).value.trim();
-                const formattedVal = val ? val.replace(/\n/g, '<br>') : '';
-                document.getElementById(`menu_${d}`).innerHTML = formattedVal;
-                localStorage.setItem(`diet_v6_${d}`, formattedVal);
+                dietData[d] = val ? val.replace(/\n/g, '<br>') : '';
             });
-            toggleDietEdit();
-            alert('✅ 식단이 저장되었습니다.');
+
+            try {
+                await db.collection('diets').doc(currentMondayKey).set({
+                    ...dietData,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
+                    document.getElementById(`menu_${d}`).innerHTML = dietData[d] || '<span style="color:#aaa;">식단 미등록</span>';
+                });
+                
+                toggleDietEdit();
+                alert('✅ 식단이 파이어스토어에 저장되어 연동되었습니다.');
+            } catch (e) {
+                console.error("식단 저장 실패:", e);
+                alert('❌ 식단 저장 중 오류가 발생했습니다.');
+            }
         }
 
-        function loadDietFromStorage() {
-            ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
-                const saved = localStorage.getItem(`diet_v6_${d}`);
-                document.getElementById(`menu_${d}`).innerHTML = saved ? saved : '';
-            });
+        async function loadDietFromFirestore() {
+            try {
+                const docRef = db.collection('diets').doc(currentMondayKey);
+                const doc = await docRef.get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
+                        const content = data[d];
+                        document.getElementById(`menu_${d}`).innerHTML = content ? content : '<span style="color:#aaa;">식단 미등록</span>';
+                    });
+                } else {
+                    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
+                        document.getElementById(`menu_${d}`).innerHTML = '<span style="color:#aaa;">식단 미등록</span>';
+                    });
+                }
+            } catch (e) {
+                console.error("식단 불러오기 실패:", e);
+                ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
+                    document.getElementById(`menu_${d}`).innerText = '식단 불러오기 오류';
+                });
+            }
         }
 
         function switchTab(tabId, element) {
@@ -334,6 +360,8 @@
             element.classList.add('active');
             if (tabId === 'calcTab') {
                 loadProductList();
+            } else if (tabId === 'dietTab') {
+                loadDietFromFirestore();
             } else if (tabId === 'manageTab') {
                 if (isAdminAuthenticated) renderProductAdminList();
             }
