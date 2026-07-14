@@ -213,10 +213,16 @@
                 </div>
             </h2>
             <input type="hidden" id="detailLogId">
+            <input type="hidden" id="detailOldProductId">
             <div id="detailLogSummary" style="font-size: 13.5px; line-height: 1.5; margin-bottom: 10px; background:#fcfcfc; padding:8px; border-radius:6px; border:1px solid #eee;"></div>
             
             <div id="editBasicContainer" style="background:#f0f5ff; padding:10px; border-radius:6px; margin-bottom:10px; border:1px solid #d0e1ff; display:none;">
                 <label style="font-size:12px; font-weight:bold; color:#007aff; margin-bottom:4px;">✏️ 기본정보 수정</label>
+                <div class="input-group" style="margin-bottom:6px;">
+                    <input type="text" id="editLogProductSearch" placeholder="제품명 변경 (검색 또는 입력)" style="padding:8px; font-size:13px;" oninput="filterEditLogProducts()" autocomplete="off">
+                    <div id="editLogProductDropdown" class="search-dropdown"></div>
+                    <input type="hidden" id="editLogSelectedProductId">
+                </div>
                 <div style="display:flex; gap:4px; margin-bottom:4px;">
                     <input type="date" id="editLogDueDate" style="flex:1; padding:8px; font-size:13px;">
                     <input type="number" id="editLogTargetQty" placeholder="목표수량" style="flex:1; padding:8px; font-size:13px;" onfocus="this.select()">
@@ -543,6 +549,9 @@
             document.getElementById('toggleEditModeBtn').style.background = '#ff9500';
 
             document.getElementById('detailLogId').value = log.id;
+            document.getElementById('detailOldProductId').value = log.productId;
+            document.getElementById('editLogProductSearch').value = log.productName;
+            document.getElementById('editLogSelectedProductId').value = log.productId;
             document.getElementById('editLogDueDate').value = log.dueDate;
             document.getElementById('editLogTargetQty').value = log.targetQty;
             document.getElementById('editLogMemo').value = log.memo || '';
@@ -569,11 +578,34 @@
                 <strong>진행상황:</strong> ${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()} (${percent}%)<br>
                 <strong>메모:</strong> ${log.memo || '없음'}
             `;
-            renderWorkLogHistory(log.workLogs || [], id);
+            // 날짜순 오름차순 정렬 후 렌더링
+            let sortedLogs = log.workLogs ? [...log.workLogs].sort((a, b) => new Date(a.date) - new Date(b.date)) : [];
+            renderWorkLogHistory(sortedLogs, id);
             calcAndRenderRemaining(log);
             document.getElementById('detailLogModal').style.display = 'flex';
         }
         function closeDetailLogModal() { document.getElementById('detailLogModal').style.display = 'none'; }
+
+        function filterEditLogProducts() {
+            const keyword = document.getElementById('editLogProductSearch').value.toLowerCase();
+            const dropdown = document.getElementById('editLogProductDropdown');
+            dropdown.innerHTML = '';
+            if (!keyword) { dropdown.style.display = 'none'; return; }
+            const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
+            if (filtered.length === 0) { dropdown.style.display = 'none'; return; }
+            filtered.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'search-item';
+                item.innerText = `📦 ${p.name}`;
+                item.onclick = () => {
+                    document.getElementById('editLogProductSearch').value = p.name;
+                    document.getElementById('editLogSelectedProductId').value = p.id;
+                    dropdown.style.display = 'none';
+                };
+                dropdown.appendChild(item);
+            });
+            dropdown.style.display = 'block';
+        }
 
         function toggleEditMode() {
             isEditActive = !isEditActive;
@@ -595,7 +627,10 @@
                 btn.style.background = '#ff9500';
             }
             const log = packingLogsList.find(x => x.id === document.getElementById('detailLogId').value);
-            if (log) renderWorkLogHistory(log.workLogs || [], log.id);
+            if (log) {
+                let sortedLogs = log.workLogs ? [...log.workLogs].sort((a, b) => new Date(a.date) - new Date(b.date)) : [];
+                renderWorkLogHistory(sortedLogs, log.id);
+            }
         }
 
         function renderWorkLogHistory(logs, logId) {
@@ -611,7 +646,7 @@
                         <input type="date" id="editWDate_${idx}" value="${item.date}" style="padding:4px; font-size:11px; width:95px;">
                         <input type="number" id="editWQty_${idx}" value="${item.qty}" style="padding:4px; font-size:11px; width:65px;" onfocus="this.select()">
                         <input type="text" id="editWMemo_${idx}" value="${item.memo || ''}" placeholder="메모" style="flex:1; padding:4px; font-size:11px;">
-                        <button class="sub-btn del-btn" style="padding:2px 5px; font-size:10px;" onclick="deleteWorkLogSingle('${logId}', ${idx})">삭제</button>
+                        <button class="sub-btn del-btn" style="padding:2px 5px; font-size:10px;" onclick="deleteWorkLogSingle('${logId}', '${item.date}')">삭제</button>
                     </div>`;
                 } else {
                     let memoStr = item.memo ? ` <span style="color:#666; font-size:11px;">(${item.memo})</span>` : '';
@@ -636,6 +671,8 @@
 
             let updatedLogs = log.workLogs ? [...log.workLogs] : [];
             updatedLogs.push({ date: wDate, qty: wQty, memo: wMemo });
+            // 날짜 오름차순으로 정렬 유지
+            updatedLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
             let newCurrentQty = updatedLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
 
             try {
@@ -657,7 +694,6 @@
             let remainSet = log.targetQty - log.currentQty;
             if (remainSet < 0) remainSet = 0;
 
-            // 작업 진행이 0% 이거나 진행 전 상태일 경우 파레트·카톤 숨기고 남은 잔여량만 표시
             if (!log.currentQty || log.currentQty <= 0) {
                 box.innerHTML = `남은 잔여량 : <strong>${remainSet.toLocaleString()} set</strong>`;
                 return;
@@ -686,10 +722,40 @@
 
         async function saveAllWorkLogsBatch() {
             const id = document.getElementById('detailLogId').value;
+            const oldProductId = document.getElementById('detailOldProductId').value;
+            let newProductId = document.getElementById('editLogSelectedProductId').value.trim();
+            let newProductName = document.getElementById('editLogProductSearch').value.trim();
             const dueDate = document.getElementById('editLogDueDate').value;
             const targetQty = Number(document.getElementById('editLogTargetQty').value);
             const memo = document.getElementById('editLogMemo').value;
-            if (!dueDate || !targetQty) { alert('출고일과 목표수량을 입력해 주세요.'); return; }
+            
+            if (!newProductName || !dueDate || !targetQty) { alert('제품명, 출고일, 목표수량을 확인해 주세요.'); return; }
+
+            let matchedProd = productList.find(x => x.id === newProductId || x.name.toLowerCase() === newProductName.toLowerCase());
+            if (!matchedProd) {
+                try {
+                    const newProdRef = await db.collection('products').add({
+                        name: newProductName,
+                        hasSet: 'X',
+                        palletToCarton: 0,
+                        cartonToInner: 0,
+                        innerToUnit: 1,
+                        timestamp: new Date()
+                    });
+                    newProductId = newProdRef.id;
+                    await loadProductList();
+                } catch(e) { console.error("신규 품목 자동등록 실패", e); }
+            } else {
+                newProductId = matchedProd.id;
+                newProductName = matchedProd.name;
+            }
+
+            if (oldProductId && oldProductId !== newProductId) {
+                const isStillUsed = packingLogsList.some(l => l.productId === oldProductId && l.id !== id);
+                if (!isStillUsed) {
+                    try { await db.collection('products').doc(oldProductId).delete(); } catch(e) { console.error("임시 간이 품목 삭제 생략/실패", e); }
+                }
+            }
 
             const log = packingLogsList.find(x => x.id === id);
             if (!log) return;
@@ -705,26 +771,31 @@
                 }
             }
 
+            // 일괄 저장 시에도 날짜 오름차순 정렬 적용
+            newWorkLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
             let newCurrentQty = newWorkLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
 
             try {
                 await db.collection('packing_logs').doc(id).update({
+                    productId: newProductId,
+                    productName: newProductName,
                     dueDate,
                     targetQty,
                     memo,
                     workLogs: newWorkLogs,
                     currentQty: newCurrentQty
                 });
-                alert('✅ 모든 수정 내용이 일괄 저장되었습니다.');
+                alert('✅ 제품명 및 수정 내용이 일괄 저장되었습니다.');
                 await loadPackingLogs();
                 openDetailLogModal(id);
             } catch(e) { alert('일괄 저장 실패'); }
         }
 
-        async function deleteWorkLogSingle(logId, idx) {
+        async function deleteWorkLogSingle(logId, targetDate) {
             const log = packingLogsList.find(x => x.id === logId);
             if (!log) return;
-            log.workLogs.splice(idx, 1);
+            log.workLogs = log.workLogs.filter(item => item.date !== targetDate);
+            log.workLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
             let newCurrentQty = log.workLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
             try {
                 await db.collection('packing_logs').doc(logId).update({ workLogs: log.workLogs, currentQty: newCurrentQty });
@@ -839,9 +910,7 @@
                     });
                     productId = newProdRef.id;
                     await loadProductList();
-                } catch(e) {
-                    console.error("미등록 제품 자동생성 실패", e);
-                }
+                } catch(e) { console.error("미등록 제품 자동생성 실패", e); }
             } else {
                 productId = pObj.id;
                 productName = pObj.name;
