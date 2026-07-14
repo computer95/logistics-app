@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>현장 물류 계산기 v5.3</title>
+    <title>현장 물류 계산기</title>
     <link rel="apple-touch-icon" href="https://api.iconify.design/fluent-emoji:package.svg">
     <link rel="icon" type="image/svg+xml" href="https://api.iconify.design/fluent-emoji:package.svg">
     <style>
@@ -73,7 +73,6 @@
         .badge-done { background: #34c759; }
         .badge-hold { background: #ffcc00; color: #333; }
 
-        /* 진행률 바 스타일 추가 */
         .progress-bar-bg { width: 100%; background-color: #e9ecef; border-radius: 4px; height: 7px; overflow: hidden; margin-top: 8px; margin-bottom: 6px; }
         .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
         .fill-none { background-color: #adb5bd; }
@@ -176,7 +175,6 @@
         </div>
     </div>
 
-    <!-- 포장일지 등록 모달 -->
     <div id="addLogModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #007aff; margin-bottom: 15px;">
@@ -184,8 +182,8 @@
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;" onclick="closeAddLogModal()">닫기</button>
             </h2>
             <div class="input-group">
-                <label>제품 검색 및 선택</label>
-                <input type="text" id="logModalProductSearch" placeholder="제품명을 입력해 검색하세요" oninput="filterLogModalProducts()" autocomplete="off">
+                <label>제품 검색 및 입력 (신규명 입력 시 자동등록)</label>
+                <input type="text" id="logModalProductSearch" placeholder="제품명을 입력해 검색하거나 작성하세요" oninput="filterLogModalProducts()" autocomplete="off">
                 <div id="logModalProductDropdown" class="search-dropdown"></div>
                 <input type="hidden" id="logModalSelectedProductId">
             </div>
@@ -205,7 +203,6 @@
         </div>
     </div>
 
-    <!-- 포장일지 상세 모달 -->
     <div id="detailLogModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #007aff; margin-bottom: 8px;">
@@ -227,6 +224,16 @@
                 <input type="text" id="editLogMemo" placeholder="메모 입력" style="padding:8px; font-size:13px; margin-bottom:4px;">
             </div>
 
+            <div id="dailyAddSection" style="background:#f9fbfd; padding:10px; border-radius:6px; margin-bottom:10px; border:1px solid #e1e8f0;">
+                <label style="font-size:12px; font-weight:bold; color:#333; margin-bottom:4px;">➕ 일일 작업 현황 추가</label>
+                <div style="display:flex; gap:4px; margin-bottom:4px;">
+                    <input type="date" id="dailyWorkDate" style="flex:1; padding:6px; font-size:12px;">
+                    <input type="number" id="dailyWorkQty" placeholder="수량(set)" style="flex:1; padding:6px; font-size:12px;" onfocus="this.select()">
+                </div>
+                <input type="text" id="dailyWorkMemo" placeholder="간단 메모" style="padding:6px; font-size:12px; margin-bottom:4px;">
+                <button class="main-btn" style="margin-top:0; padding:6px; font-size:12px; background:#34c759;" onclick="addSingleWorkLogRecord()">작업 기록 추가</button>
+            </div>
+
             <div style="max-height: 140px; overflow-y: auto; background: #fafafa; border:1px solid #e1e4e8; border-radius:6px; padding:6px; margin-bottom:10px; font-size:12px;" id="workLogHistoryContainer">
                 기록된 작업 내역이 없습니다.
             </div>
@@ -245,7 +252,6 @@
         </div>
     </div>
 
-    <!-- 새 제품 추가 모달 -->
     <div id="addProductModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #34c759; margin-bottom: 15px;">
@@ -263,7 +269,6 @@
         </div>
     </div>
 
-    <!-- 제품 수정 모달 -->
     <div id="editProductModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #ff9500; margin-bottom: 15px;">
@@ -533,6 +538,7 @@
             isEditActive = false;
             document.getElementById('editBasicContainer').style.display = 'none';
             document.getElementById('batchSaveBox').style.display = 'none';
+            document.getElementById('dailyAddSection').style.display = 'block'; // 기본은 입력창 보임
             document.getElementById('toggleEditModeBtn').innerText = '수정';
             document.getElementById('toggleEditModeBtn').style.background = '#ff9500';
 
@@ -541,6 +547,10 @@
             document.getElementById('editLogTargetQty').value = log.targetQty;
             document.getElementById('editLogMemo').value = log.memo || '';
             
+            document.getElementById('dailyWorkDate').value = new Date().toISOString().substring(0, 10);
+            document.getElementById('dailyWorkQty').value = '';
+            document.getElementById('dailyWorkMemo').value = '';
+
             const holdBtn = document.getElementById('toggleHoldBtn');
             if (log.isHold) {
                 holdBtn.innerText = '보류 해제';
@@ -569,15 +579,18 @@
             isEditActive = !isEditActive;
             const container = document.getElementById('editBasicContainer');
             const batchBox = document.getElementById('batchSaveBox');
+            const dailyAddSec = document.getElementById('dailyAddSection');
             const btn = document.getElementById('toggleEditModeBtn');
             if (isEditActive) {
                 container.style.display = 'block';
                 batchBox.style.display = 'block';
+                dailyAddSec.style.display = 'none'; // 수정 진입 시에만 일일작업기록 입력창 숨김
                 btn.innerText = '수정닫기';
                 btn.style.background = '#333';
             } else {
                 container.style.display = 'none';
                 batchBox.style.display = 'none';
+                dailyAddSec.style.display = 'block';
                 btn.innerText = '수정';
                 btn.style.background = '#ff9500';
             }
@@ -611,6 +624,31 @@
             container.innerHTML = html;
         }
 
+        async function addSingleWorkLogRecord() {
+            const id = document.getElementById('detailLogId').value;
+            const wDate = document.getElementById('dailyWorkDate').value;
+            const wQty = Number(document.getElementById('dailyWorkQty').value);
+            const wMemo = document.getElementById('dailyWorkMemo').value.trim();
+            if (!wDate || !wQty) { alert('날짜와 수량을 입력해 주세요.'); return; }
+
+            const log = packingLogsList.find(x => x.id === id);
+            if (!log) return;
+
+            let updatedLogs = log.workLogs ? [...log.workLogs] : [];
+            updatedLogs.push({ date: wDate, qty: wQty, memo: wMemo });
+            let newCurrentQty = updatedLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
+
+            try {
+                await db.collection('packing_logs').doc(id).update({
+                    workLogs: updatedLogs,
+                    currentQty: newCurrentQty
+                });
+                alert('✅ 작업 기록이 추가되었습니다.');
+                await loadPackingLogs();
+                openDetailLogModal(id);
+            } catch(e) { alert('추가 실패'); }
+        }
+
         function formatVal(val, decimals = 1) { return Number(val.toFixed(decimals)).toString(); }
 
         function calcAndRenderRemaining(log) {
@@ -619,21 +657,16 @@
             let remainSet = log.targetQty - log.currentQty;
             if (remainSet < 0) remainSet = 0;
 
-            if (!log.workLogs || log.workLogs.length === 0) {
-                box.innerHTML = `남은 잔여량 : <strong>${remainSet.toLocaleString()} set</strong><br><span style="color:#888; font-size:11.5px;">* 사양서 및 작업 등록 대기 중</span>`;
+            if (!p || (!p.palletToCarton && !p.innerToUnit)) {
+                box.innerHTML = `남은 잔여량 : <strong>${remainSet.toLocaleString()} set</strong><br><span style="color:#e05638; font-size:11.5px;">⚠️ 기준 사양 미등록 품목 (환산 불가)</span>`;
                 return;
             }
 
-            if (!p) {
-                box.innerHTML = `남은 잔여량 : <strong>${remainSet.toLocaleString()} set</strong>`;
-                return;
-            }
-
-            let cToI = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
-            let innerPerCarton = cToI * p.innerToUnit; 
-            let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit; 
+            let cToI = (p.hasSet === 'O') ? ((p.cartonToSet || 0) * (p.setToInner || 0)) : (p.cartonToInner || 0);
+            let innerPerCarton = cToI * (p.innerToUnit || 1); 
+            let unitPerSet = (p.hasSet === 'O') ? ((p.setToInner || 1) * (p.innerToUnit || 1)) : (p.innerToUnit || 1); 
             let totalEa = remainSet * unitPerSet;
-            let unitsPerPallet = p.palletToCarton * innerPerCarton;
+            let unitsPerPallet = (p.palletToCarton || 1) * innerPerCarton;
 
             let remPallets = formatVal(totalEa / unitsPerPallet, 1);
             let remCartons = formatVal(totalEa / innerPerCarton, 1);
@@ -776,21 +809,43 @@
         }
 
         async function savePackingLog() {
-            const productId = document.getElementById('logModalSelectedProductId').value;
-            const pObj = productList.find(x => x.id === productId);
+            let productId = document.getElementById('logModalSelectedProductId').value;
+            let productName = document.getElementById('logModalProductSearch').value.trim();
             const dueDate = document.getElementById('logModalDueDate').value;
             const targetQty = Number(document.getElementById('logModalTargetQty').value);
             const memo = document.getElementById('logModalMemo').value;
 
-            if (!pObj || !dueDate || !targetQty) {
-                alert('제품, 출고일, 목표수량을 모두 확인해 주세요.');
+            if (!productName || !dueDate || !targetQty) {
+                alert('제품명, 출고일, 목표수량을 모두 확인해 주세요.');
                 return;
+            }
+
+            // 미등록 품목 자동 등록 로직
+            let pObj = productList.find(x => x.id === productId || x.name.toLowerCase() === productName.toLowerCase());
+            if (!pObj) {
+                try {
+                    const newProdRef = await db.collection('products').add({
+                        name: productName,
+                        hasSet: 'X',
+                        palletToCarton: 0,
+                        cartonToInner: 0,
+                        innerToUnit: 1,
+                        timestamp: new Date()
+                    });
+                    productId = newProdRef.id;
+                    await loadProductList();
+                } catch(e) {
+                    console.error("미등록 제품 자동생성 실패", e);
+                }
+            } else {
+                productId = pObj.id;
+                productName = pObj.name;
             }
 
             try {
                 await db.collection('packing_logs').add({
                     productId,
-                    productName: pObj.name,
+                    productName,
                     dueDate,
                     targetQty,
                     currentQty: 0,
