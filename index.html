@@ -538,7 +538,7 @@
             isEditActive = false;
             document.getElementById('editBasicContainer').style.display = 'none';
             document.getElementById('batchSaveBox').style.display = 'none';
-            document.getElementById('dailyAddSection').style.display = 'block'; // 기본은 입력창 보임
+            document.getElementById('dailyAddSection').style.display = 'block'; 
             document.getElementById('toggleEditModeBtn').innerText = '수정';
             document.getElementById('toggleEditModeBtn').style.background = '#ff9500';
 
@@ -584,7 +584,7 @@
             if (isEditActive) {
                 container.style.display = 'block';
                 batchBox.style.display = 'block';
-                dailyAddSec.style.display = 'none'; // 수정 진입 시에만 일일작업기록 입력창 숨김
+                dailyAddSec.style.display = 'none'; 
                 btn.innerText = '수정닫기';
                 btn.style.background = '#333';
             } else {
@@ -656,6 +656,12 @@
             const p = productList.find(item => item.id === log.productId);
             let remainSet = log.targetQty - log.currentQty;
             if (remainSet < 0) remainSet = 0;
+
+            // 작업 진행이 0% 이거나 진행 전 상태일 경우 파레트·카톤 숨기고 남은 잔여량만 표시
+            if (!log.currentQty || log.currentQty <= 0) {
+                box.innerHTML = `남은 잔여량 : <strong>${remainSet.toLocaleString()} set</strong>`;
+                return;
+            }
 
             if (!p || (!p.palletToCarton && !p.innerToUnit)) {
                 box.innerHTML = `남은 잔여량 : <strong>${remainSet.toLocaleString()} set</strong><br><span style="color:#e05638; font-size:11.5px;">⚠️ 기준 사양 미등록 품목 (환산 불가)</span>`;
@@ -820,7 +826,6 @@
                 return;
             }
 
-            // 미등록 품목 자동 등록 로직
             let pObj = productList.find(x => x.id === productId || x.name.toLowerCase() === productName.toLowerCase());
             if (!pObj) {
                 try {
