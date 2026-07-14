@@ -56,8 +56,6 @@
         .spec-table th { background: #e9ecf0; color: #444; padding: 6px 2px; font-weight: 600; border-bottom: 1px solid #ddd; }
         .spec-table td { padding: 7px 2px; color: #333; font-weight: 500; }
         .spec-table tr:not(:last-child) td { border-bottom: 1px solid #e1e4e8; }
-
-        .edit-form-box { background: #fff; border: 1px solid #007aff; border-radius: 8px; padding: 12px; margin-top: 10px; display: none; }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
         .modal-box { background: #fff; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
@@ -157,7 +155,7 @@
             </div>
 
             <div>
-                <label style="margin-bottom: 8px; font-size: 13px; color: #666;">등록된 품목 리스트 (가나다순)</label>
+                <label id="listCountLabel" style="margin-bottom: 8px; font-size: 13px; color: #666;">등록된 품목 리스트 (0)</label>
                 <div id="productListContainer">데이터를 불러오는 중...</div>
             </div>
         </div>
@@ -207,6 +205,53 @@
             </div>
             <button class="main-btn" style="background-color: #34c759;" onclick="saveProductConfig()">등록 완료</button>
             <div id="regStatusMsg" class="status-msg"></div>
+        </div>
+    </div>
+
+    <div id="editProductModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="font-size: 18px; color: #ff9500; margin-bottom: 15px;">
+                📦 제품 정보 수정하기
+                <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;" onclick="closeEditModal()">닫기</button>
+            </h2>
+            <input type="hidden" id="editTargetId">
+            <div class="input-group">
+                <label>제품이름</label>
+                <input type="text" id="editModalName" onfocus="this.select()">
+            </div>
+            <div class="input-group">
+                <label>세트케이스 유무</label>
+                <div class="toggle-container">
+                    <button type="button" id="editModalSetBtnO" class="toggle-btn" onclick="selectModalSetOption('O')">있음 (O)</button>
+                    <button type="button" id="editModalSetBtnX" class="toggle-btn active" onclick="selectModalSetOption('X')">없음 (X)</button>
+                </div>
+                <input type="hidden" id="editModalHasSetValue" value="X">
+            </div>
+            <div class="input-group">
+                <label>파레트당 카톤 수</label>
+                <input type="number" id="editModalPtoC" onfocus="this.select()">
+            </div>
+            <div id="editModalSetFieldsO" class="conditional-fields">
+                <div class="input-group">
+                    <label>카톤당 세트케이스 수</label>
+                    <input type="number" id="editModalCtoS" onfocus="this.select()">
+                </div>
+                <div class="input-group">
+                    <label>세트케이스당 단케이스 수</label>
+                    <input type="number" id="editModalStoI" onfocus="this.select()">
+                </div>
+            </div>
+            <div id="editModalSetFieldsX" class="conditional-fields" style="display:block;">
+                <div class="input-group">
+                    <label>카톤당 단케이스 수</label>
+                    <input type="number" id="editModalCtoIX" onfocus="this.select()">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>단케이스당 반제품 수</label>
+                <input type="number" id="editModalItoU" onfocus="this.select()" onkeydown="handleEditModalKey(event)">
+            </div>
+            <button class="main-btn" style="background-color: #ff9500;" onclick="updateProductModalSave()">수정 완료 저장</button>
         </div>
     </div>
 
@@ -378,7 +423,7 @@
             } else {
                 document.getElementById('pwErrorMsg').style.display = 'block';
                 inputEl.value = ''; // 틀렸을 때 입력창 비우기
-                inputEl.focus();    // 다시 바로 입력할 수 있게 포커스 이동
+                inputEl.focus();
                 setTimeout(() => { document.getElementById('pwErrorMsg').style.display = 'none'; }, 2500);
             }
         }
@@ -387,34 +432,34 @@
         function openAddModal() { document.getElementById('addProductModal').style.display = 'flex'; }
         function closeAddModal() { document.getElementById('addProductModal').style.display = 'none'; }
 
-        function selectSetOption(val, prefix, editId = '') {
-            const hasSetId = editId ? `editHasSetValue_${editId}` : 'hasSetValue';
-            document.getElementById(hasSetId).value = val;
-            
-            if (editId) {
-                if (val === 'O') {
-                    document.getElementById(`editSetBtnO_${editId}`).classList.add('active');
-                    document.getElementById(`editSetBtnX_${editId}`).classList.remove('active');
-                    document.getElementById(`editSetFieldsO_${editId}`).style.display = 'block';
-                    document.getElementById(`editSetFieldsX_${editId}`).style.display = 'none';
-                } else {
-                    document.getElementById(`editSetBtnX_${editId}`).classList.add('active');
-                    document.getElementById(`editSetBtnO_${editId}`).classList.remove('active');
-                    document.getElementById(`editSetFieldsO_${editId}`).style.display = 'none';
-                    document.getElementById(`editSetFieldsX_${editId}`).style.display = 'block';
-                }
+        function selectSetOption(val, prefix) {
+            document.getElementById('hasSetValue').value = val;
+            if (val === 'O') {
+                document.getElementById('setBtnO').classList.add('active');
+                document.getElementById('setBtnX').classList.remove('active');
+                document.getElementById('setFieldsO').style.display = 'block';
+                document.getElementById('setFieldsX').style.display = 'none';
             } else {
-                if (val === 'O') {
-                    document.getElementById('setBtnO').classList.add('active');
-                    document.getElementById('setBtnX').classList.remove('active');
-                    document.getElementById('setFieldsO').style.display = 'block';
-                    document.getElementById('setFieldsX').style.display = 'none';
-                } else {
-                    document.getElementById('setBtnX').classList.add('active');
-                    document.getElementById('setBtnO').classList.remove('active');
-                    document.getElementById('setFieldsO').style.display = 'none';
-                    document.getElementById('setFieldsX').style.display = 'block';
-                }
+                document.getElementById('setBtnX').classList.add('active');
+                document.getElementById('setBtnO').classList.remove('active');
+                document.getElementById('setFieldsO').style.display = 'none';
+                document.getElementById('setFieldsX').style.display = 'block';
+            }
+        }
+
+        // 수정 모달용 토글 함수
+        function selectModalSetOption(val) {
+            document.getElementById('editModalHasSetValue').value = val;
+            if (val === 'O') {
+                document.getElementById('editModalSetBtnO').classList.add('active');
+                document.getElementById('editModalSetBtnX').classList.remove('active');
+                document.getElementById('editModalSetFieldsO').style.display = 'block';
+                document.getElementById('editModalSetFieldsX').style.display = 'none';
+            } else {
+                document.getElementById('editModalSetBtnX').classList.add('active');
+                document.getElementById('editModalSetBtnO').classList.remove('active');
+                document.getElementById('editModalSetFieldsO').style.display = 'none';
+                document.getElementById('editModalSetFieldsX').style.display = 'block';
             }
         }
 
@@ -485,6 +530,8 @@
 
         function drawAdminListHtml(list) {
             const container = document.getElementById('productListContainer');
+            document.getElementById('listCountLabel').innerText = `등록된 품목 리스트 (${list.length})`;
+            
             if (list.length === 0) {
                 container.innerHTML = '<p style="color:#666; font-size:13px; text-align:center; padding:15px;">검색된 품목이 없습니다.</p>';
                 return;
@@ -500,7 +547,7 @@
                         <div class="product-top-row">
                             <span class="product-name-txt">📦 ${p.name}</span>
                             <div>
-                                <button class="sub-btn edit-btn" onclick="toggleEditForm('${p.id}')">수정</button>
+                                <button class="sub-btn edit-btn" onclick="openEditModal('${p.id}')">수정</button>
                                 <button class="sub-btn del-btn" onclick="deleteProduct('${p.id}', '${p.name}')">삭제</button>
                             </div>
                         </div>
@@ -523,73 +570,50 @@
                                 </tr>
                             </tbody>
                         </table>
-                        
-                        <div class="edit-form-box" id="editForm_${p.id}">
-                            <div class="input-group">
-                                <label>제품이름</label>
-                                <input type="text" id="editName_${p.id}" value="${p.name}" onfocus="this.select()">
-                            </div>
-                            <div class="input-group">
-                                <label>세트케이스 유무</label>
-                                <div class="toggle-container">
-                                    <button type="button" id="editSetBtnO_${p.id}" class="toggle-btn ${p.hasSet === 'O' ? 'active' : ''}" onclick="selectSetOption('O', 'edit', '${p.id}')">있음 (O)</button>
-                                    <button type="button" id="editSetBtnX_${p.id}" class="toggle-btn ${p.hasSet === 'X' ? 'active' : ''}" onclick="selectSetOption('X', 'edit', '${p.id}')">없음 (X)</button>
-                                </div>
-                                <input type="hidden" id="editHasSetValue_${p.id}" value="${p.hasSet}">
-                            </div>
-                            <div class="input-group">
-                                <label>파레트당 카톤 수</label>
-                                <input type="number" id="editPtoC_${p.id}" value="${p.palletToCarton}" onfocus="this.select()">
-                            </div>
-                            <div id="editSetFieldsO_${p.id}" class="conditional-fields" style="display:${p.hasSet === 'O' ? 'block' : 'none'};">
-                                <div class="input-group">
-                                    <label>카톤당 세트케이스 수</label>
-                                    <input type="number" id="editCtoS_${p.id}" value="${p.cartonToSet || ''}" onfocus="this.select()">
-                                </div>
-                                <div class="input-group">
-                                    <label>세트케이스당 단케이스 수</label>
-                                    <input type="number" id="editStoI_${p.id}" value="${p.setToInner || ''}" onfocus="this.select()">
-                                </div>
-                            </div>
-                            <div id="editSetFieldsX_${p.id}" class="conditional-fields" style="display:${p.hasSet === 'X' ? 'block' : 'none'};">
-                                <div class="input-group">
-                                    <label>카톤당 단케이스 수</label>
-                                    <input type="number" id="editCtoIX_${p.id}" value="${p.cartonToInner || ''}" onfocus="this.select()">
-                                </div>
-                            </div>
-                            <div class="input-group">
-                                <label>단케이스당 반제품 수</label>
-                                <input type="number" id="editItoU_${p.id}" value="${p.innerToUnit}" onfocus="this.select()" onkeydown="handleEditKey(event, '${p.id}')">
-                            </div>
-                            <button class="main-btn" style="padding: 10px; font-size: 14px;" onclick="updateProduct('${p.id}')">수정 완료 저장</button>
-                        </div>
                     </div>
                 `;
             });
             container.innerHTML = html;
         }
 
-        function toggleEditForm(id) {
-            const box = document.getElementById(`editForm_${id}`);
-            box.style.display = (box.style.display === 'block') ? 'none' : 'block';
+        // 수정 모달 열기 및 값 세팅
+        function openEditModal(id) {
+            const p = productList.find(item => item.id === id);
+            if (!p) return;
+            
+            document.getElementById('editTargetId').value = p.id;
+            document.getElementById('editModalName').value = p.name;
+            document.getElementById('editModalPtoC').value = p.palletToCarton;
+            document.getElementById('editModalItoU').value = p.innerToUnit;
+            
+            selectModalSetOption(p.hasSet);
+            if (p.hasSet === 'O') {
+                document.getElementById('editModalCtoS').value = p.cartonToSet || '';
+                document.getElementById('editModalStoI').value = p.setToInner || '';
+            } else {
+                document.getElementById('editModalCtoIX').value = p.cartonToInner || '';
+            }
+            
+            document.getElementById('editProductModal').style.display = 'flex';
         }
+        function closeEditModal() { document.getElementById('editProductModal').style.display = 'none'; }
+        function handleEditModalKey(e) { if (e.key === 'Enter') updateProductModalSave(); }
 
-        function handleEditKey(e, id) { if (e.key === 'Enter') updateProduct(id); }
-
-        async function updateProduct(id) {
-            const name = document.getElementById(`editName_${id}`).value;
-            const hasSet = document.getElementById(`editHasSetValue_${id}`).value;
-            const pToC = Number(document.getElementById(`editPtoC_${id}`).value);
-            const innerToUnit = Number(document.getElementById(`editItoU_${id}`).value);
+        async function updateProductModalSave() {
+            const id = document.getElementById('editTargetId').value;
+            const name = document.getElementById('editModalName').value;
+            const hasSet = document.getElementById('editModalHasSetValue').value;
+            const pToC = Number(document.getElementById('editModalPtoC').value);
+            const innerToUnit = Number(document.getElementById('editModalItoU').value);
 
             let data = { name, hasSet, palletToCarton: pToC, innerToUnit: innerToUnit };
 
             if (hasSet === 'O') {
-                data.cartonToSet = Number(document.getElementById(`editCtoS_${id}`).value);
-                data.setToInner = Number(document.getElementById(`editStoI_${id}`).value);
+                data.cartonToSet = Number(document.getElementById('editModalCtoS').value);
+                data.setToInner = Number(document.getElementById('editModalStoI').value);
                 data.cartonToInner = null;
             } else {
-                data.cartonToInner = Number(document.getElementById(`editCtoIX_${id}`).value);
+                data.cartonToInner = Number(document.getElementById('editModalCtoIX').value);
                 data.cartonToSet = null;
                 data.setToInner = null;
             }
@@ -597,6 +621,7 @@
             try {
                 await db.collection('products').doc(id).update(data);
                 alert(`✅ [${name}] 수정 완료!`);
+                closeEditModal();
                 renderProductAdminList();
             } catch (e) {
                 alert('❌ 수정에 실패했습니다.');
