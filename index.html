@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>현장 물류 계산기 v5.0</title>
+    <title>현장 물류 계산기 v5.1</title>
     <link rel="apple-touch-icon" href="https://api.iconify.design/fluent-emoji:package.svg">
     <link rel="icon" type="image/svg+xml" href="https://api.iconify.design/fluent-emoji:package.svg">
     <style>
@@ -29,6 +29,7 @@
         .sub-btn { padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; }
         .edit-btn { background: #ff9500; color: white; }
         .del-btn { background: #ff3b30; color: white; }
+        .hold-btn { background: #ffcc00; color: #333; }
         .add-action-btn { background: #34c759; color: white; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
 
         .status-msg { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; display: none; }
@@ -64,11 +65,13 @@
         .log-card.status-none { border-left-color: #ccc; }
         .log-card.status-progress { border-left-color: #007aff; background: #f8fbff; }
         .log-card.status-done { border-left-color: #34c759; background: #f4fcf6; }
+        .log-card.status-hold { border-left-color: #ffcc00; background: #fffdf5; }
         
         .log-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: white; display: inline-block; }
         .badge-none { background: #888; }
         .badge-progress { background: #007aff; }
         .badge-done { background: #34c759; }
+        .badge-hold { background: #ffcc00; color: #333; }
 
         .diet-card { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
         .diet-card.today { background: #f0f7ff; border-color: #007aff; box-shadow: 0 2px 6px rgba(0,122,255,0.1); }
@@ -163,7 +166,6 @@
         </div>
     </div>
 
-    <!-- 포장일지 등록 모달 -->
     <div id="addLogModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #007aff; margin-bottom: 15px;">
@@ -192,7 +194,6 @@
         </div>
     </div>
 
-    <!-- 포장일지 상세 모달 (수정 버튼 및 메모 우측정렬 포함) -->
     <div id="detailLogModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #007aff; margin-bottom: 8px;">
@@ -205,18 +206,15 @@
             <input type="hidden" id="detailLogId">
             <div id="detailLogSummary" style="font-size: 13.5px; line-height: 1.5; margin-bottom: 10px; background:#fcfcfc; padding:8px; border-radius:6px; border:1px solid #eee;"></div>
             
-            <!-- 기본정보 수정 폼 (수정 누를 때 노출) -->
             <div id="editBasicContainer" style="background:#f0f5ff; padding:10px; border-radius:6px; margin-bottom:10px; border:1px solid #d0e1ff; display:none;">
                 <label style="font-size:12px; font-weight:bold; color:#007aff; margin-bottom:4px;">✏️ 기본정보 수정</label>
                 <div style="display:flex; gap:4px; margin-bottom:4px;">
                     <input type="date" id="editLogDueDate" style="flex:1; padding:8px; font-size:13px;">
                     <input type="number" id="editLogTargetQty" placeholder="목표수량" style="flex:1; padding:8px; font-size:13px;" onfocus="this.select()">
                 </div>
-                <input type="text" id="editLogMemo" placeholder="메모 입력" style="padding:8px; font-size:13px; margin-bottom:6px;">
-                <button class="main-btn" style="margin-top:0; padding:6px; font-size:13px; background:#ff9500;" onclick="saveBasicLogInfo()">기본정보 변경 저장</button>
+                <input type="text" id="editLogMemo" placeholder="메모 입력" style="padding:8px; font-size:13px; margin-bottom:4px;">
             </div>
 
-            <!-- 작업 실적 추가 -->
             <div style="background:#f4f6f8; padding:10px; border-radius:6px; margin-bottom:10px;">
                 <label style="font-size:12px; font-weight:bold; margin-bottom:4px;">작업 실적 추가</label>
                 <div style="display:flex; gap:4px; margin-bottom:4px;">
@@ -227,23 +225,24 @@
                 <button class="main-btn" style="margin-top:0; padding:6px; font-size:13px;" onclick="addWorkLogEntry()">내역 추가하기</button>
             </div>
 
-            <!-- 작업기록 히스토리 (메모 우측 배치 및 개별수정 폼) -->
             <div style="max-height: 140px; overflow-y: auto; background: #fafafa; border:1px solid #e1e4e8; border-radius:6px; padding:6px; margin-bottom:10px; font-size:12px;" id="workLogHistoryContainer">
                 기록된 작업 내역이 없습니다.
             </div>
+            <div id="batchSaveBox" style="display:none; margin-bottom:10px;">
+                <button class="main-btn" style="margin-top:0; padding:8px; font-size:13px; background:#34c759;" onclick="saveAllWorkLogsBatch()">수정 내용 일괄 저장</button>
+            </div>
 
-            <!-- 잔여물류 환산 박스 (세트 제외 파레트/카톤만 표시) -->
             <div id="remainingCalcBox" style="background:#eef4ff; border:1px solid #b3d1ff; padding:10px; border-radius:6px; margin-bottom:10px; font-size:13px; line-height:1.6;">
                 잔여량 환산 결과가 여기에 표시됩니다.
             </div>
 
-            <div style="display:flex; justify-content:space-between;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button class="sub-btn hold-btn" id="toggleHoldBtn" style="padding:6px 10px;" onclick="toggleHoldStatus()">보류 지정</button>
                 <button class="sub-btn del-btn" style="padding:6px 10px;" onclick="deletePackingLog()">일정 삭제</button>
             </div>
         </div>
     </div>
 
-    <!-- 새 제품 추가 모달 -->
     <div id="addProductModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #34c759; margin-bottom: 15px;">
@@ -261,7 +260,6 @@
         </div>
     </div>
 
-    <!-- 제품 수정 모달 -->
     <div id="editProductModal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="font-size: 18px; color: #ff9500; margin-bottom: 15px;">
@@ -431,10 +429,10 @@
             let html = '';
             packingLogsList.forEach(log => {
                 let percent = log.targetQty > 0 ? Math.round((log.currentQty / log.targetQty) * 100) : 0;
-                let autoStatus = log.currentQty >= log.targetQty ? 'done' : log.currentQty > 0 ? 'progress' : 'none';
+                let autoStatus = log.isHold ? 'hold' : (log.currentQty >= log.targetQty ? 'done' : log.currentQty > 0 ? 'progress' : 'none');
                 let statusClass = `status-${autoStatus}`;
                 let badgeClass = `badge-${autoStatus}`;
-                let statusText = autoStatus === 'progress' ? '진행 중' : autoStatus === 'done' ? '완료' : '진행 전';
+                let statusText = autoStatus === 'hold' ? '보류' : autoStatus === 'progress' ? '진행 중' : autoStatus === 'done' ? '완료' : '진행 전';
 
                 html += `
                     <div class="log-card ${statusClass}" onclick="openDetailLogModal('${log.id}')">
@@ -488,6 +486,7 @@
             if (!log) return;
             isEditActive = false;
             document.getElementById('editBasicContainer').style.display = 'none';
+            document.getElementById('batchSaveBox').style.display = 'none';
             document.getElementById('toggleEditModeBtn').innerText = '수정';
             document.getElementById('toggleEditModeBtn').style.background = '#ff9500';
 
@@ -499,6 +498,18 @@
             document.getElementById('workLogQty').value = '';
             document.getElementById('workLogMemo').value = '';
             
+            // 보류 버튼 상태 설정
+            const holdBtn = document.getElementById('toggleHoldBtn');
+            if (log.isHold) {
+                holdBtn.innerText = '보류 해제';
+                holdBtn.style.background = '#888';
+                holdBtn.style.color = '#fff';
+            } else {
+                holdBtn.innerText = '보류 지정';
+                holdBtn.style.background = '#ffcc00';
+                holdBtn.style.color = '#333';
+            }
+
             let percent = log.targetQty > 0 ? Math.round((log.currentQty / log.targetQty) * 100) : 0;
             document.getElementById('detailLogSummary').innerHTML = `
                 <strong>제품명:</strong> ${log.productName}<br>
@@ -515,13 +526,16 @@
         function toggleEditMode() {
             isEditActive = !isEditActive;
             const container = document.getElementById('editBasicContainer');
+            const batchBox = document.getElementById('batchSaveBox');
             const btn = document.getElementById('toggleEditModeBtn');
             if (isEditActive) {
                 container.style.display = 'block';
+                batchBox.style.display = 'block';
                 btn.innerText = '수정닫기';
                 btn.style.background = '#333';
             } else {
                 container.style.display = 'none';
+                batchBox.style.display = 'none';
                 btn.innerText = '수정';
                 btn.style.background = '#ff9500';
             }
@@ -539,14 +553,13 @@
             logs.forEach((item, idx) => {
                 if (isEditActive) {
                     html += `<div style="display:flex; gap:4px; align-items:center; padding:4px 0; border-bottom:1px solid #eee;">
-                        <input type="date" id="editWDate_${idx}" value="${item.date}" style="padding:4px; font-size:11px; width:100px;">
-                        <input type="number" id="editWQty_${idx}" value="${item.qty}" style="padding:4px; font-size:11px; width:70px;">
+                        <input type="date" id="editWDate_${idx}" value="${item.date}" style="padding:4px; font-size:11px; width:95px;">
+                        <input type="number" id="editWQty_${idx}" value="${item.qty}" style="padding:4px; font-size:11px; width:65px;" onfocus="this.select()">
                         <input type="text" id="editWMemo_${idx}" value="${item.memo || ''}" placeholder="메모" style="flex:1; padding:4px; font-size:11px;">
-                        <button class="sub-btn edit-btn" style="padding:2px 5px; font-size:10px;" onclick="saveWorkLogEntry('${logId}', ${idx})">저장</button>
-                        <button class="sub-btn del-btn" style="padding:2px 5px; font-size:10px;" onclick="deleteWorkLogEntry('${logId}', ${idx})">삭제</button>
+                        <button class="sub-btn del-btn" style="padding:2px 5px; font-size:10px;" onclick="deleteWorkLogSingle('${logId}', ${idx})">삭제</button>
                     </div>`;
                 } else {
-                    let memoStr = item.memo ? ` <span style="color:#666; font-size:11px;">(메모: ${item.memo})</span>` : '';
+                    let memoStr = item.memo ? ` <span style="color:#666; font-size:11px;">(${item.memo})</span>` : '';
                     html += `<div style="padding:5px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
                         <span>📅 ${item.date} : <strong>+${Number(item.qty).toLocaleString()} set</strong></span>
                         <span style="color:#444;">${memoStr}</span>
@@ -580,24 +593,9 @@
 
             box.innerHTML = `
                 남은 잔여량 : <strong>${remainSet.toLocaleString()} set</strong><br>
-                🅿️ 잔여 파레트 : <strong>${remPallets}</strong> 개<br>
-                📦 잔여 카톤 : <strong>${remCartons}</strong> 개
+                🅿️ 파레트 : <strong>${remPallets}</strong> 개<br>
+                📦 카톤 : <strong>${remCartons}</strong> 개
             `;
-        }
-
-        async function saveBasicLogInfo() {
-            const id = document.getElementById('detailLogId').value;
-            const dueDate = document.getElementById('editLogDueDate').value;
-            const targetQty = Number(document.getElementById('editLogTargetQty').value);
-            const memo = document.getElementById('editLogMemo').value;
-            if (!dueDate || !targetQty) { alert('출고일과 목표수량을 입력해 주세요.'); return; }
-
-            try {
-                await db.collection('packing_logs').doc(id).update({ dueDate, targetQty, memo });
-                alert('✅ 기본 정보가 수정되었습니다.');
-                await loadPackingLogs();
-                openDetailLogModal(id);
-            } catch(e) { alert('수정 실패'); }
         }
 
         async function addWorkLogEntry() {
@@ -622,40 +620,67 @@
             } catch(e) { alert('추가 실패'); }
         }
 
-        async function saveWorkLogEntry(logId, idx) {
-            const date = document.getElementById(`editWDate_${idx}`).value;
-            const qty = Number(document.getElementById(`editWQty_${idx}`).value);
-            const memo = document.getElementById(`editWMemo_${idx}`).value.trim();
-            if (!date || !qty) { alert('날짜와 수량을 입력해 주세요.'); return; }
+        // 일괄 저장 로직
+        async function saveAllWorkLogsBatch() {
+            const id = document.getElementById('detailLogId').value;
+            const dueDate = document.getElementById('editLogDueDate').value;
+            const targetQty = Number(document.getElementById('editLogTargetQty').value);
+            const memo = document.getElementById('editLogMemo').value;
+            if (!dueDate || !targetQty) { alert('출고일과 목표수량을 입력해 주세요.'); return; }
 
-            const log = packingLogsList.find(x => x.id === logId);
+            const log = packingLogsList.find(x => x.id === id);
             if (!log) return;
 
-            log.workLogs[idx] = { date, qty, memo };
-            let newCurrentQty = log.workLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
+            let newWorkLogs = [];
+            const historyElements = log.workLogs || [];
+            for (let idx = 0; idx < historyElements.length; idx++) {
+                const dVal = document.getElementById(`editWDate_${idx}`).value;
+                const qVal = Number(document.getElementById(`editWQty_${idx}`).value);
+                const mVal = document.getElementById(`editWMemo_${idx}`).value.trim();
+                if (dVal && qVal) {
+                    newWorkLogs.push({ date: dVal, qty: qVal, memo: mVal });
+                }
+            }
+
+            let newCurrentQty = newWorkLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
 
             try {
-                await db.collection('packing_logs').doc(logId).update({ workLogs: log.workLogs, currentQty: newCurrentQty });
-                alert('✅ 작업 기록이 수정되었습니다.');
+                await db.collection('packing_logs').doc(id).update({
+                    dueDate,
+                    targetQty,
+                    memo,
+                    workLogs: newWorkLogs,
+                    currentQty: newCurrentQty
+                });
+                alert('✅ 모든 수정 내용이 일괄 저장되었습니다.');
                 await loadPackingLogs();
-                openDetailLogModal(logId);
-            } catch(e) { alert('기록 수정 실패'); }
+                openDetailLogModal(id);
+            } catch(e) { alert('일괄 저장 실패'); }
         }
 
-        async function deleteWorkLogEntry(logId, idx) {
-            if (!confirm('이 작업 기록을 삭제하시겠습니까?')) return;
+        async function deleteWorkLogSingle(logId, idx) {
             const log = packingLogsList.find(x => x.id === logId);
             if (!log) return;
-
             log.workLogs.splice(idx, 1);
             let newCurrentQty = log.workLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
-
             try {
                 await db.collection('packing_logs').doc(logId).update({ workLogs: log.workLogs, currentQty: newCurrentQty });
-                alert('🗑️ 작업 기록이 삭제되었습니다.');
                 await loadPackingLogs();
-                openDetailLogModal(logId);
-            } catch(e) { alert('기록 삭제 실패'); }
+                renderWorkLogHistory(log.workLogs, logId);
+            } catch(e) { alert('삭제 실패'); }
+        }
+
+        async function toggleHoldStatus() {
+            const id = document.getElementById('detailLogId').value;
+            const log = packingLogsList.find(x => x.id === id);
+            if (!log) return;
+            const nextHold = !log.isHold;
+            try {
+                await db.collection('packing_logs').doc(id).update({ isHold: nextHold });
+                alert(nextHold ? '⚠️ 보류 상태로 변경되었습니다.' : '✅ 보류가 해제되었습니다.');
+                await loadPackingLogs();
+                openDetailLogModal(id);
+            } catch(e) { alert('변경 실패'); }
         }
 
         async function deletePackingLog() {
@@ -747,6 +772,7 @@
                     currentQty: 0,
                     workLogs: [],
                     memo,
+                    isHold: false,
                     createdAt: new Date()
                 });
                 alert('✅ 일정이 등록되었습니다.');
