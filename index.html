@@ -368,7 +368,8 @@
         }
 
         function checkAdminPassword() {
-            const inputVal = document.getElementById('adminPasswordInput').value;
+            const inputEl = document.getElementById('adminPasswordInput');
+            const inputVal = inputEl.value;
             if (inputVal === "3417") {
                 isAdminAuthenticated = true;
                 document.getElementById('passwordScreen').style.display = 'none';
@@ -376,6 +377,8 @@
                 renderProductAdminList();
             } else {
                 document.getElementById('pwErrorMsg').style.display = 'block';
+                inputEl.value = ''; // 틀렸을 때 입력창 비우기
+                inputEl.focus();    // 다시 바로 입력할 수 있게 포커스 이동
                 setTimeout(() => { document.getElementById('pwErrorMsg').style.display = 'none'; }, 2500);
             }
         }
