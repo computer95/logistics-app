@@ -578,7 +578,6 @@
                 <strong>진행상황:</strong> ${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()} (${percent}%)<br>
                 <strong>메모:</strong> ${log.memo || '없음'}
             `;
-            // 날짜순 오름차순 정렬 후 렌더링
             let sortedLogs = log.workLogs ? [...log.workLogs].sort((a, b) => new Date(a.date) - new Date(b.date)) : [];
             renderWorkLogHistory(sortedLogs, id);
             calcAndRenderRemaining(log);
@@ -671,7 +670,6 @@
 
             let updatedLogs = log.workLogs ? [...log.workLogs] : [];
             updatedLogs.push({ date: wDate, qty: wQty, memo: wMemo });
-            // 날짜 오름차순으로 정렬 유지
             updatedLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
             let newCurrentQty = updatedLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
 
@@ -744,7 +742,7 @@
                     });
                     newProductId = newProdRef.id;
                     await loadProductList();
-                } catch(e) { console.error("신규 품목 자동등록 실패", e); }
+                } catch(e) { console.error("신규 품목 자동등록 실패", e); alert('신규 품목 등록 실패'); return; }
             } else {
                 newProductId = matchedProd.id;
                 newProductName = matchedProd.name;
@@ -753,7 +751,7 @@
             if (oldProductId && oldProductId !== newProductId) {
                 const isStillUsed = packingLogsList.some(l => l.productId === oldProductId && l.id !== id);
                 if (!isStillUsed) {
-                    try { await db.collection('products').doc(oldProductId).delete(); } catch(e) { console.error("임시 간이 품목 삭제 생략/실패", e); }
+                    try { await db.collection('products').doc(oldProductId).delete(); } catch(e) { console.error("임시 간이 품목 삭제 실패", e); }
                 }
             }
 
@@ -771,7 +769,6 @@
                 }
             }
 
-            // 일괄 저장 시에도 날짜 오름차순 정렬 적용
             newWorkLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
             let newCurrentQty = newWorkLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
 
