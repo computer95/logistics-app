@@ -80,9 +80,10 @@
         .diet-badge { background: #007aff; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
         .diet-menu { font-size: 13.5px; color: #444; line-height: 1.5; white-space: pre-line; min-height: 20px; }
 
-        /* 제품 관리 리스트 및 모달 개편 CSS */
-        .simple-list-item { padding: 16px 14px; border-bottom: 1px solid #f1f1f1; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; background: #fff; transition: background 0.2s; }
+        /* 제품 관리 리스트 (포장일지 스타일 카드 테두리 적용) */
+        .simple-list-item { background: #fcfcfc; border: 1px solid #e1e4e8; border-left: 5px solid #007aff; border-radius: 8px; padding: 14px; margin-bottom: 10px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
         .simple-list-item:hover { background: #f0f7ff; }
+
         .detail-section-title { font-size: 13px; font-weight: bold; color: #007aff; margin-bottom: 8px; margin-top: 18px; border-bottom: 1px solid #d0e1ff; padding-bottom: 4px; }
         .weight-box { background: #fff5e6; border: 1px solid #ffe0b2; padding: 12px; border-radius: 8px; font-size: 14.5px; font-weight: bold; display: flex; flex-direction: column; gap: 6px; color: #e65100; }
         .history-list { max-height: 140px; overflow-y: auto; background: #fafafa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 8px; font-size: 13px; }
@@ -113,7 +114,7 @@
         </div>
         <div class="input-group">
             <label for="inputQty">입력 수량</label>
-            <input type="number" id="inputQty" placeholder="수량을 입력하세요" onfocus="this.select()" onkeydown="handleCalcKey(event)">
+            <input type="number" id="inputQty" placeholder="수량을 입력하세요" onfocus="this.select()" oninput="calculateUnits()" onkeydown="handleCalcKey(event)">
         </div>
         <button class="main-btn" onclick="calculateUnits()">환산하기</button>
         <div id="calcResult" class="result-box">결과가 여기에 표시됩니다.</div>
@@ -185,7 +186,7 @@
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 10px; font-size: 12px; background:#888;" onclick="closeProductDetailModal()">닫기</button>
             </h2>
             
-            <div class="detail-section-title">⚖️ 중량 스펙</div>
+            <div class="detail-section-title">⚖️ 중량 스펙 정보</div>
             <div id="pdModalWeightBox" class="weight-box"></div>
 
             <div class="detail-section-title">📋 최근 포장 이력</div>
@@ -249,9 +250,13 @@
                     <div id="editLogProductDropdown" class="search-dropdown"></div>
                     <input type="hidden" id="editLogSelectedProductId">
                 </div>
-                <div style="display:flex; gap:4px; margin-bottom:4px;">
-                    <input type="date" id="editLogDueDate" style="flex:1; padding:8px; font-size:13px;">
-                    <input type="number" id="editLogTargetQty" placeholder="목표수량" style="flex:1; padding:8px; font-size:13px;" onfocus="this.select()">
+                <div class="input-group" style="margin-bottom:6px;">
+                    <label style="font-size:12px; color:#555;">출고일</label>
+                    <input type="date" id="editLogDueDate" style="padding:8px; font-size:13px;">
+                </div>
+                <div class="input-group" style="margin-bottom:6px;">
+                    <label style="font-size:12px; color:#555;">목표수량</label>
+                    <input type="number" id="editLogTargetQty" placeholder="목표수량" style="padding:8px; font-size:13px;" onfocus="this.select()">
                 </div>
                 <input type="text" id="editLogMemo" placeholder="메모 입력" style="padding:8px; font-size:13px; margin-bottom:4px;">
             </div>
@@ -262,14 +267,13 @@
                     <input type="date" id="dailyWorkDate" style="flex:1; padding:6px; font-size:12px;">
                     <input type="number" id="dailyWorkQty" placeholder="수량(set)" style="flex:1; padding:6px; font-size:12px;" onfocus="this.select()">
                 </div>
-                <div style="display:flex; gap:4px; margin-bottom:4px;">
-                    <input type="text" id="dailyWorkMemo" placeholder="간단 메모" style="flex:2; padding:6px; font-size:12px;">
-                    <input type="text" id="dailyRemainingSub" placeholder="남은 부자재 (예: 단 5개, 박스 2개)" style="flex:3; padding:6px; font-size:12px;">
+                <div style="margin-bottom:4px;">
+                    <input type="text" id="dailyWorkMemo" placeholder="간단 메모 입력" style="width:100%; padding:6px; font-size:12px;">
                 </div>
                 <button class="main-btn" style="margin-top:0; padding:6px; font-size:12px; background:#34c759;" onclick="addSingleWorkLogRecord()">작업 기록 추가</button>
             </div>
 
-            <div style="max-height: 140px; overflow-y: auto; background: #fafafa; border:1px solid #e1e4e8; border-radius:6px; padding:6px; margin-bottom:10px; font-size:12px;" id="workLogHistoryContainer">
+            <div style="max-height: 140px; overflow-y: auto; background: #fafafa; border:1px solid #e1e4e8; border-radius:6px; padding:6px; margin-bottom:10px; font-size:13px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;" id="workLogHistoryContainer">
                 기록된 작업 내역이 없습니다.
             </div>
             <div id="batchSaveBox" style="display:none; margin-bottom:10px;">
@@ -368,7 +372,6 @@
         let isEditActive = false;
         let isCompletedOpen = false;
 
-        // 초기 실행 로드 (포장 이력 조회를 위해 로그 리스트도 미리 로드해둠)
         initDietSystem();
         loadProductList();
         loadPackingLogs();
@@ -509,6 +512,7 @@
             document.getElementById('selectedProductId').value = id;
             document.getElementById('productSearchDropdown').style.display = 'none';
             document.getElementById('inputQty').focus();
+            calculateUnits();
         }
 
         function setCalcMode(mode) {
@@ -520,6 +524,7 @@
                 document.getElementById('calcModeEa').classList.add('active');
                 document.getElementById('calcModeSet').classList.remove('active');
             }
+            calculateUnits();
         }
 
         function handleCalcKey(e) {
@@ -530,17 +535,14 @@
             return Number.isInteger(val) ? val.toLocaleString() : val.toFixed(decimals);
         }
 
+        // 환산하기 수행 및 결과 영역으로 부드럽게 스크롤 이동 기능 복구
         function calculateUnits() {
             const pId = document.getElementById('selectedProductId').value;
             const rawQty = parseFloat(document.getElementById('inputQty').value);
             const resultBox = document.getElementById('calcResult');
 
-            if (!pId) {
-                resultBox.innerHTML = '⚠️ 목록에서 제품을 선택해 주세요.';
-                return;
-            }
-            if (isNaN(rawQty) || rawQty <= 0) {
-                resultBox.innerHTML = '⚠️ 올바른 수량을 입력해 주세요.';
+            if (!pId || isNaN(rawQty) || rawQty <= 0) {
+                resultBox.innerHTML = '결과가 여기에 표시됩니다.';
                 return;
             }
 
@@ -582,6 +584,7 @@
                 }
             }
             resultBox.innerHTML = resultHtml;
+            resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         async function loadPackingLogs() {
@@ -591,7 +594,6 @@
                 snapshot.forEach(doc => {
                     packingLogsList.push({ id: doc.id, ...doc.data() });
                 });
-                // 관리자 창에 있으면 포장일지 리스트를 안 그려도 되니 체크
                 if (document.getElementById('logTab').classList.contains('active')) {
                     renderPackingLogsHtml();
                 }
@@ -789,7 +791,6 @@
             document.getElementById('dailyWorkDate').value = new Date().toISOString().substring(0, 10);
             document.getElementById('dailyWorkQty').value = '';
             document.getElementById('dailyWorkMemo').value = '';
-            document.getElementById('dailyRemainingSub').value = '';
 
             document.getElementById('detailLogModal').style.display = 'flex';
         }
@@ -824,6 +825,7 @@
                 batchBox.style.display = 'none';
                 btn.innerText = '수정';
             }
+            renderWorkLogHistory(packingLogsList.find(l => l.id === document.getElementById('detailLogId').value));
         }
 
         function filterEditLogProducts() {
@@ -846,6 +848,7 @@
             document.getElementById('editLogProductDropdown').style.display = 'none';
         }
 
+        // 작업일지 폰트 및 메모 우측정렬, 삭제버튼은 수정 모드에서만 표출
         function renderWorkLogHistory(log) {
             const container = document.getElementById('workLogHistoryContainer');
             if (!log.history || log.history.length === 0) {
@@ -856,19 +859,19 @@
             log.history.slice().reverse().forEach((h, idx) => {
                 let originalIdx = log.history.length - 1 - idx;
                 html += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #eee;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #eee;">
                         <div>
-                            <strong>${h.date}</strong>: +${h.qty.toLocaleString()} set 
-                            ${h.memo ? `(${h.memo})` : ''} 
-                            ${h.remainingSub ? `<br><span style="color:#007aff; font-size:11px;">잔여부자재: ${h.remainingSub}</span>` : ''}
+                            <strong>${h.date}</strong>: +${h.qty.toLocaleString()} set
+                            ${h.memo ? `<span style="color:#666; margin-left:6px; float:right;">${h.memo}</span>` : ''}
                         </div>
-                        <button class="sub-btn del-btn" style="padding:2px 5px; font-size:10px;" onclick="deleteSingleWorkLogRecord(${originalIdx})">삭제</button>
+                        ${isEditActive ? `<button class="sub-btn del-btn" style="padding:2px 6px; font-size:10px;" onclick="deleteSingleWorkLogRecord(${originalIdx})">삭제</button>` : ''}
                     </div>
                 `;
             });
             container.innerHTML = html;
         }
 
+        // 남은 목표량 환산: 파레트와 카톤만 표기, 포장구성 미입력 시 숨김 처리
         function updateRemainingCalcBox(log) {
             const box = document.getElementById('remainingCalcBox');
             let remaining = log.targetQty - log.currentQty;
@@ -878,25 +881,23 @@
             }
 
             const p = productList.find(item => item.id === log.productId);
-            if (!p) {
-                box.innerHTML = `잔여 목표 수량: <strong>${remaining.toLocaleString()} set</strong> (제품 스펙 정보 없음)`;
+            // 기존처럼 포장 구성 미입력 제품인 경우 아예 숨김 처리
+            if (!p || (!p.palletToCarton && !p.cartonToInner && !p.setToInner)) {
+                box.style.display = 'none';
                 return;
             }
+            box.style.display = 'block';
 
             let cToI = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
             let innerPerCarton = cToI;
             let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit;
             let totalEa = remaining * unitPerSet;
+            let unitsPerPallet = p.palletToCarton * innerPerCarton * p.innerToUnit;
 
+            let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
             let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
-            let totalSets = (p.hasSet === 'O') ? formatVal(remaining, 1) : 0;
-            let totalInners = formatVal(totalEa / p.innerToUnit, 1);
 
-            let res = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()} set 기준):</strong><br>`;
-            res += `📦 카톤: <strong>${totalCartons}</strong> 개`;
-            if (p.hasSet === 'O') res += ` | 🎁 세트: <strong>${totalSets}</strong> 개`;
-            res += ` | 📦 단케이스: <strong>${totalInners}</strong> 개`;
-            box.innerHTML = res;
+            box.innerHTML = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()} set):</strong><br>🅿️ 파레트: <strong>${totalPallets}</strong> 개 | 📦 카톤: <strong>${totalCartons}</strong> 개`;
         }
 
         async function addSingleWorkLogRecord() {
@@ -904,7 +905,6 @@
             let date = document.getElementById('dailyWorkDate').value;
             let qty = parseInt(document.getElementById('dailyWorkQty').value);
             let memo = document.getElementById('dailyWorkMemo').value.trim();
-            let remainingSub = document.getElementById('dailyRemainingSub').value.trim();
 
             if (!date || isNaN(qty) || qty <= 0) {
                 alert('작업일자와 수량을 올바르게 입력해 주세요.');
@@ -915,7 +915,7 @@
             if (!log) return;
 
             if (!log.history) log.history = [];
-            log.history.push({ date, qty, memo, remainingSub });
+            log.history.push({ date, qty, memo });
             log.currentQty = log.history.reduce((sum, h) => sum + h.qty, 0);
 
             try {
@@ -950,6 +950,7 @@
             }
         }
 
+        // 수정 시 제품명 변경 오류 및 신규 생성 완벽 해결 로직
         async function saveAllWorkLogsBatch() {
             let logId = document.getElementById('detailLogId').value;
             let productName = document.getElementById('editLogProductSearch').value.trim();
@@ -963,16 +964,25 @@
                 return;
             }
 
-            if (!productId) {
-                let match = productList.find(p => p.name === productName);
-                if (match) productId = match.id;
-                else {
-                    let newRef = await db.collection('products').add({
-                        name: productName, hasSet: 'X', palletToCarton: 24, cartonToInner: 30, innerToUnit: 10,
-                        unitWeight: 0, setWeight: 0, cartonWeight: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    productId = newRef.id;
-                    await loadProductList();
+            // 만약 검색창에 입력은 했으나 드롭다운을 안 눌렀거나 새로운 이름으로 직접 입력한 경우
+            let match = productList.find(p => p.id === productId && p.name === productName);
+            if (!match) {
+                let nameMatch = productList.find(p => p.name === productName);
+                if (nameMatch) {
+                    productId = nameMatch.id;
+                } else {
+                    // 아예 완전 새로운 제품 이름인 경우 제품관리(products)에 자동 생성
+                    try {
+                        let newRef = await db.collection('products').add({
+                            name: productName, hasSet: 'X', palletToCarton: 24, cartonToInner: 30, innerToUnit: 10,
+                            unitWeight: 0, setWeight: 0, cartonWeight: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        productId = newRef.id;
+                        await loadProductList();
+                    } catch (e) {
+                        alert('신규 제품 자동 등록 실패');
+                        return;
+                    }
                 }
             }
 
@@ -1018,21 +1028,26 @@
             } catch (e) { alert('삭제 오류'); }
         }
 
-        // --- [제품 관리 탭 개편 영역] ---
+        // --- 제품 관리 탭 영역 ---
         function handlePasswordKey(e) { if (e.key === 'Enter') checkAdminPassword(); }
+        
+        // 비밀번호 오입력 시 입력창 비우기 및 포커스 복원 기능 복구
         function checkAdminPassword() {
-            const pw = document.getElementById('adminPasswordInput').value;
-            if (pw === '1234') { // 관리자 비밀번호 (임시 고정)
+            const inputField = document.getElementById('adminPasswordInput');
+            const pw = inputField.value;
+            if (pw === '1234') {
                 isAdminAuthenticated = true;
                 document.getElementById('passwordScreen').style.display = 'none';
                 document.getElementById('adminContent').style.display = 'block';
                 renderProductAdminList();
             } else {
                 document.getElementById('pwErrorMsg').style.display = 'block';
+                inputField.value = '';
+                inputField.focus();
             }
         }
 
-        // 극단적으로 심플해진 제품 리스트 렌더링
+        // 포장일지 스타일 테두리를 적용한 제품관리 리스트
         async function renderProductAdminList() {
             await loadProductList();
             const container = document.getElementById('productListContainer');
@@ -1043,11 +1058,11 @@
                 return;
             }
 
-            let html = '<div style="border-top: 1px solid #eee; margin-top:5px;">';
+            let html = '<div style="margin-top:5px;">';
             productList.forEach(p => {
                 html += `
                     <div class="simple-list-item" onclick="openProductDetailModal('${p.id}')">
-                        <span>📦</span> ${p.name}
+                        <span>📦</span> <strong>${p.name}</strong>
                     </div>
                 `;
             });
@@ -1055,7 +1070,6 @@
             container.innerHTML = html;
         }
 
-        // 리스트 필터링 (심플 리스트용)
         function filterAdminList() {
             const keyword = document.getElementById('adminFilterInput').value.trim().toLowerCase();
             const items = document.querySelectorAll('.simple-list-item');
@@ -1068,15 +1082,14 @@
             });
         }
 
-        // ★ 새롭게 추가된 [제품 상세 정보 모달] 로직
+        // 제품관리 상세창 (순서: 중량 스펙 -> 포장 구성 사양)
         function openProductDetailModal(id) {
             const p = productList.find(item => item.id === id);
             if (!p) return;
             
-            // 모달 타이틀 세팅
             document.getElementById('pdModalTitle').innerText = `📦 ${p.name}`;
             
-            // 1. 중량 정보 (Top)
+            // 1. 중량 스펙 (Top)
             const weightBox = document.getElementById('pdModalWeightBox');
             let wHtml = '';
             if (p.unitWeight) wHtml += `<div>단제품: ${p.unitWeight} g</div>`;
@@ -1085,9 +1098,8 @@
             if (!wHtml) wHtml = '<div style="color:#888; font-weight:normal; font-size:13px;">등록된 중량 정보가 없습니다.</div>';
             weightBox.innerHTML = wHtml;
 
-            // 2. 포장 이력 연동 (Middle)
+            // 2. 최근 포장 이력 (Middle)
             const historyBox = document.getElementById('pdModalHistoryBox');
-            // packingLogsList에서 해당 제품 ID의 로그를 필터링 후, 최신 출고일 순으로 정렬
             let relatedLogs = packingLogsList.filter(log => log.productId === id && (log.currentQty > 0 || log.isForceDone));
             relatedLogs.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
             
@@ -1108,7 +1120,7 @@
                 historyBox.innerHTML = hHtml;
             }
 
-            // 3. 포장 사양 (Bottom)
+            // 3. 포장 구성 사양 (Bottom)
             const specBox = document.getElementById('pdModalSpecBox');
             let cToI = (p.hasSet === 'O') ? `세트당 단케이스: <strong>${p.setToInner}개</strong><br>카톤당 세트: <strong>${p.cartonToSet}개</strong>` : `카톤당 단케이스: <strong>${p.cartonToInner}개</strong>`;
             specBox.innerHTML = `
@@ -1117,7 +1129,6 @@
                 단케이스당 반제품: <strong>${p.innerToUnit} 개</strong>
             `;
 
-            // 4. 액션 버튼 연결 (수정 / 삭제)
             document.getElementById('pdModalEditBtn').onclick = () => { 
                 closeProductDetailModal(); 
                 openEditModal(p.id); 
@@ -1133,7 +1144,6 @@
             document.getElementById('productDetailModal').style.display = 'none';
         }
 
-        // --- 등록 및 수정 공통 기능 ---
         function openAddModal() {
             document.getElementById('regProductName').value = '';
             selectSetOption('X', 'reg');
