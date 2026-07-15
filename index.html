@@ -50,18 +50,6 @@
         .password-screen { text-align: center; padding: 30px 10px; }
         .password-screen input { text-align: center; letter-spacing: 5px; font-size: 24px; margin-bottom: 15px; }
         
-        .product-card { background: #fcfcfc; border: 1px solid #e1e4e8; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-        .product-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .product-name-txt { font-weight: bold; font-size: 15px; color: #111; }
-        
-        .spec-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; background: #f4f6f8; border-radius: 6px; overflow: hidden; text-align: center; }
-        .spec-table th { background: #e9ecf0; color: #444; padding: 6px 2px; font-weight: 600; border-bottom: 1px solid #ddd; }
-        .spec-table td { padding: 7px 2px; color: #333; font-weight: 500; }
-        .spec-table tr:not(:last-child) td { border-bottom: 1px solid #e1e4e8; }
-        
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
-        .modal-box { background: #fff; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-
         .log-card { background: #fcfcfc; border: 1px solid #e1e4e8; border-left: 5px solid #ccc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; }
         .log-card.status-none { border-left-color: #ccc; }
         .log-card.status-urgent { border-left-color: #ff3b30; background: #fff5f5; }
@@ -91,6 +79,17 @@
         .diet-day { font-weight: bold; font-size: 15px; color: #111; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
         .diet-badge { background: #007aff; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
         .diet-menu { font-size: 13.5px; color: #444; line-height: 1.5; white-space: pre-line; min-height: 20px; }
+
+        /* 제품 관리 리스트 및 모달 개편 CSS */
+        .simple-list-item { padding: 16px 14px; border-bottom: 1px solid #f1f1f1; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; background: #fff; transition: background 0.2s; }
+        .simple-list-item:hover { background: #f0f7ff; }
+        .detail-section-title { font-size: 13px; font-weight: bold; color: #007aff; margin-bottom: 8px; margin-top: 18px; border-bottom: 1px solid #d0e1ff; padding-bottom: 4px; }
+        .weight-box { background: #fff5e6; border: 1px solid #ffe0b2; padding: 12px; border-radius: 8px; font-size: 14.5px; font-weight: bold; display: flex; flex-direction: column; gap: 6px; color: #e65100; }
+        .history-list { max-height: 140px; overflow-y: auto; background: #fafafa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 8px; font-size: 13px; }
+        .spec-info-box { background: #f4f6f8; border-radius: 6px; padding: 12px; font-size: 13.5px; color: #444; line-height: 1.6; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .modal-box { background: #fff; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -175,6 +174,29 @@
             <div>
                 <label id="listCountLabel" style="margin-bottom: 8px; font-size: 13px; color: #666;">등록된 품목 리스트 (0)</label>
                 <div id="productListContainer">데이터를 불러오는 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="productDetailModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="font-size: 18px; color: #111; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                <span id="pdModalTitle">📦 제품명</span>
+                <button type="button" class="sub-btn del-btn" style="padding: 4px 10px; font-size: 12px; background:#888;" onclick="closeProductDetailModal()">닫기</button>
+            </h2>
+            
+            <div class="detail-section-title">⚖️ 중량 스펙</div>
+            <div id="pdModalWeightBox" class="weight-box"></div>
+
+            <div class="detail-section-title">📋 최근 포장 이력</div>
+            <div id="pdModalHistoryBox" class="history-list"></div>
+
+            <div class="detail-section-title">⚙️ 포장 구성 사양 (계산용)</div>
+            <div id="pdModalSpecBox" class="spec-info-box"></div>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button id="pdModalEditBtn" class="main-btn" style="background-color:#ff9500; margin-top:0; font-size:14px;">수정하기</button>
+                <button id="pdModalDeleteBtn" class="main-btn" style="background-color:#ff3b30; margin-top:0; font-size:14px;">삭제하기</button>
             </div>
         </div>
     </div>
@@ -346,8 +368,10 @@
         let isEditActive = false;
         let isCompletedOpen = false;
 
+        // 초기 실행 로드 (포장 이력 조회를 위해 로그 리스트도 미리 로드해둠)
         initDietSystem();
         loadProductList();
+        loadPackingLogs();
 
         function initDietSystem() {
             const weekDates = getThisWeekDates();
@@ -445,35 +469,147 @@
             if (tabId === 'calcTab') loadProductList();
             else if (tabId === 'logTab') loadPackingLogs();
             else if (tabId === 'dietTab') loadDietFromFirestore();
-            else if (tabId === 'manageTab') { if (isAdminAuthenticated) renderProductAdminList(); }
+            else if (tabId === 'manageTab') {
+                if (isAdminAuthenticated) renderProductAdminList();
+            }
+        }
+
+        async function loadProductList() {
+            try {
+                const snapshot = await db.collection('products').orderBy('name').get();
+                productList = [];
+                snapshot.forEach(doc => {
+                    productList.push({ id: doc.id, ...doc.data() });
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        function filterProducts() {
+            const keyword = document.getElementById('productSearchInput').value.trim().toLowerCase();
+            const dropdown = document.getElementById('productSearchDropdown');
+            if (!keyword) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
+            if (filtered.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            let html = '';
+            filtered.forEach(p => {
+                html += `<div class="search-item" onclick="selectProduct('${p.id}', '${p.name}')">${p.name}</div>`;
+            });
+            dropdown.innerHTML = html;
+            dropdown.style.display = 'block';
+        }
+
+        function selectProduct(id, name) {
+            document.getElementById('productSearchInput').value = name;
+            document.getElementById('selectedProductId').value = id;
+            document.getElementById('productSearchDropdown').style.display = 'none';
+            document.getElementById('inputQty').focus();
+        }
+
+        function setCalcMode(mode) {
+            currentCalcMode = mode;
+            if (mode === 'SET') {
+                document.getElementById('calcModeSet').classList.add('active');
+                document.getElementById('calcModeEa').classList.remove('active');
+            } else {
+                document.getElementById('calcModeEa').classList.add('active');
+                document.getElementById('calcModeSet').classList.remove('active');
+            }
+        }
+
+        function handleCalcKey(e) {
+            if (e.key === 'Enter') calculateUnits();
+        }
+
+        function formatVal(val, decimals = 1) {
+            return Number.isInteger(val) ? val.toLocaleString() : val.toFixed(decimals);
+        }
+
+        function calculateUnits() {
+            const pId = document.getElementById('selectedProductId').value;
+            const rawQty = parseFloat(document.getElementById('inputQty').value);
+            const resultBox = document.getElementById('calcResult');
+
+            if (!pId) {
+                resultBox.innerHTML = '⚠️ 목록에서 제품을 선택해 주세요.';
+                return;
+            }
+            if (isNaN(rawQty) || rawQty <= 0) {
+                resultBox.innerHTML = '⚠️ 올바른 수량을 입력해 주세요.';
+                return;
+            }
+
+            const p = productList.find(item => item.id === pId);
+            if (!p) {
+                resultBox.innerHTML = '⚠️ 선택한 제품 정보를 찾을 수 없습니다.';
+                return;
+            }
+
+            let cToI = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
+            let innerPerCarton = cToI; 
+            let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit; 
+            let totalEa = (currentCalcMode === 'EA') ? rawQty : (rawQty * unitPerSet);
+            let unitsPerPallet = p.palletToCarton * innerPerCarton * p.innerToUnit;
+            
+            let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
+            let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
+            let totalSets = (p.hasSet === 'O') ? formatVal(totalEa / (p.setToInner * p.innerToUnit), 1) : 0;
+            let totalInners = formatVal(totalEa / p.innerToUnit, 1);
+
+            let resultHtml = `<strong>📊 [${p.name}] 환산 결과</strong><br><br>`;
+            resultHtml += `🅿️ 파레트 : <strong>${totalPallets}</strong> 개<br>`;
+            resultHtml += `📦 카톤 : <strong>${totalCartons}</strong> 개<br>`;
+            if (p.hasSet === 'O') {
+                resultHtml += `🎁 세트케이스 : <strong>${totalSets}</strong> 개<br>`;
+            }
+            resultHtml += `📦 단케이스 : <strong>${totalInners}</strong> 개<br>`;
+            resultHtml += `✨ 총 개수(EA) : <strong>${totalEa.toLocaleString()}</strong> 개`;
+
+            if (p.unitWeight || p.setWeight || p.cartonWeight) {
+                resultHtml += `<br><br>⚖️ <strong>예상 중량:</strong><br>`;
+                if (p.cartonWeight && totalCartons > 0) {
+                    let estWeightKg = (parseFloat(totalCartons) * p.cartonWeight).toFixed(1);
+                    resultHtml += `- 총 카톤 기준 중량: <strong>${Number(estWeightKg).toLocaleString()} kg</strong><br>`;
+                }
+                if (p.unitWeight) {
+                    let estTotalKg = ((totalEa * p.unitWeight) / 1000).toFixed(1);
+                    resultHtml += `- 총 반제품 기준 중량: <strong>${Number(estTotalKg).toLocaleString()} kg</strong>`;
+                }
+            }
+            resultBox.innerHTML = resultHtml;
         }
 
         async function loadPackingLogs() {
-            await loadProductList();
             try {
                 const snapshot = await db.collection('packing_logs').orderBy('dueDate', 'asc').get();
                 packingLogsList = [];
-                snapshot.forEach(doc => { packingLogsList.push({ id: doc.id, ...doc.data() }); });
-                renderPackingLogsHtml();
+                snapshot.forEach(doc => {
+                    packingLogsList.push({ id: doc.id, ...doc.data() });
+                });
+                // 관리자 창에 있으면 포장일지 리스트를 안 그려도 되니 체크
+                if (document.getElementById('logTab').classList.contains('active')) {
+                    renderPackingLogsHtml();
+                }
             } catch (e) {
-                document.getElementById('packingLogContainer').innerHTML = '<p style="color:#666; font-size:13px; text-align:center;">포장일지 불러오기 오류</p>';
+                console.error("포장일지 불러오기 오류", e);
             }
         }
 
         function renderPackingLogsHtml() {
             const container = document.getElementById('packingLogContainer');
             document.getElementById('logCountLabel').innerText = `(${packingLogsList.length}건)`;
-            
             if (packingLogsList.length === 0) {
                 container.innerHTML = '<p style="color:#666; font-size:13px; text-align:center; padding:15px;">등록된 출고 일정이 없습니다.</p>';
                 return;
             }
-
             const today = new Date();
             today.setHours(0,0,0,0);
             const todayStr = today.toISOString().substring(0, 10);
-
-            // D-7 계산용 타임스탬프
             const sevenDaysLater = new Date(today);
             sevenDaysLater.setDate(today.getDate() + 7);
 
@@ -508,7 +644,6 @@
                 });
                 html += `</div>`;
             }
-
             container.innerHTML = html;
         }
 
@@ -521,7 +656,6 @@
             let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
             let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
             
-            // D-7 안쪽 & 진행 전(currentQty === 0 이고 완료되지 않은 상태) 검사
             let dueObj = new Date(log.dueDate);
             dueObj.setHours(0,0,0,0);
             let isUrgent = (!isDone && log.currentQty === 0 && !log.isHold && dueObj >= new Date(todayStr) && dueObj <= sevenDaysLater);
@@ -557,360 +691,461 @@
             document.getElementById('logModalMemo').value = '';
             document.getElementById('addLogModal').style.display = 'flex';
         }
-        function closeAddLogModal() { document.getElementById('addLogModal').style.display = 'none'; }
+
+        function closeAddLogModal() {
+            document.getElementById('addLogModal').style.display = 'none';
+        }
 
         function filterLogModalProducts() {
-            const keyword = document.getElementById('logModalProductSearch').value.toLowerCase();
+            const keyword = document.getElementById('logModalProductSearch').value.trim().toLowerCase();
             const dropdown = document.getElementById('logModalProductDropdown');
-            dropdown.innerHTML = '';
-            if (!keyword) { dropdown.style.display = 'none'; return; }
+            if (!keyword) {
+                dropdown.style.display = 'none';
+                return;
+            }
             const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
-            if (filtered.length === 0) { dropdown.style.display = 'none'; return; }
+            if (filtered.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            let html = '';
             filtered.forEach(p => {
-                const item = document.createElement('div');
-                item.className = 'search-item';
-                item.innerText = `📦 ${p.name}`;
-                item.onclick = () => {
-                    document.getElementById('logModalProductSearch').value = p.name;
-                    document.getElementById('logModalSelectedProductId').value = p.id;
-                    dropdown.style.display = 'none';
-                };
-                dropdown.appendChild(item);
+                html += `<div class="search-item" onclick="selectLogModalProduct('${p.id}', '${p.name}')">${p.name}</div>`;
             });
+            dropdown.innerHTML = html;
             dropdown.style.display = 'block';
         }
 
-        async function openDetailLogModal(id) {
-            const log = packingLogsList.find(x => x.id === id);
+        function selectLogModalProduct(id, name) {
+            document.getElementById('logModalProductSearch').value = name;
+            document.getElementById('logModalSelectedProductId').value = id;
+            document.getElementById('logModalProductDropdown').style.display = 'none';
+        }
+
+        async function savePackingLog() {
+            let productName = document.getElementById('logModalProductSearch').value.trim();
+            let productId = document.getElementById('logModalSelectedProductId').value;
+            let dueDate = document.getElementById('logModalDueDate').value;
+            let targetQty = parseInt(document.getElementById('logModalTargetQty').value);
+            let memo = document.getElementById('logModalMemo').value.trim();
+
+            if (!productName) { alert('제품명을 입력해 주세요.'); return; }
+            if (!dueDate) { alert('출고일을 선택해 주세요.'); return; }
+            if (isNaN(targetQty) || targetQty <= 0) { alert('목표 수량을 올바르게 입력해 주세요.'); return; }
+
+            if (!productId) {
+                let match = productList.find(p => p.name === productName);
+                if (match) {
+                    productId = match.id;
+                } else {
+                    try {
+                        let newRef = await db.collection('products').add({
+                            name: productName, hasSet: 'X', palletToCarton: 24, cartonToInner: 30, innerToUnit: 10,
+                            unitWeight: 0, setWeight: 0, cartonWeight: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        productId = newRef.id;
+                        await loadProductList();
+                    } catch (e) {
+                        alert('신규 제품 자동 등록 실패');
+                        return;
+                    }
+                }
+            }
+
+            try {
+                await db.collection('packing_logs').add({
+                    productId, productName, dueDate, targetQty, currentQty: 0, memo, history: [],
+                    isHold: false, isForceDone: false, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                closeAddLogModal();
+                loadPackingLogs();
+            } catch (e) {
+                alert('일정 저장 오류');
+            }
+        }
+
+        async function openDetailLogModal(logId) {
+            let log = packingLogsList.find(l => l.id === logId);
             if (!log) return;
-            isEditActive = false;
-            document.getElementById('editBasicContainer').style.display = 'none';
-            document.getElementById('batchSaveBox').style.display = 'none';
-            document.getElementById('dailyAddSection').style.display = 'block'; 
-            document.getElementById('toggleEditModeBtn').innerText = '수정';
-            document.getElementById('toggleEditModeBtn').style.background = '#ff9500';
 
             document.getElementById('detailLogId').value = log.id;
             document.getElementById('detailOldProductId').value = log.productId;
-            document.getElementById('editLogProductSearch').value = log.productName;
-            document.getElementById('editLogSelectedProductId').value = log.productId;
-            document.getElementById('editLogDueDate').value = log.dueDate;
-            document.getElementById('editLogTargetQty').value = log.targetQty;
-            document.getElementById('editLogMemo').value = log.memo || '';
+            document.getElementById('detailLogSummary').innerHTML = `
+                📌 <strong>제품:</strong> ${log.productName}<br>
+                📅 <strong>출고일:</strong> ${log.dueDate} | 🎯 <strong>목표:</strong> ${log.targetQty.toLocaleString()} set<br>
+                💬 <strong>메모:</strong> ${log.memo || '없음'}
+            `;
             
+            isEditActive = false;
+            document.getElementById('editBasicContainer').style.display = 'none';
+            document.getElementById('batchSaveBox').style.display = 'none';
+            document.getElementById('toggleEditModeBtn').innerText = '수정';
+
+            renderWorkLogHistory(log);
+            updateRemainingCalcBox(log);
+
+            document.getElementById('toggleHoldBtn').innerText = log.isHold ? '보류 해제' : '보류 지정';
+            document.getElementById('toggleForceDoneBtn').innerText = log.isForceDone ? '완료 취소' : '수동 완료';
             document.getElementById('dailyWorkDate').value = new Date().toISOString().substring(0, 10);
             document.getElementById('dailyWorkQty').value = '';
             document.getElementById('dailyWorkMemo').value = '';
             document.getElementById('dailyRemainingSub').value = '';
 
-            const holdBtn = document.getElementById('toggleHoldBtn');
-            if (log.isHold) {
-                holdBtn.innerText = '보류 해제';
-                holdBtn.style.background = '#888';
-                holdBtn.style.color = '#fff';
-            } else {
-                holdBtn.innerText = '보류 지정';
-                holdBtn.style.background = '#ffcc00';
-                holdBtn.style.color = '#333';
-            }
-
-            const forceBtn = document.getElementById('toggleForceDoneBtn');
-            if (log.isForceDone) {
-                forceBtn.innerText = '수동완료 취소';
-                forceBtn.style.background = '#888';
-            } else {
-                forceBtn.innerText = '수동 완료';
-                forceBtn.style.background = '#34c759';
-            }
-
-            let percent = log.targetQty > 0 ? Math.round((log.currentQty / log.targetQty) * 100) : 0;
-            document.getElementById('detailLogSummary').innerHTML = `
-                <strong>제품명:</strong> ${log.productName}<br>
-                <strong>출고일:</strong> <strong>${log.dueDate}</strong><br>
-                <strong>진행상황:</strong> ${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()} (${percent}%) ${log.isForceDone ? '<span style="color:#34c759; font-weight:bold;">[수동완료됨]</span>' : ''}<br>
-                <strong>메모:</strong> ${log.memo || '없음'}
-            `;
-            let sortedLogs = log.workLogs ? [...log.workLogs].sort((a, b) => new Date(a.date) - new Date(b.date)) : [];
-            renderWorkLogHistory(sortedLogs, id);
-            calcAndRenderRemaining(log);
             document.getElementById('detailLogModal').style.display = 'flex';
         }
-        function closeDetailLogModal() { document.getElementById('detailLogModal').style.display = 'none'; }
 
-        function filterEditLogProducts() {
-            const keyword = document.getElementById('editLogProductSearch').value.toLowerCase();
-            const dropdown = document.getElementById('editLogProductDropdown');
-            dropdown.innerHTML = '';
-            if (!keyword) { dropdown.style.display = 'none'; return; }
-            const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
-            if (filtered.length === 0) { dropdown.style.display = 'none'; return; }
-            filtered.forEach(p => {
-                const item = document.createElement('div');
-                item.className = 'search-item';
-                item.innerText = `📦 ${p.name}`;
-                item.onclick = () => {
-                    document.getElementById('editLogProductSearch').value = p.name;
-                    document.getElementById('editLogSelectedProductId').value = p.id;
-                    dropdown.style.display = 'none';
-                };
-                dropdown.appendChild(item);
-            });
-            dropdown.style.display = 'block';
+        function closeDetailLogModal() {
+            document.getElementById('detailLogModal').style.display = 'none';
+            loadPackingLogs();
         }
 
         function toggleEditMode() {
             isEditActive = !isEditActive;
-            const container = document.getElementById('editBasicContainer');
+            const editBox = document.getElementById('editBasicContainer');
             const batchBox = document.getElementById('batchSaveBox');
-            const dailyAddSec = document.getElementById('dailyAddSection');
             const btn = document.getElementById('toggleEditModeBtn');
+
             if (isEditActive) {
-                container.style.display = 'block';
+                editBox.style.display = 'block';
                 batchBox.style.display = 'block';
-                dailyAddSec.style.display = 'none'; 
-                btn.innerText = '수정닫기';
-                btn.style.background = '#333';
+                btn.innerText = '수정 취소';
+                
+                let logId = document.getElementById('detailLogId').value;
+                let log = packingLogsList.find(l => l.id === logId);
+                if (log) {
+                    document.getElementById('editLogProductSearch').value = log.productName;
+                    document.getElementById('editLogSelectedProductId').value = log.productId;
+                    document.getElementById('editLogDueDate').value = log.dueDate;
+                    document.getElementById('editLogTargetQty').value = log.targetQty;
+                    document.getElementById('editLogMemo').value = log.memo || '';
+                }
             } else {
-                container.style.display = 'none';
+                editBox.style.display = 'none';
                 batchBox.style.display = 'none';
-                dailyAddSec.style.display = 'block';
                 btn.innerText = '수정';
-                btn.style.background = '#ff9500';
-            }
-            const log = packingLogsList.find(x => x.id === document.getElementById('detailLogId').value);
-            if (log) {
-                let sortedLogs = log.workLogs ? [...log.workLogs].sort((a, b) => new Date(a.date) - new Date(b.date)) : [];
-                renderWorkLogHistory(sortedLogs, log.id);
             }
         }
 
-        function renderWorkLogHistory(logs, logId) {
+        function filterEditLogProducts() {
+            const keyword = document.getElementById('editLogProductSearch').value.trim().toLowerCase();
+            const dropdown = document.getElementById('editLogProductDropdown');
+            if (!keyword) { dropdown.style.display = 'none'; return; }
+            const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
+            if (filtered.length === 0) { dropdown.style.display = 'none'; return; }
+            let html = '';
+            filtered.forEach(p => {
+                html += `<div class="search-item" onclick="selectEditLogProduct('${p.id}', '${p.name}')">${p.name}</div>`;
+            });
+            dropdown.innerHTML = html;
+            dropdown.style.display = 'block';
+        }
+
+        function selectEditLogProduct(id, name) {
+            document.getElementById('editLogProductSearch').value = name;
+            document.getElementById('editLogSelectedProductId').value = id;
+            document.getElementById('editLogProductDropdown').style.display = 'none';
+        }
+
+        function renderWorkLogHistory(log) {
             const container = document.getElementById('workLogHistoryContainer');
-            if (!logs || logs.length === 0) {
+            if (!log.history || log.history.length === 0) {
                 container.innerHTML = '기록된 작업 내역이 없습니다.';
                 return;
             }
             let html = '';
-            logs.forEach((item, idx) => {
-                if (isEditActive) {
-                    html += `<div style="display:flex; gap:4px; align-items:center; padding:4px 0; border-bottom:1px solid #eee;">
-                        <input type="date" id="editWDate_${idx}" value="${item.date}" style="padding:4px; font-size:11px; width:95px;">
-                        <input type="number" id="editWQty_${idx}" value="${item.qty}" style="padding:4px; font-size:11px; width:65px;" onfocus="this.select()">
-                        <input type="text" id="editWMemo_${idx}" value="${item.memo || ''}" placeholder="메모" style="flex:1; padding:4px; font-size:11px;">
-                        <input type="text" id="editWSub_${idx}" value="${item.remainingSub || ''}" placeholder="잔여부자재" style="flex:1; padding:4px; font-size:11px;">
-                        <button class="sub-btn del-btn" style="padding:2px 5px; font-size:10px;" onclick="deleteWorkLogSingle('${logId}', '${item.date}')">삭제</button>
-                    </div>`;
-                } else {
-                    let memoStr = item.memo ? ` <span style="color:#666; font-size:11px;">(${item.memo})</span>` : '';
-                    let subStr = item.remainingSub ? ` <span style="color:#007aff; font-size:11px;">[잔여: ${item.remainingSub}]</span>` : '';
-                    html += `<div style="padding:5px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                        <span>📅 ${item.date} : <strong>+${Number(item.qty).toLocaleString()} set</strong></span>
-                        <span style="color:#444;">${memoStr}${subStr}</span>
-                    </div>`;
-                }
+            log.history.slice().reverse().forEach((h, idx) => {
+                let originalIdx = log.history.length - 1 - idx;
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #eee;">
+                        <div>
+                            <strong>${h.date}</strong>: +${h.qty.toLocaleString()} set 
+                            ${h.memo ? `(${h.memo})` : ''} 
+                            ${h.remainingSub ? `<br><span style="color:#007aff; font-size:11px;">잔여부자재: ${h.remainingSub}</span>` : ''}
+                        </div>
+                        <button class="sub-btn del-btn" style="padding:2px 5px; font-size:10px;" onclick="deleteSingleWorkLogRecord(${originalIdx})">삭제</button>
+                    </div>
+                `;
             });
             container.innerHTML = html;
         }
 
-        async function addSingleWorkLogRecord() {
-            const id = document.getElementById('detailLogId').value;
-            const wDate = document.getElementById('dailyWorkDate').value;
-            const wQty = Number(document.getElementById('dailyWorkQty').value);
-            const wMemo = document.getElementById('dailyWorkMemo').value.trim();
-            const wSub = document.getElementById('dailyRemainingSub').value.trim();
-            if (!wDate || !wQty) { alert('날짜와 수량을 입력해 주세요.'); return; }
+        function updateRemainingCalcBox(log) {
+            const box = document.getElementById('remainingCalcBox');
+            let remaining = log.targetQty - log.currentQty;
+            if (remaining <= 0) {
+                box.innerHTML = '🎉 목표 수량을 모두 달성했습니다!';
+                return;
+            }
 
-            const log = packingLogsList.find(x => x.id === id);
-            if (!log) return;
+            const p = productList.find(item => item.id === log.productId);
+            if (!p) {
+                box.innerHTML = `잔여 목표 수량: <strong>${remaining.toLocaleString()} set</strong> (제품 스펙 정보 없음)`;
+                return;
+            }
 
-            let updatedLogs = log.workLogs ? [...log.workLogs] : [];
-            updatedLogs.push({ date: wDate, qty: wQty, memo: wMemo, remainingSub: wSub });
-            updatedLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
-            let newCurrentQty = updatedLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
+            let cToI = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
+            let innerPerCarton = cToI;
+            let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit;
+            let totalEa = remaining * unitPerSet;
 
-            try {
-                await db.collection('packing_logs').doc(id).update({
-                    workLogs: updatedLogs,
-                    currentQty: newCurrentQty
-                });
-                alert('✅ 작업 기록이 추가되었습니다.');
-                await loadPackingLogs();
-                openDetailLogModal(id);
-            } catch(e) { alert('추가 실패'); }
+            let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
+            let totalSets = (p.hasSet === 'O') ? formatVal(remaining, 1) : 0;
+            let totalInners = formatVal(totalEa / p.innerToUnit, 1);
+
+            let res = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()} set 기준):</strong><br>`;
+            res += `📦 카톤: <strong>${totalCartons}</strong> 개`;
+            if (p.hasSet === 'O') res += ` | 🎁 세트: <strong>${totalSets}</strong> 개`;
+            res += ` | 📦 단케이스: <strong>${totalInners}</strong> 개`;
+            box.innerHTML = res;
         }
 
-        function formatVal(val, decimals = 1) { return Number(val.toFixed(decimals)).toString(); }
+        async function addSingleWorkLogRecord() {
+            let logId = document.getElementById('detailLogId').value;
+            let date = document.getElementById('dailyWorkDate').value;
+            let qty = parseInt(document.getElementById('dailyWorkQty').value);
+            let memo = document.getElementById('dailyWorkMemo').value.trim();
+            let remainingSub = document.getElementById('dailyRemainingSub').value.trim();
 
-        function calcAndRenderRemaining(log) {
-            const box = document.getElementById('remainingCalcBox');
-            const p = productList.find(item => item.id === log.productId);
-            let remainSet = log.targetQty - log.currentQty;
-            if (remainSet < 0) remainSet = 0;
-
-            if (!log.currentQty || log.currentQty <= 0) {
-                box.innerHTML = `남은 잔여량 : <strong>${remainSet.toLocaleString()} set</strong>`;
+            if (!date || isNaN(qty) || qty <= 0) {
+                alert('작업일자와 수량을 올바르게 입력해 주세요.');
                 return;
             }
 
-            if (!p || (!p.palletToCarton && !p.innerToUnit)) {
-                box.innerHTML = `남은 잔여량 : <strong>${remainSet.toLocaleString()} set</strong><br><span style="color:#e05638; font-size:11.5px;">⚠️ 기준 사양 미등록 품목 (환산 불가)</span>`;
-                return;
+            let log = packingLogsList.find(l => l.id === logId);
+            if (!log) return;
+
+            if (!log.history) log.history = [];
+            log.history.push({ date, qty, memo, remainingSub });
+            log.currentQty = log.history.reduce((sum, h) => sum + h.qty, 0);
+
+            try {
+                await db.collection('packing_logs').doc(logId).update({
+                    history: log.history,
+                    currentQty: log.currentQty
+                });
+                openDetailLogModal(logId);
+            } catch (e) {
+                alert('작업 기록 추가 오류');
             }
+        }
 
-            let cToI = (p.hasSet === 'O') ? ((p.cartonToSet || 0) * (p.setToInner || 0)) : (p.cartonToInner || 0);
-            let innerPerCarton = cToI * (p.innerToUnit || 1); 
-            let unitPerSet = (p.hasSet === 'O') ? ((p.setToInner || 1) * (p.innerToUnit || 1)) : (p.innerToUnit || 1); 
-            let totalEa = remainSet * unitPerSet;
-            let unitsPerPallet = (p.palletToCarton || 1) * innerPerCarton;
+        async function deleteSingleWorkLogRecord(index) {
+            let logId = document.getElementById('detailLogId').value;
+            let log = packingLogsList.find(l => l.id === logId);
+            if (!log || !log.history) return;
 
-            let remPallets = formatVal(totalEa / unitsPerPallet, 1);
-            let remCartons = formatVal(totalEa / innerPerCarton, 1);
+            if (!confirm('이 작업 기록을 삭제하시겠습니까?')) return;
 
-            box.innerHTML = `
-                남은 잔여량 : <strong>${remainSet.toLocaleString()} set</strong><br>
-                🅿️ 파레트 : <strong>${remPallets}</strong> 개<br>
-                📦 카톤 : <strong>${remCartons}</strong> 개
-            `;
+            log.history.splice(index, 1);
+            log.currentQty = log.history.reduce((sum, h) => sum + (h.qty || 0), 0);
+
+            try {
+                await db.collection('packing_logs').doc(logId).update({
+                    history: log.history,
+                    currentQty: log.currentQty
+                });
+                openDetailLogModal(logId);
+            } catch (e) {
+                alert('작업 기록 삭제 오류');
+            }
         }
 
         async function saveAllWorkLogsBatch() {
-            const id = document.getElementById('detailLogId').value;
-            const oldProductId = document.getElementById('detailOldProductId').value;
-            let newProductId = document.getElementById('editLogSelectedProductId').value.trim();
-            let newProductName = document.getElementById('editLogProductSearch').value.trim();
-            const dueDate = document.getElementById('editLogDueDate').value;
-            const targetQty = Number(document.getElementById('editLogTargetQty').value);
-            const memo = document.getElementById('editLogMemo').value;
-            
-            if (!newProductName || !dueDate || !targetQty) { alert('제품명, 출고일, 목표수량을 확인해 주세요.'); return; }
+            let logId = document.getElementById('detailLogId').value;
+            let productName = document.getElementById('editLogProductSearch').value.trim();
+            let productId = document.getElementById('editLogSelectedProductId').value;
+            let dueDate = document.getElementById('editLogDueDate').value;
+            let targetQty = parseInt(document.getElementById('editLogTargetQty').value);
+            let memo = document.getElementById('editLogMemo').value.trim();
 
-            let matchedProd = productList.find(x => x.id === newProductId || x.name.toLowerCase() === newProductName.toLowerCase());
-            if (!matchedProd) {
-                try {
-                    const newProdRef = await db.collection('products').add({
-                        name: newProductName,
-                        hasSet: 'X',
-                        palletToCarton: 0,
-                        cartonToInner: 0,
-                        innerToUnit: 1,
-                        timestamp: new Date()
+            if (!productName || !dueDate || isNaN(targetQty)) {
+                alert('필수 입력 항목을 확인해 주세요.');
+                return;
+            }
+
+            if (!productId) {
+                let match = productList.find(p => p.name === productName);
+                if (match) productId = match.id;
+                else {
+                    let newRef = await db.collection('products').add({
+                        name: productName, hasSet: 'X', palletToCarton: 24, cartonToInner: 30, innerToUnit: 10,
+                        unitWeight: 0, setWeight: 0, cartonWeight: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    newProductId = newProdRef.id;
+                    productId = newRef.id;
                     await loadProductList();
-                } catch(e) { console.error("신규 품목 자동등록 실패", e); alert('신규 품목 등록 실패'); return; }
-            } else {
-                newProductId = matchedProd.id;
-                newProductName = matchedProd.name;
-            }
-
-            if (oldProductId && oldProductId !== newProductId) {
-                const isStillUsed = packingLogsList.some(l => l.productId === oldProductId && l.id !== id);
-                if (!isStillUsed) {
-                    try { await db.collection('products').doc(oldProductId).delete(); } catch(e) { console.error("임시 간이 품목 삭제 실패", e); }
                 }
             }
-
-            const log = packingLogsList.find(x => x.id === id);
-            if (!log) return;
-
-            let newWorkLogs = [];
-            const historyElements = log.workLogs || [];
-            for (let idx = 0; idx < historyElements.length; idx++) {
-                const dVal = document.getElementById(`editWDate_${idx}`).value;
-                const qVal = Number(document.getElementById(`editWQty_${idx}`).value);
-                const mVal = document.getElementById(`editWMemo_${idx}`).value.trim();
-                const sVal = document.getElementById(`editWSub_${idx}`).value.trim();
-                if (dVal && qVal) {
-                    newWorkLogs.push({ date: dVal, qty: qVal, memo: mVal, remainingSub: sVal });
-                }
-            }
-
-            newWorkLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
-            let newCurrentQty = newWorkLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
 
             try {
-                await db.collection('packing_logs').doc(id).update({
-                    productId: newProductId,
-                    productName: newProductName,
-                    dueDate,
-                    targetQty,
-                    memo,
-                    workLogs: newWorkLogs,
-                    currentQty: newCurrentQty
+                await db.collection('packing_logs').doc(logId).update({
+                    productId, productName, dueDate, targetQty, memo
                 });
-                alert('✅ 제품명 및 수정 내용이 일괄 저장되었습니다.');
-                await loadPackingLogs();
-                openDetailLogModal(id);
-            } catch(e) { alert('일괄 저장 실패'); }
-        }
-
-        async function deleteWorkLogSingle(logId, targetDate) {
-            const log = packingLogsList.find(x => x.id === logId);
-            if (!log) return;
-            log.workLogs = log.workLogs.filter(item => item.date !== targetDate);
-            log.workLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
-            let newCurrentQty = log.workLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
-            try {
-                await db.collection('packing_logs').doc(logId).update({ workLogs: log.workLogs, currentQty: newCurrentQty });
-                await loadPackingLogs();
-                renderWorkLogHistory(log.workLogs, logId);
-            } catch(e) { alert('삭제 실패'); }
+                alert('✅ 수정 내용이 저장되었습니다.');
+                closeDetailLogModal();
+            } catch (e) {
+                alert('저장 오류');
+            }
         }
 
         async function toggleHoldStatus() {
-            const id = document.getElementById('detailLogId').value;
-            const log = packingLogsList.find(x => x.id === id);
+            let logId = document.getElementById('detailLogId').value;
+            let log = packingLogsList.find(l => l.id === logId);
             if (!log) return;
-            const nextHold = !log.isHold;
+            let newHold = !log.isHold;
             try {
-                await db.collection('packing_logs').doc(id).update({ isHold: nextHold });
-                alert(nextHold ? '⚠️ 보류 상태로 변경되었습니다.' : '✅ 보류가 해제되었습니다.');
-                await loadPackingLogs();
-                openDetailLogModal(id);
-            } catch(e) { alert('변경 실패'); }
+                await db.collection('packing_logs').doc(logId).update({ isHold: newHold });
+                closeDetailLogModal();
+            } catch (e) { alert('상태 변경 오류'); }
         }
 
         async function toggleForceDoneStatus() {
-            const id = document.getElementById('detailLogId').value;
-            const log = packingLogsList.find(x => x.id === id);
+            let logId = document.getElementById('detailLogId').value;
+            let log = packingLogsList.find(l => l.id === logId);
             if (!log) return;
-            const nextForce = !log.isForceDone;
+            let newForce = !log.isForceDone;
             try {
-                await db.collection('packing_logs').doc(id).update({ isForceDone: nextForce });
-                alert(nextForce ? '✅ 수동 완료 처리되었습니다.' : '✅ 수동 완료가 취소되었습니다.');
-                await loadPackingLogs();
-                openDetailLogModal(id);
-            } catch(e) { alert('변경 실패'); }
+                await db.collection('packing_logs').doc(logId).update({ isForceDone: newForce });
+                closeDetailLogModal();
+            } catch (e) { alert('상태 변경 오류'); }
         }
 
         async function deletePackingLog() {
-            const id = document.getElementById('detailLogId').value;
-            if (confirm('이 일정을 삭제하시겠습니까?')) {
-                try {
-                    await db.collection('packing_logs').doc(id).delete();
-                    alert('🗑️ 삭제되었습니다.');
-                    closeDetailLogModal();
-                    loadPackingLogs();
-                } catch(e) { alert('삭제 실패'); }
-            }
+            if (!confirm('이 출고 일정을 완전히 삭제하시겠습니까?')) return;
+            let logId = document.getElementById('detailLogId').value;
+            try {
+                await db.collection('packing_logs').doc(logId).delete();
+                closeDetailLogModal();
+            } catch (e) { alert('삭제 오류'); }
         }
 
+        // --- [제품 관리 탭 개편 영역] ---
+        function handlePasswordKey(e) { if (e.key === 'Enter') checkAdminPassword(); }
         function checkAdminPassword() {
-            const inputEl = document.getElementById('adminPasswordInput');
-            if (inputEl.value === "3417") {
+            const pw = document.getElementById('adminPasswordInput').value;
+            if (pw === '1234') { // 관리자 비밀번호 (임시 고정)
                 isAdminAuthenticated = true;
                 document.getElementById('passwordScreen').style.display = 'none';
                 document.getElementById('adminContent').style.display = 'block';
                 renderProductAdminList();
             } else {
                 document.getElementById('pwErrorMsg').style.display = 'block';
-                inputEl.value = ''; inputEl.focus();
-                setTimeout(() => { document.getElementById('pwErrorMsg').style.display = 'none'; }, 2500);
             }
         }
-        function handlePasswordKey(e) { if (e.key === 'Enter') checkAdminPassword(); }
 
-        function openAddModal() { document.getElementById('addProductModal').style.display = 'flex'; }
+        // 극단적으로 심플해진 제품 리스트 렌더링
+        async function renderProductAdminList() {
+            await loadProductList();
+            const container = document.getElementById('productListContainer');
+            document.getElementById('listCountLabel').innerText = `등록된 품목 리스트 (${productList.length})`;
+            
+            if (productList.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#666; font-size:13px; padding-top:15px;">등록된 제품이 없습니다.</p>';
+                return;
+            }
+
+            let html = '<div style="border-top: 1px solid #eee; margin-top:5px;">';
+            productList.forEach(p => {
+                html += `
+                    <div class="simple-list-item" onclick="openProductDetailModal('${p.id}')">
+                        <span>📦</span> ${p.name}
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // 리스트 필터링 (심플 리스트용)
+        function filterAdminList() {
+            const keyword = document.getElementById('adminFilterInput').value.trim().toLowerCase();
+            const items = document.querySelectorAll('.simple-list-item');
+            productList.forEach((p, idx) => {
+                if (p.name.toLowerCase().includes(keyword)) {
+                    items[idx].style.display = 'flex';
+                } else {
+                    items[idx].style.display = 'none';
+                }
+            });
+        }
+
+        // ★ 새롭게 추가된 [제품 상세 정보 모달] 로직
+        function openProductDetailModal(id) {
+            const p = productList.find(item => item.id === id);
+            if (!p) return;
+            
+            // 모달 타이틀 세팅
+            document.getElementById('pdModalTitle').innerText = `📦 ${p.name}`;
+            
+            // 1. 중량 정보 (Top)
+            const weightBox = document.getElementById('pdModalWeightBox');
+            let wHtml = '';
+            if (p.unitWeight) wHtml += `<div>단제품: ${p.unitWeight} g</div>`;
+            if (p.setWeight) wHtml += `<div>세트: ${p.setWeight} g</div>`;
+            if (p.cartonWeight) wHtml += `<div>카톤: ${p.cartonWeight} kg</div>`;
+            if (!wHtml) wHtml = '<div style="color:#888; font-weight:normal; font-size:13px;">등록된 중량 정보가 없습니다.</div>';
+            weightBox.innerHTML = wHtml;
+
+            // 2. 포장 이력 연동 (Middle)
+            const historyBox = document.getElementById('pdModalHistoryBox');
+            // packingLogsList에서 해당 제품 ID의 로그를 필터링 후, 최신 출고일 순으로 정렬
+            let relatedLogs = packingLogsList.filter(log => log.productId === id && (log.currentQty > 0 || log.isForceDone));
+            relatedLogs.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+            
+            if (relatedLogs.length === 0) {
+                historyBox.innerHTML = '<div style="color:#888; text-align:center; padding:10px 0;">최근 포장 이력이 없습니다.</div>';
+            } else {
+                let hHtml = '';
+                relatedLogs.forEach(log => {
+                    let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0);
+                    let statusTxt = log.isForceDone ? '<span style="color:#34c759">[수동완료]</span>' : (isDone ? '<span style="color:#34c759">[완료]</span>' : '<span style="color:#007aff">[진행중]</span>');
+                    hHtml += `
+                        <div style="padding:6px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                            <span>📅 ${log.dueDate} ${statusTxt}</span>
+                            <strong>${log.currentQty.toLocaleString()} set</strong>
+                        </div>
+                    `;
+                });
+                historyBox.innerHTML = hHtml;
+            }
+
+            // 3. 포장 사양 (Bottom)
+            const specBox = document.getElementById('pdModalSpecBox');
+            let cToI = (p.hasSet === 'O') ? `세트당 단케이스: <strong>${p.setToInner}개</strong><br>카톤당 세트: <strong>${p.cartonToSet}개</strong>` : `카톤당 단케이스: <strong>${p.cartonToInner}개</strong>`;
+            specBox.innerHTML = `
+                파레트당 카톤: <strong>${p.palletToCarton} 박스</strong><br>
+                ${cToI}<br>
+                단케이스당 반제품: <strong>${p.innerToUnit} 개</strong>
+            `;
+
+            // 4. 액션 버튼 연결 (수정 / 삭제)
+            document.getElementById('pdModalEditBtn').onclick = () => { 
+                closeProductDetailModal(); 
+                openEditModal(p.id); 
+            };
+            document.getElementById('pdModalDeleteBtn').onclick = () => { 
+                deleteProduct(p.id, p.name); 
+            };
+
+            document.getElementById('productDetailModal').style.display = 'flex';
+        }
+
+        function closeProductDetailModal() {
+            document.getElementById('productDetailModal').style.display = 'none';
+        }
+
+        // --- 등록 및 수정 공통 기능 ---
+        function openAddModal() {
+            document.getElementById('regProductName').value = '';
+            selectSetOption('X', 'reg');
+            document.getElementById('regPalletToCarton').value = '';
+            document.getElementById('regCartonToInnerX').value = '';
+            document.getElementById('regInnerToUnit').value = '';
+            document.getElementById('regUnitWeight').value = '';
+            document.getElementById('regSetWeight').value = '';
+            document.getElementById('regCartonWeight').value = '';
+            document.getElementById('addProductModal').style.display = 'flex';
+        }
+
         function closeAddModal() { document.getElementById('addProductModal').style.display = 'none'; }
 
         function selectSetOption(val, prefix) {
@@ -928,6 +1163,71 @@
             }
         }
 
+        function handleRegKey(e) { if (e.key === 'Enter') saveProductConfig(); }
+
+        async function saveProductConfig() {
+            let name = document.getElementById('regProductName').value.trim();
+            let hasSet = document.getElementById('hasSetValue').value;
+            let palletToCarton = parseInt(document.getElementById('regPalletToCarton').value);
+            let innerToUnit = parseInt(document.getElementById('regInnerToUnit').value);
+            
+            let cartonToSet = 0, setToInner = 0, cartonToInner = 0;
+            if (hasSet === 'O') {
+                cartonToSet = parseInt(document.getElementById('regCartonToSet').value);
+                setToInner = parseInt(document.getElementById('regSetToInner').value);
+            } else {
+                cartonToInner = parseInt(document.getElementById('regCartonToInnerX').value);
+            }
+
+            let unitWeight = parseFloat(document.getElementById('regUnitWeight').value) || 0;
+            let setWeight = parseFloat(document.getElementById('regSetWeight').value) || 0;
+            let cartonWeight = parseFloat(document.getElementById('regCartonWeight').value) || 0;
+
+            if (!name || isNaN(palletToCarton) || isNaN(innerToUnit)) {
+                alert('필수 입력 항목을 정확히 입력해 주세요.');
+                return;
+            }
+
+            try {
+                await db.collection('products').add({
+                    name, hasSet, palletToCarton, cartonToSet, setToInner, cartonToInner, innerToUnit,
+                    unitWeight, setWeight, cartonWeight,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                closeAddModal();
+                renderProductAdminList();
+                alert('✅ 제품이 등록되었습니다.');
+            } catch (e) {
+                alert('제품 등록 오류');
+            }
+        }
+
+        async function openEditModal(id) {
+            let p = productList.find(item => item.id === id);
+            if (!p) return;
+
+            document.getElementById('editTargetId').value = p.id;
+            document.getElementById('editModalName').value = p.name;
+            selectModalSetOption(p.hasSet || 'X');
+            document.getElementById('editModalPtoC').value = p.palletToCarton;
+            
+            if (p.hasSet === 'O') {
+                document.getElementById('editModalCtoS').value = p.cartonToSet || '';
+                document.getElementById('editModalStoI').value = p.setToInner || '';
+            } else {
+                document.getElementById('editModalCtoIX').value = p.cartonToInner || '';
+            }
+            
+            document.getElementById('editModalItoU').value = p.innerToUnit;
+            document.getElementById('editModalUnitWeight').value = p.unitWeight || '';
+            document.getElementById('editModalSetWeight').value = p.setWeight || '';
+            document.getElementById('editModalCartonWeight').value = p.cartonWeight || '';
+            
+            document.getElementById('editProductModal').style.display = 'flex';
+        }
+
+        function closeEditModal() { document.getElementById('editProductModal').style.display = 'none'; }
+        
         function selectModalSetOption(val) {
             document.getElementById('editModalHasSetValue').value = val;
             if (val === 'O') {
@@ -943,196 +1243,30 @@
             }
         }
 
-        function showRegStatus(message, isSuccess = true) {
-            const msgBox = document.getElementById('regStatusMsg');
-            msgBox.className = `status-msg ${isSuccess ? 'success' : 'error'}`;
-            msgBox.innerText = message;
-            msgBox.style.display = 'block';
-            setTimeout(() => { msgBox.style.display = 'none'; }, 3000);
-        }
-
-        async function savePackingLog() {
-            let productId = document.getElementById('logModalSelectedProductId').value;
-            let productName = document.getElementById('logModalProductSearch').value.trim();
-            const dueDate = document.getElementById('logModalDueDate').value;
-            const targetQty = Number(document.getElementById('logModalTargetQty').value);
-            const memo = document.getElementById('logModalMemo').value;
-
-            if (!productName || !dueDate || !targetQty) {
-                alert('제품명, 출고일, 목표수량을 모두 확인해 주세요.');
-                return;
-            }
-
-            let pObj = productList.find(x => x.id === productId || x.name.toLowerCase() === productName.toLowerCase());
-            if (!pObj) {
-                try {
-                    const newProdRef = await db.collection('products').add({
-                        name: productName,
-                        hasSet: 'X',
-                        palletToCarton: 0,
-                        cartonToInner: 0,
-                        innerToUnit: 1,
-                        timestamp: new Date()
-                    });
-                    productId = newProdRef.id;
-                    await loadProductList();
-                } catch(e) { console.error("미등록 제품 자동생성 실패", e); }
-            } else {
-                productId = pObj.id;
-                productName = pObj.name;
-            }
-
-            try {
-                await db.collection('packing_logs').add({
-                    productId,
-                    productName,
-                    dueDate,
-                    targetQty,
-                    currentQty: 0,
-                    workLogs: [],
-                    memo,
-                    isHold: false,
-                    isForceDone: false,
-                    createdAt: new Date()
-                });
-                alert('✅ 일정이 등록되었습니다.');
-                closeAddLogModal();
-                loadPackingLogs();
-            } catch (e) { alert('❌ 등록 실패'); }
-        }
-
-        async function saveProductConfig() {
-            const name = document.getElementById('regProductName').value;
-            const hasSet = document.getElementById('hasSetValue').value;
-            const pToC = document.getElementById('regPalletToCarton').value;
-            const innerToUnit = document.getElementById('regInnerToUnit').value;
-            const unitWeight = document.getElementById('regUnitWeight').value;
-            const setWeight = document.getElementById('regSetWeight').value;
-            const cartonWeight = document.getElementById('regCartonWeight').value;
-
-            let data = { 
-                name, 
-                hasSet, 
-                palletToCarton: Number(pToC), 
-                innerToUnit: Number(innerToUnit), 
-                unitWeight: unitWeight ? Number(unitWeight) : null,
-                setWeight: setWeight ? Number(setWeight) : null,
-                cartonWeight: cartonWeight ? Number(cartonWeight) : null,
-                timestamp: new Date() 
-            };
-
-            if (hasSet === 'O') {
-                data.cartonToSet = Number(document.getElementById('regCartonToSet').value);
-                data.setToInner = Number(document.getElementById('regSetToInner').value);
-            } else {
-                data.cartonToInner = Number(document.getElementById('regCartonToInnerX').value);
-            }
-
-            try {
-                await db.collection('products').add(data);
-                alert(`✅ [${name}] 등록이 완료되었습니다.`);
-                closeAddModal();
-                loadProductList();
-                renderProductAdminList();
-            } catch (e) { showRegStatus('❌ 등록 실패', false); }
-        }
-        function handleRegKey(e) { if (e.key === 'Enter') saveProductConfig(); }
-
-        async function loadProductList() {
-            productList = [];
-            const snapshot = await db.collection('products').orderBy('name', 'asc').get();
-            snapshot.forEach(doc => { productList.push({ id: doc.id, ...doc.data() }); });
-        }
-
-        async function renderProductAdminList() {
-            await loadProductList();
-            drawAdminListHtml(productList);
-        }
-
-        function filterAdminList() {
-            const keyword = document.getElementById('adminFilterInput').value.toLowerCase();
-            drawAdminListHtml(productList.filter(p => p.name.toLowerCase().includes(keyword)));
-        }
-
-        function drawAdminListHtml(list) {
-            const container = document.getElementById('productListContainer');
-            document.getElementById('listCountLabel').innerText = `등록된 품목 리스트 (${list.length})`;
-            if (list.length === 0) { container.innerHTML = '<p style="color:#666; font-size:13px; text-align:center; padding:15px;">검색된 품목이 없습니다.</p>'; return; }
-            let html = '';
-            list.forEach(p => {
-                let cartonVal = (p.hasSet === 'O') ? `${p.cartonToSet}개/세트` : `${p.cartonToInner}개`;
-                let setVal = (p.hasSet === 'O') ? `${p.setToInner}개` : '-';
-                let weightInfo = `단:${p.unitWeight ? p.unitWeight+'g' : '-'} | 세트:${p.setWeight ? p.setWeight+'g' : '-'} | 카톤:${p.cartonWeight ? p.cartonWeight+'kg' : '-'}`;
-                html += `
-                    <div class="product-card" id="card_${p.id}">
-                        <div class="product-top-row">
-                            <span class="product-name-txt">📦 ${p.name}</span>
-                            <div>
-                                <button class="sub-btn edit-btn" onclick="openEditModal('${p.id}')">수정</button>
-                                <button class="sub-btn del-btn" onclick="deleteProduct('${p.id}', '${p.name}')">삭제</button>
-                            </div>
-                        </div>
-                        <table class="spec-table">
-                            <thead><tr><th>파레트/카톤</th><th>카톤/세트(단)</th><th>세트/단</th><th>단/반제품</th></tr></thead>
-                            <tbody><tr><td>${p.palletToCarton}박스</td><td>${cartonVal}</td><td>${setVal}</td><td>${p.innerToUnit}개</td></tr></tbody>
-                        </table>
-                        <div style="font-size:11.5px; color:#666; margin-top:6px; text-align:right;">⚖️ 중량: ${weightInfo}</div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function openEditModal(id) {
-            const p = productList.find(item => item.id === id);
-            if (!p) return;
-            document.getElementById('editTargetId').value = p.id;
-            document.getElementById('editModalName').value = p.name;
-            document.getElementById('editModalPtoC').value = p.palletToCarton;
-            document.getElementById('editModalItoU').value = p.innerToUnit;
-            document.getElementById('editModalUnitWeight').value = p.unitWeight || '';
-            document.getElementById('editModalSetWeight').value = p.setWeight || '';
-            document.getElementById('editModalCartonWeight').value = p.cartonWeight || '';
-            selectModalSetOption(p.hasSet);
-            if (p.hasSet === 'O') {
-                document.getElementById('editModalCtoS').value = p.cartonToSet || '';
-                document.getElementById('editModalStoI').value = p.setToInner || '';
-            } else {
-                document.getElementById('editModalCtoIX').value = p.cartonToInner || '';
-            }
-            document.getElementById('editProductModal').style.display = 'flex';
-        }
-        function closeEditModal() { document.getElementById('editProductModal').style.display = 'none'; }
         function handleEditModalKey(e) { if (e.key === 'Enter') updateProductModalSave(); }
 
         async function updateProductModalSave() {
             const id = document.getElementById('editTargetId').value;
             const name = document.getElementById('editModalName').value;
             const hasSet = document.getElementById('editModalHasSetValue').value;
-            const pToC = Number(document.getElementById('editModalPtoC').value);
-            const innerToUnit = Number(document.getElementById('editModalItoU').value);
-            const unitWeight = document.getElementById('editModalUnitWeight').value;
-            const setWeight = document.getElementById('editModalSetWeight').value;
-            const cartonWeight = document.getElementById('editModalCartonWeight').value;
+            const pToC = parseInt(document.getElementById('editModalPtoC').value);
+            const innerToUnit = parseInt(document.getElementById('editModalItoU').value);
+            const unitWeight = parseFloat(document.getElementById('editModalUnitWeight').value) || 0;
+            const setWeight = parseFloat(document.getElementById('editModalSetWeight').value) || 0;
+            const cartonWeight = parseFloat(document.getElementById('editModalCartonWeight').value) || 0;
 
-            let data = { 
-                name, 
-                hasSet, 
-                palletToCarton: pToC, 
-                innerToUnit: innerToUnit,
-                unitWeight: unitWeight ? Number(unitWeight) : null,
-                setWeight: setWeight ? Number(setWeight) : null,
-                cartonWeight: cartonWeight ? Number(cartonWeight) : null
-            };
+            let data = { name, hasSet, palletToCarton: pToC, innerToUnit, unitWeight, setWeight, cartonWeight };
 
             if (hasSet === 'O') {
-                data.cartonToSet = Number(document.getElementById('editModalCtoS').value);
-                data.setToInner = Number(document.getElementById('editModalStoI').value);
-                data.cartonToInner = null;
+                data.cartonToSet = parseInt(document.getElementById('editModalCtoS').value) || 0;
+                data.setToInner = parseInt(document.getElementById('editModalStoI').value) || 0;
+                data.cartonToInner = 0;
             } else {
-                data.cartonToInner = Number(document.getElementById('editModalCtoIX').value);
-                data.cartonToSet = null; data.setToInner = null;
+                data.cartonToInner = parseInt(document.getElementById('editModalCtoIX').value) || 0;
+                data.cartonToSet = 0; 
+                data.setToInner = 0;
             }
+
             try {
                 await db.collection('products').doc(id).update(data);
                 alert(`✅ [${name}] 수정 완료!`);
@@ -1146,71 +1280,10 @@
                 try {
                     await db.collection('products').doc(id).delete();
                     alert(`🗑️ [${name}] 삭제되었습니다.`);
+                    closeProductDetailModal();
                     renderProductAdminList();
                 } catch (e) { alert('❌ 삭제 실패'); }
             }
-        }
-
-        function setCalcMode(mode) {
-            currentCalcMode = mode;
-            if (mode === 'SET') {
-                document.getElementById('calcModeSet').classList.add('active');
-                document.getElementById('calcModeEa').classList.remove('active');
-            } else {
-                document.getElementById('calcModeEa').classList.add('active');
-                document.getElementById('calcModeSet').classList.remove('active');
-            }
-            autoCalculate();
-        }
-
-        function filterProducts() {
-            const keyword = document.getElementById('productSearchInput').value.toLowerCase();
-            const dropdown = document.getElementById('productSearchDropdown');
-            dropdown.innerHTML = '';
-            if (!keyword) { dropdown.style.display = 'none'; return; }
-            const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
-            if (filtered.length === 0) { dropdown.style.display = 'none'; return; }
-            filtered.forEach(p => {
-                const item = document.createElement('div');
-                item.className = 'search-item';
-                item.innerText = `📦 ${p.name}`;
-                item.onclick = () => {
-                    document.getElementById('productSearchInput').value = p.name;
-                    document.getElementById('selectedProductId').value = p.id;
-                    dropdown.style.display = 'none';
-                    autoCalculate();
-                };
-                dropdown.appendChild(item);
-            });
-            dropdown.style.display = 'block';
-        }
-
-        function autoCalculate() { if (document.getElementById('inputQty').value && document.getElementById('selectedProductId').value) calculateUnits(); }
-        function handleCalcKey(e) { if (e.key === 'Enter') calculateUnits(); }
-
-        function calculateUnits() {
-            const selectedId = document.getElementById('selectedProductId').value;
-            const rawQty = Number(document.getElementById('inputQty').value);
-            const resultBox = document.getElementById('calcResult');
-            const p = productList.find(item => item.id === selectedId);
-            if (!p || !rawQty) { resultBox.innerText = '⚠️ 제품과 올바른 수량을 다시 확인해 주세요.'; return; }
-            let cToI = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
-            let innerPerCarton = cToI * p.innerToUnit; 
-            let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit; 
-            let totalEa = (currentCalcMode === 'EA') ? rawQty : (rawQty * unitPerSet);
-            let unitsPerPallet = p.palletToCarton * innerPerCarton;
-            let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
-            let totalCartons = formatVal(totalEa / innerPerCarton, 1);
-            let totalSets = (p.hasSet === 'O') ? formatVal(totalEa / (p.setToInner * p.innerToUnit), 1) : 0;
-            let totalInners = formatVal(totalEa / p.innerToUnit, 1);
-            let resultHtml = `<strong>📊 [${p.name}] 환산 결과</strong><br><br>`;
-            resultHtml += `🅿️ 파레트 : <strong>${totalPallets}</strong> 개<br>`;
-            resultHtml += `📦 카톤 : <strong>${totalCartons}</strong> 개<br>`;
-            if (p.hasSet === 'O') { resultHtml += `🎁 세트케이스 : <strong>${totalSets}</strong> 개<br>`; }
-            resultHtml += `🗂️ 단케이스 : <strong>${totalInners}</strong> 개<br>`;
-            resultHtml += `⚙️ 반제품 : <strong>${totalEa.toLocaleString()}</strong> 개`;
-            resultBox.innerHTML = resultHtml;
-            resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     </script>
 </body>
