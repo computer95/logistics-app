@@ -30,6 +30,7 @@
         .edit-btn { background: #ff9500; color: white; }
         .del-btn { background: #ff3b30; color: white; }
         .hold-btn { background: #ffcc00; color: #333; }
+        .force-done-btn { background: #34c759; color: white; }
         .add-action-btn { background: #34c759; color: white; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
 
         .status-msg { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; display: none; }
@@ -63,12 +64,14 @@
 
         .log-card { background: #fcfcfc; border: 1px solid #e1e4e8; border-left: 5px solid #ccc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; }
         .log-card.status-none { border-left-color: #ccc; }
+        .log-card.status-urgent { border-left-color: #ff3b30; background: #fff5f5; }
         .log-card.status-progress { border-left-color: #007aff; background: #f8fbff; }
         .log-card.status-done { border-left-color: #34c759; background: #f4fcf6; }
         .log-card.status-hold { border-left-color: #ffcc00; background: #fffdf5; }
         
         .log-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: white; display: inline-block; }
         .badge-none { background: #888; }
+        .badge-urgent { background: #ff3b30; }
         .badge-progress { background: #007aff; }
         .badge-done { background: #34c759; }
         .badge-hold { background: #ffcc00; color: #333; }
@@ -76,6 +79,7 @@
         .progress-bar-bg { width: 100%; background-color: #e9ecef; border-radius: 4px; height: 7px; overflow: hidden; margin-top: 8px; margin-bottom: 6px; }
         .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
         .fill-none { background-color: #adb5bd; }
+        .fill-urgent { background-color: #ff3b30; }
         .fill-progress { background-color: #007aff; }
         .fill-done { background-color: #34c759; }
         .fill-hold { background-color: #ffcc00; }
@@ -236,7 +240,10 @@
                     <input type="date" id="dailyWorkDate" style="flex:1; padding:6px; font-size:12px;">
                     <input type="number" id="dailyWorkQty" placeholder="수량(set)" style="flex:1; padding:6px; font-size:12px;" onfocus="this.select()">
                 </div>
-                <input type="text" id="dailyWorkMemo" placeholder="간단 메모" style="padding:6px; font-size:12px; margin-bottom:4px;">
+                <div style="display:flex; gap:4px; margin-bottom:4px;">
+                    <input type="text" id="dailyWorkMemo" placeholder="간단 메모" style="flex:2; padding:6px; font-size:12px;">
+                    <input type="text" id="dailyRemainingSub" placeholder="남은 부자재 (예: 단 5개, 박스 2개)" style="flex:3; padding:6px; font-size:12px;">
+                </div>
                 <button class="main-btn" style="margin-top:0; padding:6px; font-size:12px; background:#34c759;" onclick="addSingleWorkLogRecord()">작업 기록 추가</button>
             </div>
 
@@ -252,7 +259,10 @@
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <button class="sub-btn hold-btn" id="toggleHoldBtn" style="padding:6px 10px;" onclick="toggleHoldStatus()">보류 지정</button>
+                <div style="display:flex; gap:4px;">
+                    <button class="sub-btn hold-btn" id="toggleHoldBtn" style="padding:6px 10px;" onclick="toggleHoldStatus()">보류 지정</button>
+                    <button class="sub-btn force-done-btn" id="toggleForceDoneBtn" style="padding:6px 10px;" onclick="toggleForceDoneStatus()">수동 완료</button>
+                </div>
                 <button class="sub-btn del-btn" style="padding:6px 10px;" onclick="deletePackingLog()">일정 삭제</button>
             </div>
         </div>
@@ -269,7 +279,16 @@
             <div class="input-group"><label for="regPalletToCarton">파레트당 카톤 수</label><input type="number" id="regPalletToCarton" placeholder="예: 24" onfocus="this.select()"></div>
             <div id="setFieldsO" class="conditional-fields"><div class="input-group"><label for="regCartonToSet">카톤당 세트케이스 수</label><input type="number" id="regCartonToSet" placeholder="예: 5" onfocus="this.select()"></div><div class="input-group"><label for="regSetToInner">세트케이스당 단케이스 수</label><input type="number" id="regSetToInner" placeholder="예: 6" onfocus="this.select()"></div></div>
             <div id="setFieldsX" class="conditional-fields" style="display:block;"><div class="input-group"><label for="regCartonToInnerX">카톤당 단케이스 수</label><input type="number" id="regCartonToInnerX" placeholder="예: 30" onfocus="this.select()"></div></div>
-            <div class="input-group"><label for="regInnerToUnit">단케이스당 반제품 수</label><input type="number" id="regInnerToUnit" placeholder="예: 10" onfocus="this.select()" onkeydown="handleRegKey(event)"></div>
+            <div class="input-group"><label for="regInnerToUnit">단케이스당 반제품 수</label><input type="number" id="regInnerToUnit" placeholder="예: 10" onfocus="this.select()"></div>
+            
+            <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
+            <p style="font-size:13px; font-weight:bold; color:#34c759; margin-bottom:10px;">⚖️ 중량 스펙 정보 (선택)</p>
+            <div style="display:flex; gap:6px;">
+                <div class="input-group" style="flex:1;"><label for="regUnitWeight">단제품 중량(g)</label><input type="number" step="0.1" id="regUnitWeight" placeholder="예: 10" onfocus="this.select()"></div>
+                <div class="input-group" style="flex:1;"><label for="regSetWeight">세트 중량(g)</label><input type="number" step="0.1" id="regSetWeight" placeholder="예: 100" onfocus="this.select()"></div>
+            </div>
+            <div class="input-group"><label for="regCartonWeight">카톤 중량(kg)</label><input type="number" step="0.1" id="regCartonWeight" placeholder="예: 10" onfocus="this.select()" onkeydown="handleRegKey(event)"></div>
+
             <button class="main-btn" style="background-color: #34c759;" onclick="saveProductConfig()">등록 완료</button>
             <div id="regStatusMsg" class="status-msg"></div>
         </div>
@@ -287,7 +306,16 @@
             <div class="input-group"><label>파레트당 카톤 수</label><input type="number" id="editModalPtoC" onfocus="this.select()"></div>
             <div id="editModalSetFieldsO" class="conditional-fields"><div class="input-group"><label>카톤당 세트케이스 수</label><input type="number" id="editModalCtoS" onfocus="this.select()"></div><div class="input-group"><label>세트케이스당 단케이스 수</label><input type="number" id="editModalStoI" onfocus="this.select()"></div></div>
             <div id="editModalSetFieldsX" class="conditional-fields" style="display:block;"><div class="input-group"><label>카톤당 단케이스 수</label><input type="number" id="editModalCtoIX" onfocus="this.select()"></div></div>
-            <div class="input-group"><label>단케이스당 반제품 수</label><input type="number" id="editModalItoU" onfocus="this.select()" onkeydown="handleEditModalKey(event)"></div>
+            <div class="input-group"><label>단케이스당 반제품 수</label><input type="number" id="editModalItoU" onfocus="this.select()"></div>
+
+            <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
+            <p style="font-size:13px; font-weight:bold; color:#ff9500; margin-bottom:10px;">⚖️ 중량 스펙 정보 수정</p>
+            <div style="display:flex; gap:6px;">
+                <div class="input-group" style="flex:1;"><label>단제품 중량(g)</label><input type="number" step="0.1" id="editModalUnitWeight" onfocus="this.select()"></div>
+                <div class="input-group" style="flex:1;"><label>세트 중량(g)</label><input type="number" step="0.1" id="editModalSetWeight" onfocus="this.select()"></div>
+            </div>
+            <div class="input-group"><label>카톤 중량(kg)</label><input type="number" step="0.1" id="editModalCartonWeight" onfocus="this.select()" onkeydown="handleEditModalKey(event)"></div>
+
             <button class="main-btn" style="background-color: #ff9500;" onclick="updateProductModalSave()">수정 완료 저장</button>
         </div>
     </div>
@@ -441,12 +469,19 @@
                 return;
             }
 
-            const todayStr = new Date().toISOString().substring(0, 10);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const todayStr = today.toISOString().substring(0, 10);
+
+            // D-7 계산용 타임스탬프
+            const sevenDaysLater = new Date(today);
+            sevenDaysLater.setDate(today.getDate() + 7);
+
             let activeList = [];
             let completedList = [];
 
             packingLogsList.forEach(log => {
-                let isDone = log.currentQty >= log.targetQty && log.targetQty > 0;
+                let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
                 let isPastDue = log.dueDate < todayStr;
                 if (isDone && isPastDue && !log.isHold) {
                     completedList.push(log);
@@ -457,7 +492,7 @@
 
             let html = '';
             activeList.forEach(log => {
-                html += createLogCardHtml(log);
+                html += createLogCardHtml(log, todayStr, sevenDaysLater);
             });
 
             if (completedList.length > 0) {
@@ -469,7 +504,7 @@
                     <div id="completedSectionBox" style="display: ${isCompletedOpen ? 'block' : 'none'};">
                 `;
                 completedList.forEach(log => {
-                    html += createLogCardHtml(log);
+                    html += createLogCardHtml(log, todayStr, sevenDaysLater);
                 });
                 html += `</div>`;
             }
@@ -482,13 +517,20 @@
             renderPackingLogsHtml();
         }
 
-        function createLogCardHtml(log) {
+        function createLogCardHtml(log, todayStr, sevenDaysLater) {
             let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
-            let autoStatus = log.isHold ? 'hold' : (log.currentQty >= log.targetQty ? 'done' : log.currentQty > 0 ? 'progress' : 'none');
+            let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
+            
+            // D-7 안쪽 & 진행 전(currentQty === 0 이고 완료되지 않은 상태) 검사
+            let dueObj = new Date(log.dueDate);
+            dueObj.setHours(0,0,0,0);
+            let isUrgent = (!isDone && log.currentQty === 0 && !log.isHold && dueObj >= new Date(todayStr) && dueObj <= sevenDaysLater);
+
+            let autoStatus = log.isHold ? 'hold' : (isDone ? 'done' : (isUrgent ? 'urgent' : (log.currentQty > 0 ? 'progress' : 'none')));
             let statusClass = `status-${autoStatus}`;
             let badgeClass = `badge-${autoStatus}`;
             let fillClass = `fill-${autoStatus}`;
-            let statusText = autoStatus === 'hold' ? '보류' : autoStatus === 'progress' ? '진행 중' : autoStatus === 'done' ? '완료' : '진행 전';
+            let statusText = autoStatus === 'hold' ? '보류' : (autoStatus === 'urgent' ? '출고임박' : (autoStatus === 'progress' ? '진행 중' : (autoStatus === 'done' ? '완료' : '진행 전')));
 
             return `
                 <div class="log-card ${statusClass}" onclick="openDetailLogModal('${log.id}')">
@@ -501,7 +543,7 @@
                     </div>
                     <div style="font-size:13px; color:#555; display:flex; justify-content:space-between; align-items:center;">
                         <span>진행률: <strong>${percent}%</strong> (${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()})</span>
-                        <span style="font-weight:bold;">출고: ${log.dueDate}</span>
+                        <span style="font-weight:bold; ${isUrgent ? 'color:#ff3b30;' : ''}">출고: ${log.dueDate}</span>
                     </div>
                 </div>
             `;
@@ -559,6 +601,7 @@
             document.getElementById('dailyWorkDate').value = new Date().toISOString().substring(0, 10);
             document.getElementById('dailyWorkQty').value = '';
             document.getElementById('dailyWorkMemo').value = '';
+            document.getElementById('dailyRemainingSub').value = '';
 
             const holdBtn = document.getElementById('toggleHoldBtn');
             if (log.isHold) {
@@ -571,11 +614,20 @@
                 holdBtn.style.color = '#333';
             }
 
+            const forceBtn = document.getElementById('toggleForceDoneBtn');
+            if (log.isForceDone) {
+                forceBtn.innerText = '수동완료 취소';
+                forceBtn.style.background = '#888';
+            } else {
+                forceBtn.innerText = '수동 완료';
+                forceBtn.style.background = '#34c759';
+            }
+
             let percent = log.targetQty > 0 ? Math.round((log.currentQty / log.targetQty) * 100) : 0;
             document.getElementById('detailLogSummary').innerHTML = `
                 <strong>제품명:</strong> ${log.productName}<br>
                 <strong>출고일:</strong> <strong>${log.dueDate}</strong><br>
-                <strong>진행상황:</strong> ${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()} (${percent}%)<br>
+                <strong>진행상황:</strong> ${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()} (${percent}%) ${log.isForceDone ? '<span style="color:#34c759; font-weight:bold;">[수동완료됨]</span>' : ''}<br>
                 <strong>메모:</strong> ${log.memo || '없음'}
             `;
             let sortedLogs = log.workLogs ? [...log.workLogs].sort((a, b) => new Date(a.date) - new Date(b.date)) : [];
@@ -645,13 +697,15 @@
                         <input type="date" id="editWDate_${idx}" value="${item.date}" style="padding:4px; font-size:11px; width:95px;">
                         <input type="number" id="editWQty_${idx}" value="${item.qty}" style="padding:4px; font-size:11px; width:65px;" onfocus="this.select()">
                         <input type="text" id="editWMemo_${idx}" value="${item.memo || ''}" placeholder="메모" style="flex:1; padding:4px; font-size:11px;">
+                        <input type="text" id="editWSub_${idx}" value="${item.remainingSub || ''}" placeholder="잔여부자재" style="flex:1; padding:4px; font-size:11px;">
                         <button class="sub-btn del-btn" style="padding:2px 5px; font-size:10px;" onclick="deleteWorkLogSingle('${logId}', '${item.date}')">삭제</button>
                     </div>`;
                 } else {
                     let memoStr = item.memo ? ` <span style="color:#666; font-size:11px;">(${item.memo})</span>` : '';
+                    let subStr = item.remainingSub ? ` <span style="color:#007aff; font-size:11px;">[잔여: ${item.remainingSub}]</span>` : '';
                     html += `<div style="padding:5px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
                         <span>📅 ${item.date} : <strong>+${Number(item.qty).toLocaleString()} set</strong></span>
-                        <span style="color:#444;">${memoStr}</span>
+                        <span style="color:#444;">${memoStr}${subStr}</span>
                     </div>`;
                 }
             });
@@ -663,13 +717,14 @@
             const wDate = document.getElementById('dailyWorkDate').value;
             const wQty = Number(document.getElementById('dailyWorkQty').value);
             const wMemo = document.getElementById('dailyWorkMemo').value.trim();
+            const wSub = document.getElementById('dailyRemainingSub').value.trim();
             if (!wDate || !wQty) { alert('날짜와 수량을 입력해 주세요.'); return; }
 
             const log = packingLogsList.find(x => x.id === id);
             if (!log) return;
 
             let updatedLogs = log.workLogs ? [...log.workLogs] : [];
-            updatedLogs.push({ date: wDate, qty: wQty, memo: wMemo });
+            updatedLogs.push({ date: wDate, qty: wQty, memo: wMemo, remainingSub: wSub });
             updatedLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
             let newCurrentQty = updatedLogs.reduce((sum, cur) => sum + Number(cur.qty), 0);
 
@@ -764,8 +819,9 @@
                 const dVal = document.getElementById(`editWDate_${idx}`).value;
                 const qVal = Number(document.getElementById(`editWQty_${idx}`).value);
                 const mVal = document.getElementById(`editWMemo_${idx}`).value.trim();
+                const sVal = document.getElementById(`editWSub_${idx}`).value.trim();
                 if (dVal && qVal) {
-                    newWorkLogs.push({ date: dVal, qty: qVal, memo: mVal });
+                    newWorkLogs.push({ date: dVal, qty: qVal, memo: mVal, remainingSub: sVal });
                 }
             }
 
@@ -809,6 +865,19 @@
             try {
                 await db.collection('packing_logs').doc(id).update({ isHold: nextHold });
                 alert(nextHold ? '⚠️ 보류 상태로 변경되었습니다.' : '✅ 보류가 해제되었습니다.');
+                await loadPackingLogs();
+                openDetailLogModal(id);
+            } catch(e) { alert('변경 실패'); }
+        }
+
+        async function toggleForceDoneStatus() {
+            const id = document.getElementById('detailLogId').value;
+            const log = packingLogsList.find(x => x.id === id);
+            if (!log) return;
+            const nextForce = !log.isForceDone;
+            try {
+                await db.collection('packing_logs').doc(id).update({ isForceDone: nextForce });
+                alert(nextForce ? '✅ 수동 완료 처리되었습니다.' : '✅ 수동 완료가 취소되었습니다.');
                 await loadPackingLogs();
                 openDetailLogModal(id);
             } catch(e) { alert('변경 실패'); }
@@ -923,6 +992,7 @@
                     workLogs: [],
                     memo,
                     isHold: false,
+                    isForceDone: false,
                     createdAt: new Date()
                 });
                 alert('✅ 일정이 등록되었습니다.');
@@ -936,7 +1006,20 @@
             const hasSet = document.getElementById('hasSetValue').value;
             const pToC = document.getElementById('regPalletToCarton').value;
             const innerToUnit = document.getElementById('regInnerToUnit').value;
-            let data = { name, hasSet, palletToCarton: Number(pToC), innerToUnit: Number(innerToUnit), timestamp: new Date() };
+            const unitWeight = document.getElementById('regUnitWeight').value;
+            const setWeight = document.getElementById('regSetWeight').value;
+            const cartonWeight = document.getElementById('regCartonWeight').value;
+
+            let data = { 
+                name, 
+                hasSet, 
+                palletToCarton: Number(pToC), 
+                innerToUnit: Number(innerToUnit), 
+                unitWeight: unitWeight ? Number(unitWeight) : null,
+                setWeight: setWeight ? Number(setWeight) : null,
+                cartonWeight: cartonWeight ? Number(cartonWeight) : null,
+                timestamp: new Date() 
+            };
 
             if (hasSet === 'O') {
                 data.cartonToSet = Number(document.getElementById('regCartonToSet').value);
@@ -979,6 +1062,7 @@
             list.forEach(p => {
                 let cartonVal = (p.hasSet === 'O') ? `${p.cartonToSet}개/세트` : `${p.cartonToInner}개`;
                 let setVal = (p.hasSet === 'O') ? `${p.setToInner}개` : '-';
+                let weightInfo = `단:${p.unitWeight ? p.unitWeight+'g' : '-'} | 세트:${p.setWeight ? p.setWeight+'g' : '-'} | 카톤:${p.cartonWeight ? p.cartonWeight+'kg' : '-'}`;
                 html += `
                     <div class="product-card" id="card_${p.id}">
                         <div class="product-top-row">
@@ -992,6 +1076,7 @@
                             <thead><tr><th>파레트/카톤</th><th>카톤/세트(단)</th><th>세트/단</th><th>단/반제품</th></tr></thead>
                             <tbody><tr><td>${p.palletToCarton}박스</td><td>${cartonVal}</td><td>${setVal}</td><td>${p.innerToUnit}개</td></tr></tbody>
                         </table>
+                        <div style="font-size:11.5px; color:#666; margin-top:6px; text-align:right;">⚖️ 중량: ${weightInfo}</div>
                     </div>
                 `;
             });
@@ -1005,6 +1090,9 @@
             document.getElementById('editModalName').value = p.name;
             document.getElementById('editModalPtoC').value = p.palletToCarton;
             document.getElementById('editModalItoU').value = p.innerToUnit;
+            document.getElementById('editModalUnitWeight').value = p.unitWeight || '';
+            document.getElementById('editModalSetWeight').value = p.setWeight || '';
+            document.getElementById('editModalCartonWeight').value = p.cartonWeight || '';
             selectModalSetOption(p.hasSet);
             if (p.hasSet === 'O') {
                 document.getElementById('editModalCtoS').value = p.cartonToSet || '';
@@ -1023,7 +1111,20 @@
             const hasSet = document.getElementById('editModalHasSetValue').value;
             const pToC = Number(document.getElementById('editModalPtoC').value);
             const innerToUnit = Number(document.getElementById('editModalItoU').value);
-            let data = { name, hasSet, palletToCarton: pToC, innerToUnit: innerToUnit };
+            const unitWeight = document.getElementById('editModalUnitWeight').value;
+            const setWeight = document.getElementById('editModalSetWeight').value;
+            const cartonWeight = document.getElementById('editModalCartonWeight').value;
+
+            let data = { 
+                name, 
+                hasSet, 
+                palletToCarton: pToC, 
+                innerToUnit: innerToUnit,
+                unitWeight: unitWeight ? Number(unitWeight) : null,
+                setWeight: setWeight ? Number(setWeight) : null,
+                cartonWeight: cartonWeight ? Number(cartonWeight) : null
+            };
+
             if (hasSet === 'O') {
                 data.cartonToSet = Number(document.getElementById('editModalCtoS').value);
                 data.setToInner = Number(document.getElementById('editModalStoI').value);
