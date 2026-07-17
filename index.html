@@ -37,7 +37,7 @@
         .status-msg.success { background: #e1f5fe; color: #0288d1; display: block; }
         .status-msg.error { background: #ffebee; color: #c62828; display: block; }
 
-        .result-box { margin-top: 20px; padding: 15px 15px 25px 15px; background: #eef4ff; border-radius: 8px; font-weight: 600; line-height: 1.8; font-size: 15px; }
+        .result-box { margin-top: 20px; padding: 15px; background: #eef4ff; border-radius: 8px; font-weight: 600; line-height: 1.8; font-size: 15px; min-height: 80px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .conditional-fields { display: none; }
@@ -50,7 +50,7 @@
         .password-screen { text-align: center; padding: 30px 10px; }
         .password-screen input { text-align: center; letter-spacing: 5px; font-size: 24px; margin-bottom: 15px; }
         
-        .log-card { background: #fcfcfc; border: 1px solid #e1e4e8; border-left: 5px solid #ccc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; }
+        .log-card { background: #fcfcfc; border: 1px solid #e1e4e8; border-left: 5px solid #ccc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
         .log-card.status-none { border-left-color: #ccc; }
         .log-card.status-urgent { border-left-color: #ff3b30; background: #fff5f5; }
         .log-card.status-progress { border-left-color: #007aff; background: #f8fbff; }
@@ -63,6 +63,12 @@
         .badge-progress { background: #007aff; }
         .badge-done { background: #34c759; }
         .badge-hold { background: #ffcc00; color: #333; }
+
+        .tag { display: inline-block; padding: 2px 6px; font-size: 11px; border-radius: 4px; font-weight: bold; margin-left: 4px; }
+        .tag-파우치 { background: #e8f4fd; color: #2980b9; }
+        .tag-스틱 { background: #eef9f0; color: #27ae60; }
+        .tag-바이알 { background: #fdfeeb; color: #d35400; }
+        .tag-PTP { background: #fce4ec; color: #c2185b; }
 
         .progress-bar-bg { width: 100%; background-color: #e9ecef; border-radius: 4px; height: 7px; overflow: hidden; margin-top: 8px; margin-bottom: 6px; }
         .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
@@ -109,7 +115,7 @@
         <div class="input-group">
             <label>입력 기준 선택</label>
             <div class="toggle-container">
-                <button type="button" id="calcModeSet" class="toggle-btn active" onclick="setCalcMode('SET')">세트/단케이스 기준</button>
+                <button type="button" id="calcModeSet" class="toggle-btn active" onclick="setCalcMode('SET')">포장 구성(정방향) 기준</button>
                 <button type="button" id="calcModeEa" class="toggle-btn" onclick="setCalcMode('EA')">개수(반제품) 기준</button>
             </div>
         </div>
@@ -118,15 +124,18 @@
             <input type="number" id="inputQty" placeholder="수량을 입력하세요" onfocus="this.select()" onkeydown="handleCalcKey(event)">
         </div>
         <button class="main-btn" onclick="calculateUnits()">환산하기</button>
-        <div id="calcResult" class="result-box">결과가 여기에 표시됩니다.</div>
+        <div id="calcResult" class="result-box">제품을 선택하거나 구성을 등록해주세요.</div>
     </div>
 
     <div id="logTab" class="container tab-content">
         <h2>
-            📋 포장일지 <span id="logCountLabel" style="font-size:13px; font-weight:normal; color:#666;">(0건)</span>
+            📋 포장일지 <span id="logCountLabel" style="font-size:13px; font-weight:normal; color:#666;">(남은 일정: 0건)</span>
             <button class="add-action-btn" onclick="openAddLogModal()">+ 일정 등록</button>
         </h2>
-        <p style="font-size: 12.5px; color: #666; margin-bottom: 12px;">출고 일정 및 작업 진행 현황을 관리합니다.</p>
+        <p style="font-size: 12.5px; color: #666; margin-bottom: 12px;">출고 일정 및 작업 진행 현황을 관리합니다. (과거 출고일 자동 완료)</p>
+        <div style="margin-bottom: 10px; display: flex; gap: 5px;">
+            <button class="sub-btn del-btn" style="padding:6px 10px;" onclick="deleteSelectedLogs()">선택 항목 다중 삭제</button>
+        </div>
         <div id="packingLogContainer">데이터를 불러오는 중...</div>
     </div>
 
@@ -159,7 +168,7 @@
     <div id="manageTab" class="container tab-content">
         <div id="passwordScreen" class="password-screen">
             <h2>🔒 관리자 인증</h2>
-            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">제품관리를 위해 비밀번호를 입력하세요.</p>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">제품관리를 위해 비밀번호(3417)를 입력하세요.</p>
             <input type="password" id="adminPasswordInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" onfocus="this.select()" onkeydown="handlePasswordKey(event)">
             <button class="main-btn" onclick="checkAdminPassword()">확인</button>
             <div id="pwErrorMsg" class="status-msg error" style="margin-top: 15px; display: none;">비밀번호가 틀렸습니다.</div>
@@ -187,13 +196,13 @@
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 10px; font-size: 12px; background:#888;" onclick="closeProductDetailModal()">닫기</button>
             </h2>
             
-            <div class="detail-section-title">⚖️ 중량 스펙 정보</div>
+            <div class="detail-section-title">⚖️ 중량 스펙 정보 (자유 텍스트 입력 가능)</div>
             <div id="pdModalWeightBox" class="weight-box"></div>
 
             <div class="detail-section-title">📋 최근 포장 이력</div>
             <div id="pdModalHistoryBox" class="history-list"></div>
 
-            <div class="detail-section-title">⚙️ 포장 구성 사양 (계산용)</div>
+            <div class="detail-section-title">⚙️ 포장 구성 사양 (큰 ➔ 작은 정방향)</div>
             <div id="pdModalSpecBox" class="spec-info-box"></div>
 
             <div style="display:flex; gap:10px; margin-top:20px;">
@@ -220,7 +229,7 @@
                 <input type="date" id="logModalDueDate">
             </div>
             <div class="input-group">
-                <label>목표 수량 (set 또는 개)</label>
+                <label>목표 수량</label>
                 <input type="number" id="logModalTargetQty" placeholder="예: 5000" onfocus="this.select()">
             </div>
             <div class="input-group">
@@ -270,7 +279,7 @@
                 <label style="font-size:12px; font-weight:bold; color:#333; margin-bottom:4px;">➕ 일일 작업 현황 추가</label>
                 <div style="display:flex; gap:4px; margin-bottom:4px;">
                     <input type="date" id="dailyWorkDate" style="flex:1; padding:6px; font-size:12px;">
-                    <input type="number" id="dailyWorkQty" placeholder="수량(set)" style="flex:1; padding:6px; font-size:12px;" onfocus="this.select()">
+                    <input type="number" id="dailyWorkQty" placeholder="수량" style="flex:1; padding:6px; font-size:12px;" onfocus="this.select()">
                 </div>
                 <div style="margin-bottom:4px;">
                     <input type="text" id="dailyWorkMemo" placeholder="간단 메모 입력" style="width:100%; padding:6px; font-size:12px;">
@@ -305,20 +314,28 @@
                 📦 새 제품 추가하기
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;" onclick="closeAddModal()">닫기</button>
             </h2>
-            <div class="input-group"><label for="regProductName">제품이름</label><input type="text" id="regProductName" placeholder="예: A제품" onfocus="this.select()"></div>
+            <div class="input-group"><label for="regProductName">제품이름</label><input type="text" id="regProductName" placeholder="예: 홍삼진액스틱" onfocus="this.select()"></div>
+            
+            <div class="input-group">
+                <label>제품 종류 태그</label>
+                <select id="regProductType">
+                    <option value="파우치">파우치</option>
+                    <option value="스틱" selected>스틱</option>
+                    <option value="바이알">바이알</option>
+                    <option value="PTP">PTP</option>
+                </select>
+            </div>
+
             <div class="input-group"><label>세트케이스 유무</label><div class="toggle-container"><button type="button" id="setBtnO" class="toggle-btn" onclick="selectSetOption('O', 'reg')">있음 (O)</button><button type="button" id="setBtnX" class="toggle-btn active" onclick="selectSetOption('X', 'reg')">없음 (X)</button></div><input type="hidden" id="hasSetValue" value="X"></div>
-            <div class="input-group"><label for="regPalletToCarton">파레트당 카톤 수</label><input type="number" id="regPalletToCarton" placeholder="예: 24" onfocus="this.select()"></div>
+            
+            <div class="input-group"><label for="regPalletToCarton">아웃박스(BOX)당 카톤 수</label><input type="number" id="regPalletToCarton" placeholder="예: 24" onfocus="this.select()"></div>
             <div id="setFieldsO" class="conditional-fields"><div class="input-group"><label for="regCartonToSet">카톤당 세트케이스 수</label><input type="number" id="regCartonToSet" placeholder="예: 5" onfocus="this.select()"></div><div class="input-group"><label for="regSetToInner">세트케이스당 단케이스 수</label><input type="number" id="regSetToInner" placeholder="예: 6" onfocus="this.select()"></div></div>
             <div id="setFieldsX" class="conditional-fields" style="display:block;"><div class="input-group"><label for="regCartonToInnerX">카톤당 단케이스 수</label><input type="number" id="regCartonToInnerX" placeholder="예: 30" onfocus="this.select()"></div></div>
-            <div class="input-group"><label for="regInnerToUnit">단케이스당 반제품 수</label><input type="number" id="regInnerToUnit" placeholder="예: 10" onfocus="this.select()"></div>
+            <div class="input-group"><label for="regInnerToUnit">단케이스당 반제품(EA) 수</label><input type="number" id="regInnerToUnit" placeholder="예: 10" onfocus="this.select()"></div>
             
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
-            <p style="font-size:13px; font-weight:bold; color:#34c759; margin-bottom:10px;">⚖️ 중량 스펙 정보 (선택)</p>
-            <div style="display:flex; gap:6px;">
-                <div class="input-group" style="flex:1;"><label for="regUnitWeight">단제품 중량(g)</label><input type="number" step="0.1" id="regUnitWeight" placeholder="예: 10" onfocus="this.select()"></div>
-                <div class="input-group" style="flex:1;"><label for="regSetWeight">세트 중량(g)</label><input type="number" step="0.1" id="regSetWeight" placeholder="예: 100" onfocus="this.select()"></div>
-            </div>
-            <div class="input-group"><label for="regCartonWeight">카톤 중량(kg)</label><input type="number" step="0.1" id="regCartonWeight" placeholder="예: 10" onfocus="this.select()" onkeydown="handleRegKey(event)"></div>
+            <p style="font-size:13px; font-weight:bold; color:#34c759; margin-bottom:10px;">⚖️ 중량 스펙 정보 (자유 텍스트 기입 가능)</p>
+            <div class="input-group"><label for="regWeightText">중량 기입 (예: 10g ± 2g)</label><input type="text" id="regWeightText" placeholder="예: 10g ± 2g" onfocus="this.select()"></div>
 
             <button class="main-btn" style="background-color: #34c759;" onclick="saveProductConfig()">등록 완료</button>
             <div id="regStatusMsg" class="status-msg"></div>
@@ -333,19 +350,25 @@
             </h2>
             <input type="hidden" id="editTargetId">
             <div class="input-group"><label>제품이름</label><input type="text" id="editModalName" onfocus="this.select()"></div>
+            <div class="input-group">
+                <label>제품 종류 태그</label>
+                <select id="editModalType">
+                    <option value="파우치">파우치</option>
+                    <option value="스틱">스틱</option>
+                    <option value="바이알">바이알</option>
+                    <option value="PTP">PTP</option>
+                </select>
+            </div>
             <div class="input-group"><label>세트케이스 유무</label><div class="toggle-container"><button type="button" id="editModalSetBtnO" class="toggle-btn" onclick="selectModalSetOption('O')">있음 (O)</button><button type="button" id="editModalSetBtnX" class="toggle-btn active" onclick="selectModalSetOption('X')">없음 (X)</button></div><input type="hidden" id="editModalHasSetValue" value="X"></div>
-            <div class="input-group"><label>파레트당 카톤 수</label><input type="number" id="editModalPtoC" onfocus="this.select()"></div>
+            
+            <div class="input-group"><label>아웃박스당 카톤 수</label><input type="number" id="editModalPtoC" onfocus="this.select()"></div>
             <div id="editModalSetFieldsO" class="conditional-fields"><div class="input-group"><label>카톤당 세트케이스 수</label><input type="number" id="editModalCtoS" onfocus="this.select()"></div><div class="input-group"><label>세트케이스당 단케이스 수</label><input type="number" id="editModalStoI" onfocus="this.select()"></div></div>
             <div id="editModalSetFieldsX" class="conditional-fields" style="display:block;"><div class="input-group"><label>카톤당 단케이스 수</label><input type="number" id="editModalCtoIX" onfocus="this.select()"></div></div>
             <div class="input-group"><label>단케이스당 반제품 수</label><input type="number" id="editModalItoU" onfocus="this.select()"></div>
 
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
             <p style="font-size:13px; font-weight:bold; color:#ff9500; margin-bottom:10px;">⚖️ 중량 스펙 정보 수정</p>
-            <div style="display:flex; gap:6px;">
-                <div class="input-group" style="flex:1;"><label>단제품 중량(g)</label><input type="number" step="0.1" id="editModalUnitWeight" onfocus="this.select()"></div>
-                <div class="input-group" style="flex:1;"><label>세트 중량(g)</label><input type="number" step="0.1" id="editModalSetWeight" onfocus="this.select()"></div>
-            </div>
-            <div class="input-group"><label>카톤 중량(kg)</label><input type="number" step="0.1" id="editModalCartonWeight" onfocus="this.select()" onkeydown="handleEditModalKey(event)"></div>
+            <div class="input-group"><label>중량 기입 (예: 10g ± 2g)</label><input type="text" id="editModalWeightText" onfocus="this.select()"></div>
 
             <button class="main-btn" style="background-color: #ff9500;" onclick="updateProductModalSave()">수정 완료 저장</button>
         </div>
@@ -517,6 +540,7 @@
             document.getElementById('selectedProductId').value = id;
             document.getElementById('productSearchDropdown').style.display = 'none';
             document.getElementById('inputQty').focus();
+            calculateUnits();
         }
 
         function setCalcMode(mode) {
@@ -546,8 +570,12 @@
             const rawQty = parseFloat(document.getElementById('inputQty').value);
             const resultBox = document.getElementById('calcResult');
 
-            if (!pId || isNaN(rawQty) || rawQty <= 0) {
-                resultBox.innerHTML = '결과가 여기에 표시됩니다.';
+            if (!pId) {
+                resultBox.innerHTML = '제품을 먼저 선택해주세요.';
+                return;
+            }
+            if (isNaN(rawQty) || rawQty <= 0) {
+                resultBox.innerHTML = '수량을 입력하세요.';
                 return;
             }
 
@@ -561,7 +589,7 @@
             let innerPerCarton = cToI; 
             let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit; 
             let totalEa = (currentCalcMode === 'EA') ? rawQty : (rawQty * unitPerSet);
-            let unitsPerPallet = p.palletToCarton * innerPerCarton * p.innerToUnit;
+            let unitsPerPallet = (p.palletToCarton || 24) * innerPerCarton * p.innerToUnit;
             
             let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
             let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
@@ -569,7 +597,7 @@
             let totalInners = formatVal(totalEa / p.innerToUnit, 1);
 
             let resultHtml = `<strong>📊 [${p.name}] 환산 결과</strong><br><br>`;
-            resultHtml += `🅿️ 파레트 : <strong>${totalPallets}</strong> 개<br>`;
+            resultHtml += `🅿️ 아웃박스/파레트 기준: <strong>${totalPallets}</strong> 개<br>`;
             resultHtml += `📦 카톤 : <strong>${totalCartons}</strong> 개<br>`;
             if (p.hasSet === 'O') {
                 resultHtml += `🎁 세트케이스 : <strong>${totalSets}</strong> 개<br>`;
@@ -577,17 +605,6 @@
             resultHtml += `📦 단케이스 : <strong>${totalInners}</strong> 개<br>`;
             resultHtml += `✨ 총 개수(EA) : <strong>${totalEa.toLocaleString()}</strong> 개`;
 
-            if (p.unitWeight || p.setWeight || p.cartonWeight) {
-                resultHtml += `<br><br>⚖️ <strong>예상 중량:</strong><br>`;
-                if (p.cartonWeight && totalCartons > 0) {
-                    let estWeightKg = (parseFloat(totalCartons) * p.cartonWeight).toFixed(1);
-                    resultHtml += `- 총 카톤 기준 중량: <strong>${Number(estWeightKg).toLocaleString()} kg</strong><br>`;
-                }
-                if (p.unitWeight) {
-                    let estTotalKg = ((totalEa * p.unitWeight) / 1000).toFixed(1);
-                    resultHtml += `- 총 반제품 기준 중량: <strong>${Number(estTotalKg).toLocaleString()} kg</strong>`;
-                }
-            }
             resultBox.innerHTML = resultHtml;
             resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -599,6 +616,7 @@
                 snapshot.forEach(doc => {
                     packingLogsList.push({ id: doc.id, ...doc.data() });
                 });
+                checkAutoCompletedLogs();
                 if (document.getElementById('logTab').classList.contains('active')) {
                     renderPackingLogsHtml();
                 }
@@ -607,13 +625,24 @@
             }
         }
 
+        async function checkAutoCompletedLogs() {
+            const today = new Date().toISOString().substring(0, 10);
+            let updated = false;
+            for (let log of packingLogsList) {
+                if (log.dueDate < today && !log.isForceDone && log.currentQty < log.targetQty && !log.isHold) {
+                    log.isForceDone = true;
+                    updated = true;
+                    await db.collection('packing_logs').doc(log.id).update({ isForceDone: true });
+                }
+            }
+            if (updated && document.getElementById('logTab').classList.contains('active')) {
+                renderPackingLogsHtml();
+            }
+        }
+
         function renderPackingLogsHtml() {
             const container = document.getElementById('packingLogContainer');
-            document.getElementById('logCountLabel').innerText = `(${packingLogsList.length}건)`;
-            if (packingLogsList.length === 0) {
-                container.innerHTML = '<p style="color:#666; font-size:13px; text-align:center; padding:15px;">등록된 출고 일정이 없습니다.</p>';
-                return;
-            }
+            
             const today = new Date();
             today.setHours(0,0,0,0);
             const todayStr = today.toISOString().substring(0, 10);
@@ -632,6 +661,13 @@
                     activeList.push(log);
                 }
             });
+
+            document.getElementById('logCountLabel').innerText = `(남은 일정: ${activeList.length}건)`;
+
+            if (packingLogsList.length === 0) {
+                container.innerHTML = '<p style="color:#666; font-size:13px; text-align:center; padding:15px;">등록된 출고 일정이 없습니다.</p>';
+                return;
+            }
 
             let html = '';
             activeList.forEach(log => {
@@ -673,21 +709,47 @@
             let fillClass = `fill-${autoStatus}`;
             let statusText = autoStatus === 'hold' ? '보류' : (autoStatus === 'urgent' ? '출고임박' : (autoStatus === 'progress' ? '진행 중' : (autoStatus === 'done' ? '완료' : '진행 전')));
 
+            const matchedProd = productList.find(p => p.id === log.productId);
+            const pType = matchedProd && matchedProd.productType ? matchedProd.productType : '기타';
+
             return `
-                <div class="log-card ${statusClass}" onclick="openDetailLogModal('${log.id}')">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                        <span style="font-weight:bold; font-size:15px;">📦 ${log.productName}</span>
-                        <span class="log-badge ${badgeClass}">${statusText}</span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar-fill ${fillClass}" style="width: ${percent}%;"></div>
-                    </div>
-                    <div style="font-size:13px; color:#555; display:flex; justify-content:space-between; align-items:center;">
-                        <span>진행률: <strong>${percent}%</strong> (${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()})</span>
-                        <span style="font-weight:bold; ${isUrgent ? 'color:#ff3b30;' : ''}">출고: ${log.dueDate}</span>
+                <div class="log-card ${statusClass}" style="display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" class="log-select-checkbox" data-id="${log.id}" style="width:20px; height:20px; cursor:pointer;">
+                    <div style="flex:1; cursor:pointer;" onclick="openDetailLogModal('${log.id}')">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <span style="font-weight:bold; font-size:15px;">📦 ${log.productName} <span class="tag tag-${pType}">${pType}</span></span>
+                            <span class="log-badge ${badgeClass}">${statusText}</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill ${fillClass}" style="width: ${percent}%;"></div>
+                        </div>
+                        <div style="font-size:13px; color:#555; display:flex; justify-content:space-between; align-items:center;">
+                            <span>진행률: <strong>${percent}%</strong> (${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()})</span>
+                            <span style="font-weight:bold; ${isUrgent ? 'color:#ff3b30;' : ''}">출고: ${log.dueDate}</span>
+                        </div>
                     </div>
                 </div>
             `;
+        }
+
+        async function deleteSelectedLogs() {
+            const checkedBoxes = document.querySelectorAll('.log-select-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert('삭제할 일지를 체크박스로 선택해주세요.');
+                return;
+            }
+            if (!confirm(`선택한 ${checkedBoxes.length}개의 일지를 정말 삭제하시겠습니까?`)) return;
+
+            try {
+                for (let cb of checkedBoxes) {
+                    let logId = cb.dataset.id;
+                    await db.collection('packing_logs').doc(logId).delete();
+                }
+                alert('✅ 선택한 일지가 삭제되었습니다.');
+                loadPackingLogs();
+            } catch (e) {
+                alert('❌ 다중 삭제 오류 발생');
+            }
         }
 
         function openAddLogModal() {
@@ -747,8 +809,8 @@
                 } else {
                     try {
                         let newRef = await db.collection('products').add({
-                            name: productName, hasSet: 'X', palletToCarton: 24, cartonToInner: 30, innerToUnit: 10,
-                            unitWeight: 0, setWeight: 0, cartonWeight: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            name: productName, productType: '스틱', hasSet: 'X', palletToCarton: 24, cartonToInner: 30, innerToUnit: 10,
+                            weightText: '10g ± 2g', createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
                         productId = newRef.id;
                         await loadProductList();
@@ -876,19 +938,29 @@
             mapped.forEach(obj => {
                 let h = obj.item;
                 let oIdx = obj.originalIdx;
-                let formattedMemo = h.memo ? `(${h.memo})` : '';
                 
-                html += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0;">
-                        <div>
-                            <span>${h.date}</span>: <strong>+${h.qty.toLocaleString()} set</strong>
+                if (isEditActive) {
+                    html += `
+                        <div style="display:flex; gap:4px; align-items:center; margin-bottom:6px; border-bottom:1px dashed #ddd; padding-bottom:4px;">
+                            <input type="date" id="inline-date-${oIdx}" value="${h.date}" style="padding:4px; font-size:11px; flex:1;">
+                            <input type="number" id="inline-qty-${oIdx}" value="${h.qty}" style="padding:4px; font-size:11px; width:60px;">
+                            <input type="text" id="inline-memo-${oIdx}" value="${h.memo || ''}" placeholder="메모" style="padding:4px; font-size:11px; flex:1;">
+                            <button class="sub-btn del-btn" style="padding:4px 6px; font-size:10px;" onclick="deleteSingleWorkLogRecord(${oIdx})">삭제</button>
                         </div>
-                        <div style="text-align:right;">
-                            <span style="color:#666; font-size:12px;">${formattedMemo}</span>
-                            ${isEditActive ? `<button class="sub-btn del-btn" style="padding:2px 6px; font-size:10px; margin-left:6px;" onclick="deleteSingleWorkLogRecord(${oIdx})">삭제</button>` : ''}
+                    `;
+                } else {
+                    let formattedMemo = h.memo ? `(${h.memo})` : '';
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0;">
+                            <div>
+                                <span>${h.date}</span>: <strong>+${h.qty.toLocaleString()}</strong>
+                            </div>
+                            <div style="text-align:right;">
+                                <span style="color:#666; font-size:12px;">${formattedMemo}</span>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
             });
             container.innerHTML = html;
         }
@@ -913,12 +985,12 @@
             let innerPerCarton = cToI;
             let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit;
             let totalEa = remaining * unitPerSet;
-            let unitsPerPallet = p.palletToCarton * innerPerCarton * p.innerToUnit;
+            let unitsPerPallet = (p.palletToCarton || 24) * innerPerCarton * p.innerToUnit;
 
             let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
             let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
 
-            box.innerHTML = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()} set):</strong><br>🅿️ 파레트: <strong>${totalPallets}</strong> 개 | 📦 카톤: <strong>${totalCartons}</strong> 개`;
+            box.innerHTML = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()}):</strong><br>🅿️ 기준 박스: <strong>${totalPallets}</strong> 개 | 📦 카톤: <strong>${totalCartons}</strong> 개`;
         }
 
         async function addSingleWorkLogRecord() {
@@ -966,7 +1038,8 @@
                     history: log.history,
                     currentQty: log.currentQty
                 });
-                openDetailLogModal(logId);
+                renderWorkLogHistory(log);
+                updateRemainingCalcBox(log);
             } catch (e) {
                 alert('작업 기록 삭제 오류');
             }
@@ -974,6 +1047,22 @@
 
         async function saveAllWorkLogsBatch() {
             let logId = document.getElementById('detailLogId').value;
+            let log = packingLogsList.find(l => l.id === logId);
+            
+            if (log && log.history) {
+                for (let i = 0; i < log.history.length; i++) {
+                    let dInput = document.getElementById(`inline-date-${i}`);
+                    let qInput = document.getElementById(`inline-qty-${i}`);
+                    let mInput = document.getElementById(`inline-memo-${i}`);
+                    if (dInput && qInput && mInput) {
+                        log.history[i].date = dInput.value;
+                        log.history[i].qty = parseInt(qInput.value) || 0;
+                        log.history[i].memo = mInput.value.trim();
+                    }
+                }
+                log.currentQty = log.history.reduce((sum, h) => sum + (h.qty || 0), 0);
+            }
+
             let productName = document.getElementById('editLogProductSearch').value.trim();
             let productId = document.getElementById('editLogSelectedProductId').value;
             let dueDate = document.getElementById('editLogDueDate').value;
@@ -993,8 +1082,8 @@
                 } else {
                     try {
                         let newRef = await db.collection('products').add({
-                            name: productName, hasSet: 'X', palletToCarton: 24, cartonToInner: 30, innerToUnit: 10,
-                            unitWeight: 0, setWeight: 0, cartonWeight: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            name: productName, productType: '스틱', hasSet: 'X', palletToCarton: 24, cartonToInner: 30, innerToUnit: 10,
+                            weightText: '10g ± 2g', createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
                         productId = newRef.id;
                         await loadProductList();
@@ -1007,7 +1096,9 @@
 
             try {
                 await db.collection('packing_logs').doc(logId).update({
-                    productId, productName, dueDate, targetQty, memo
+                    productId, productName, dueDate, targetQty, memo,
+                    history: log.history || [],
+                    currentQty: log.currentQty || 0
                 });
                 alert('✅ 수정 내용이 저장되었습니다.');
                 closeDetailLogModal();
@@ -1076,9 +1167,10 @@
 
             let html = '<div style="margin-top:5px;">';
             productList.forEach(p => {
+                const pType = p.productType ? p.productType : '기타';
                 html += `
                     <div class="simple-list-item" onclick="openProductDetailModal('${p.id}')">
-                        <span>📦</span> <span style="font-weight:600; font-size:15px;">${p.name}</span>
+                        <span>📦</span> <span style="font-weight:600; font-size:15px;">${p.name} <span class="tag tag-${pType}">${pType}</span></span>
                     </div>
                 `;
             });
@@ -1105,15 +1197,11 @@
                 return;
             }
             
-            document.getElementById('pdModalTitle').innerText = `📦 ${p.name}`;
+            const pType = p.productType ? p.productType : '기타';
+            document.getElementById('pdModalTitle').innerText = `📦 ${p.name} `;
             
             const weightBox = document.getElementById('pdModalWeightBox');
-            let wHtml = '';
-            if (p.unitWeight) wHtml += `<div>단제품: ${p.unitWeight} g</div>`;
-            if (p.setWeight) wHtml += `<div>세트: ${p.setWeight} g</div>`;
-            if (p.cartonWeight) wHtml += `<div>카톤: ${p.cartonWeight} kg</div>`;
-            if (!wHtml) wHtml = '<div style="color:#888; font-weight:normal; font-size:13px;">등록된 중량 정보가 없습니다.</div>';
-            weightBox.innerHTML = wHtml;
+            weightBox.innerHTML = `<div>중량 스펙: ${p.weightText || '미등록'}</div>`;
 
             const historyBox = document.getElementById('pdModalHistoryBox');
             let relatedLogs = packingLogsList.filter(log => log.productId === id && (log.currentQty > 0 || log.isForceDone));
@@ -1125,11 +1213,11 @@
                 let hHtml = '';
                 relatedLogs.forEach(log => {
                     let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0);
-                    let statusTxt = log.isForceDone ? '<span style="color:#34c759">[수동완료]</span>' : (isDone ? '<span style="color:#34c759">[완료]</span>' : '<span style="color:#007aff">[진행중]</span>');
+                    let statusTxt = log.isForceDone ? '<span style="color:#34c759">[완료]</span>' : (isDone ? '<span style="color:#34c759">[완료]</span>' : '<span style="color:#007aff">[진행중]</span>');
                     hHtml += `
                         <div style="padding:6px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
                             <span>📅 ${log.dueDate} ${statusTxt}</span>
-                            <strong>${log.currentQty.toLocaleString()} set</strong>
+                            <strong>${log.currentQty.toLocaleString()}</strong>
                         </div>
                     `;
                 });
@@ -1139,7 +1227,8 @@
             const specBox = document.getElementById('pdModalSpecBox');
             let cToI = (p.hasSet === 'O') ? `세트당 단케이스: <strong>${p.setToInner}개</strong><br>카톤당 세트: <strong>${p.cartonToSet}개</strong>` : `카톤당 단케이스: <strong>${p.cartonToInner}개</strong>`;
             specBox.innerHTML = `
-                파레트당 카톤: <strong>${p.palletToCarton || '-'} 박스</strong><br>
+                종류: <strong><span class="tag tag-${pType}">${pType}</span></strong><br>
+                아웃박스당 카톤: <strong>${p.palletToCarton || '-'} 박스</strong><br>
                 ${cToI}<br>
                 단케이스당 반제품: <strong>${p.innerToUnit || '-'} 개</strong>
             `;
@@ -1161,13 +1250,12 @@
 
         function openAddModal() {
             document.getElementById('regProductName').value = '';
+            document.getElementById('regProductType').value = '스틱';
             selectSetOption('X', 'reg');
             document.getElementById('regPalletToCarton').value = '';
             document.getElementById('regCartonToInnerX').value = '';
             document.getElementById('regInnerToUnit').value = '';
-            document.getElementById('regUnitWeight').value = '';
-            document.getElementById('regSetWeight').value = '';
-            document.getElementById('regCartonWeight').value = '';
+            document.getElementById('regWeightText').value = '';
             document.getElementById('addProductModal').style.display = 'flex';
         }
 
@@ -1188,10 +1276,9 @@
             }
         }
 
-        function handleRegKey(e) { if (e.key === 'Enter') saveProductConfig(); }
-
         async function saveProductConfig() {
             let name = document.getElementById('regProductName').value.trim();
+            let productType = document.getElementById('regProductType').value;
             let hasSet = document.getElementById('hasSetValue').value;
             let palletToCarton = parseInt(document.getElementById('regPalletToCarton').value);
             let innerToUnit = parseInt(document.getElementById('regInnerToUnit').value);
@@ -1204,9 +1291,7 @@
                 cartonToInner = parseInt(document.getElementById('regCartonToInnerX').value);
             }
 
-            let unitWeight = parseFloat(document.getElementById('regUnitWeight').value) || 0;
-            let setWeight = parseFloat(document.getElementById('regSetWeight').value) || 0;
-            let cartonWeight = parseFloat(document.getElementById('regCartonWeight').value) || 0;
+            let weightText = document.getElementById('regWeightText').value.trim();
 
             if (!name || isNaN(palletToCarton) || isNaN(innerToUnit)) {
                 alert('필수 입력 항목을 정확히 입력해 주세요.');
@@ -1215,8 +1300,8 @@
 
             try {
                 await db.collection('products').add({
-                    name, hasSet, palletToCarton, cartonToSet, setToInner, cartonToInner, innerToUnit,
-                    unitWeight, setWeight, cartonWeight,
+                    name, productType, hasSet, palletToCarton, cartonToSet, setToInner, cartonToInner, innerToUnit,
+                    weightText,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 closeAddModal();
@@ -1233,6 +1318,7 @@
 
             document.getElementById('editTargetId').value = p.id;
             document.getElementById('editModalName').value = p.name;
+            document.getElementById('editModalType').value = p.productType || '스틱';
             selectModalSetOption(p.hasSet || 'X');
             document.getElementById('editModalPtoC').value = p.palletToCarton;
             
@@ -1244,9 +1330,7 @@
             }
             
             document.getElementById('editModalItoU').value = p.innerToUnit;
-            document.getElementById('editModalUnitWeight').value = p.unitWeight || '';
-            document.getElementById('editModalSetWeight').value = p.setWeight || '';
-            document.getElementById('editModalCartonWeight').value = p.cartonWeight || '';
+            document.getElementById('editModalWeightText').value = p.weightText || '';
             
             document.getElementById('editProductModal').style.display = 'flex';
         }
@@ -1268,19 +1352,16 @@
             }
         }
 
-        function handleEditModalKey(e) { if (e.key === 'Enter') updateProductModalSave(); }
-
         async function updateProductModalSave() {
             const id = document.getElementById('editTargetId').value;
             const name = document.getElementById('editModalName').value;
+            const productType = document.getElementById('editModalType').value;
             const hasSet = document.getElementById('editModalHasSetValue').value;
             const pToC = parseInt(document.getElementById('editModalPtoC').value);
             const innerToUnit = parseInt(document.getElementById('editModalItoU').value);
-            const unitWeight = parseFloat(document.getElementById('editModalUnitWeight').value) || 0;
-            const setWeight = parseFloat(document.getElementById('editModalSetWeight').value) || 0;
-            const cartonWeight = parseFloat(document.getElementById('editModalCartonWeight').value) || 0;
+            const weightText = document.getElementById('editModalWeightText').value.trim();
 
-            let data = { name, hasSet, palletToCarton: pToC, innerToUnit, unitWeight, setWeight, cartonWeight };
+            let data = { name, productType, hasSet, palletToCarton: pToC, innerToUnit, weightText };
 
             if (hasSet === 'O') {
                 data.cartonToSet = parseInt(document.getElementById('editModalCtoS').value) || 0;
