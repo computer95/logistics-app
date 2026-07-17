@@ -80,7 +80,6 @@
         .diet-badge { background: #007aff; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
         .diet-menu { font-size: 13.5px; color: #444; line-height: 1.5; white-space: pre-line; min-height: 20px; }
 
-        /* 제품 관리 리스트 (테두리만 남기고 왼쪽 색상 포인트 제거) */
         .simple-list-item { background: #fcfcfc; border: 1px solid #e1e4e8; border-radius: 8px; padding: 14px; margin-bottom: 10px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
         .simple-list-item:hover { background: #f0f7ff; }
 
@@ -92,7 +91,6 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
         .modal-box { background: #fff; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         
-        /* 제품 스펙 모달은 일지 모달 위로 뜨게 설정 */
         #productDetailModal { z-index: 2050; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -530,7 +528,6 @@
                 document.getElementById('calcModeEa').classList.add('active');
                 document.getElementById('calcModeSet').classList.remove('active');
             }
-            // 기준을 바꿨을 때 입력된 숫자가 있으면 자동 환산
             if(document.getElementById('inputQty').value) {
                 calculateUnits();
             }
@@ -592,7 +589,6 @@
                 }
             }
             resultBox.innerHTML = resultHtml;
-            // 결과창으로 시야 살짝 이동
             resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
@@ -782,7 +778,6 @@
             document.getElementById('detailLogId').value = log.id;
             document.getElementById('detailOldProductId').value = log.productId;
             
-            // 상세창 요약 정보 (출고일 아래에 목표량, 상세정보 버튼 포함)
             document.getElementById('detailLogSummary').innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-size:15px;">📌 <strong>제품:</strong> ${log.productName}</span>
@@ -820,13 +815,13 @@
             isEditActive = !isEditActive;
             const editBox = document.getElementById('editBasicContainer');
             const batchBox = document.getElementById('batchSaveBox');
-            const dailyAddBox = document.getElementById('dailyAddSection'); // 추가
+            const dailyAddBox = document.getElementById('dailyAddSection');
             const btn = document.getElementById('toggleEditModeBtn');
 
             if (isEditActive) {
                 editBox.style.display = 'block';
                 batchBox.style.display = 'block';
-                dailyAddBox.style.display = 'none'; // 수정 중일 때 숨김
+                dailyAddBox.style.display = 'none';
                 btn.innerText = '수정 취소';
                 
                 let logId = document.getElementById('detailLogId').value;
@@ -841,7 +836,7 @@
             } else {
                 editBox.style.display = 'none';
                 batchBox.style.display = 'none';
-                dailyAddBox.style.display = 'block'; // 수정 취소 시 다시 표시
+                dailyAddBox.style.display = 'block';
                 btn.innerText = '수정';
             }
             renderWorkLogHistory(packingLogsList.find(l => l.id === document.getElementById('detailLogId').value));
@@ -867,7 +862,6 @@
             document.getElementById('editLogProductDropdown').style.display = 'none';
         }
 
-        // 작업기록: 오름차순, 메모 우측 괄호 정렬, 줄 구분선 제거, 수량 굵게
         function renderWorkLogHistory(log) {
             const container = document.getElementById('workLogHistoryContainer');
             if (!log.history || log.history.length === 0) {
@@ -876,16 +870,14 @@
             }
             let html = '';
             
-            // 날짜 기준 오름차순 정렬 (옛날 날짜가 위로)
             let mapped = (log.history || []).map((item, originalIdx) => ({item, originalIdx}));
             mapped.sort((a, b) => new Date(a.item.date) - new Date(b.item.date));
 
             mapped.forEach(obj => {
                 let h = obj.item;
                 let oIdx = obj.originalIdx;
-                let formattedMemo = h.memo ? `(${h.memo})` : ''; // 메모 괄호 처리
+                let formattedMemo = h.memo ? `(${h.memo})` : '';
                 
-                // border-bottom 제거해서 줄 구분선 없앰
                 html += `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0;">
                         <div>
@@ -911,7 +903,6 @@
             }
 
             const p = productList.find(item => item.id === log.productId);
-            // 포장 구성 미입력 제품이면 박스 숨김
             if (!p || (!p.palletToCarton && !p.cartonToInner && !p.setToInner)) {
                 box.style.display = 'none';
                 return;
@@ -935,10 +926,7 @@
             let date = document.getElementById('dailyWorkDate').value;
             let qty = parseInt(document.getElementById('dailyWorkQty').value);
             let rawMemo = document.getElementById('dailyWorkMemo').value.trim();
-
-            // 괄호가 이미 있다면 냅두고, 없으면 안에서 처리할 수 있지만
-            // 입력 데이터는 원본 그대로 넣고 화면(renderWorkLogHistory)에서 ()를 씌워주는 게 좋음
-            let memo = rawMemo.replace(/^\(|\)$/g, ''); // 앞뒤 괄호 혹시 쳤으면 제거해서 통일성 유지
+            let memo = rawMemo.replace(/^\(|\)$/g, '');
 
             if (!date || isNaN(qty) || qty <= 0) {
                 alert('작업일자와 수량을 올바르게 입력해 주세요.');
@@ -1064,7 +1052,7 @@
         function checkAdminPassword() {
             const inputField = document.getElementById('adminPasswordInput');
             const pw = inputField.value;
-            if (pw === '1234') {
+            if (pw === '3417') {
                 isAdminAuthenticated = true;
                 document.getElementById('passwordScreen').style.display = 'none';
                 document.getElementById('adminContent').style.display = 'block';
