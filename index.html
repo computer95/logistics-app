@@ -50,7 +50,7 @@
         .password-screen { text-align: center; padding: 30px 10px; }
         .password-screen input { text-align: center; letter-spacing: 5px; font-size: 24px; margin-bottom: 15px; }
         
-        .log-card { background: #fcfcfc; border: 1px solid #e1e4e8; border-left: 5px solid #ccc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+        .log-card { background: #fcfcfc; border: 1px solid #e1e4e8; border-left: 5px solid #ccc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
         .log-card.status-none { border-left-color: #ccc; }
         .log-card.status-urgent { border-left-color: #ff3b30; background: #fff5f5; }
         .log-card.status-progress { border-left-color: #007aff; background: #f8fbff; }
@@ -133,9 +133,6 @@
             <button class="add-action-btn" onclick="openAddLogModal()">+ 일정 등록</button>
         </h2>
         <p style="font-size: 12.5px; color: #666; margin-bottom: 12px;">출고 일정 및 작업 진행 현황을 관리합니다. (과거 출고일 자동 완료)</p>
-        <div style="margin-bottom: 10px; display: flex; gap: 5px;">
-            <button class="sub-btn del-btn" style="padding:6px 10px;" onclick="deleteSelectedLogs()">선택 항목 다중 삭제</button>
-        </div>
         <div id="packingLogContainer">데이터를 불러오는 중...</div>
     </div>
 
@@ -168,7 +165,7 @@
     <div id="manageTab" class="container tab-content">
         <div id="passwordScreen" class="password-screen">
             <h2>🔒 관리자 인증</h2>
-            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">제품관리를 위해 비밀번호(3417)를 입력하세요.</p>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">비밀번호를 입력하세요.</p>
             <input type="password" id="adminPasswordInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" onfocus="this.select()" onkeydown="handlePasswordKey(event)">
             <button class="main-btn" onclick="checkAdminPassword()">확인</button>
             <div id="pwErrorMsg" class="status-msg error" style="margin-top: 15px; display: none;">비밀번호가 틀렸습니다.</div>
@@ -196,13 +193,13 @@
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 10px; font-size: 12px; background:#888;" onclick="closeProductDetailModal()">닫기</button>
             </h2>
             
-            <div class="detail-section-title">⚖️ 중량 스펙 정보 (자유 텍스트 입력 가능)</div>
+            <div class="detail-section-title">⚖️ 중량 스펙 정보</div>
             <div id="pdModalWeightBox" class="weight-box"></div>
 
             <div class="detail-section-title">📋 최근 포장 이력</div>
             <div id="pdModalHistoryBox" class="history-list"></div>
 
-            <div class="detail-section-title">⚙️ 포장 구성 사양 (큰 ➔ 작은 정방향)</div>
+            <div class="detail-section-title">⚙️ 포장 구성 사양</div>
             <div id="pdModalSpecBox" class="spec-info-box"></div>
 
             <div style="display:flex; gap:10px; margin-top:20px;">
@@ -597,13 +594,13 @@
             let totalInners = formatVal(totalEa / p.innerToUnit, 1);
 
             let resultHtml = `<strong>📊 [${p.name}] 환산 결과</strong><br><br>`;
-            resultHtml += `🅿️ 아웃박스/파레트 기준: <strong>${totalPallets}</strong> 개<br>`;
+            resultHtml += `🅿️ 파레트 : <strong>${totalPallets}</strong> 개<br>`;
             resultHtml += `📦 카톤 : <strong>${totalCartons}</strong> 개<br>`;
             if (p.hasSet === 'O') {
                 resultHtml += `🎁 세트케이스 : <strong>${totalSets}</strong> 개<br>`;
             }
             resultHtml += `📦 단케이스 : <strong>${totalInners}</strong> 개<br>`;
-            resultHtml += `✨ 총 개수(EA) : <strong>${totalEa.toLocaleString()}</strong> 개`;
+            resultHtml += `✨ 반제품 : <strong>${totalEa.toLocaleString()}</strong> 개`;
 
             resultBox.innerHTML = resultHtml;
             resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -713,8 +710,8 @@
             const pType = matchedProd && matchedProd.productType ? matchedProd.productType : '기타';
 
             return `
-                <div class="log-card ${statusClass}" style="display:flex; align-items:center; gap:10px;">
-                    <input type="checkbox" class="log-select-checkbox" data-id="${log.id}" style="width:20px; height:20px; cursor:pointer;">
+                <div class="log-card ${statusClass}">
+                    <input type="checkbox" class="log-select-checkbox" data-id="${log.id}" style="width:20px; height:20px; cursor:pointer; flex-shrink:0;">
                     <div style="flex:1; cursor:pointer;" onclick="openDetailLogModal('${log.id}')">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                             <span style="font-weight:bold; font-size:15px;">📦 ${log.productName} <span class="tag tag-${pType}">${pType}</span></span>
