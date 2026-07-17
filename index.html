@@ -69,6 +69,7 @@
         .tag-스틱 { background: #eef9f0; color: #27ae60; }
         .tag-바이알 { background: #fdfeeb; color: #d35400; }
         .tag-PTP { background: #fce4ec; color: #c2185b; }
+        .tag-진액고 { background: #ffebeb; color: #000000;}
 
         .progress-bar-bg { width: 100%; background-color: #e9ecef; border-radius: 4px; height: 7px; overflow: hidden; margin-top: 8px; margin-bottom: 6px; }
         .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
@@ -115,8 +116,8 @@
         <div class="input-group">
             <label>입력 기준 선택</label>
             <div class="toggle-container">
-                <button type="button" id="calcModeSet" class="toggle-btn active" onclick="setCalcMode('SET')">포장 구성(정방향) 기준</button>
-                <button type="button" id="calcModeEa" class="toggle-btn" onclick="setCalcMode('EA')">개수(반제품) 기준</button>
+                <button type="button" id="calcModeSet" class="toggle-btn active" onclick="setCalcMode('SET')">세트케이스(SET) 기준</button>
+                <button type="button" id="calcModeEa" class="toggle-btn" onclick="setCalcMode('EA')">반제품(EA) 기준</button>
             </div>
         </div>
         <div class="input-group">
@@ -320,6 +321,7 @@
                     <option value="스틱" selected>스틱</option>
                     <option value="바이알">바이알</option>
                     <option value="PTP">PTP</option>
+                    <option value="진액고">진액고</option>
                 </select>
             </div>
 
@@ -354,6 +356,7 @@
                     <option value="스틱">스틱</option>
                     <option value="바이알">바이알</option>
                     <option value="PTP">PTP</option>
+                    <option value="진액고">진액고</option>
                 </select>
             </div>
             <div class="input-group"><label>세트케이스 유무</label><div class="toggle-container"><button type="button" id="editModalSetBtnO" class="toggle-btn" onclick="selectModalSetOption('O')">있음 (O)</button><button type="button" id="editModalSetBtnX" class="toggle-btn active" onclick="selectModalSetOption('X')">없음 (X)</button></div><input type="hidden" id="editModalHasSetValue" value="X"></div>
