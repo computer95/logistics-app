@@ -267,7 +267,7 @@
                     <label style="font-size:12px; color:#555;">목표수량</label>
                     <input type="number" id="editLogTargetQty" placeholder="목표수량" style="padding:8px; font-size:13px;" onfocus="this.select()">
                 </div>
-                <div class="input-group" style="border-top:1px dashed #b3d1ff; padding-top:12px;">
+                <div class="input-group" style="margin-bottom:12px;">
                     <label style="font-size:12px; color:#555;">메모 (특이사항)</label>
                     <input type="text" id="editLogMemo" placeholder="메모 입력" style="padding:8px; font-size:13px; margin-bottom:4px;">
                 </div>
@@ -314,15 +314,18 @@
             </h2>
             <div class="input-group"><label for="regProductName">제품이름</label><input type="text" id="regProductName" placeholder="예: 홍삼진액스틱" onfocus="this.select()"></div>
             
-            <div class="input-group">
-                <label>제품 종류 태그</label>
-                <select id="regProductType">
-                    <option value="파우치">파우치</option>
-                    <option value="스틱" selected>스틱</option>
-                    <option value="바이알">바이알</option>
-                    <option value="PTP">PTP</option>
-                    <option value="진액고">진액고</option>
-                </select>
+            <div class="input-group" style="margin-bottom: 12px;">
+            <label style="display: block; margin-bottom: 6px;">제품 종류</label>
+         <!-- 버튼들을 감싸는 컨테이너 -->
+            <div id="productTypeGroup" style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="type-btn active" onclick="selectType(this, '스틱')">스틱</button>
+            <button type="button" class="type-btn" onclick="selectType(this, '파우치')">파우치</button>
+            <button type="button" class="type-btn" onclick="selectType(this, '바이알')">바이알</button>
+            <button type="button" class="type-btn" onclick="selectType(this, 'PTP')">PTP</button>
+            <button type="button" class="type-btn" onclick="selectType(this, '진액고')">진액고</button>
+            </div>
+            <!-- 실제 값이 저장될 숨겨진 입력창 -->
+            <input type="hidden" id="regProductType" value="스틱">
             </div>
 
             <div class="input-group"><label>세트케이스 유무</label><div class="toggle-container"><button type="button" id="setBtnO" class="toggle-btn" onclick="selectSetOption('O', 'reg')">있음 (O)</button><button type="button" id="setBtnX" class="toggle-btn active" onclick="selectSetOption('X', 'reg')">없음 (X)</button></div><input type="hidden" id="hasSetValue" value="X"></div>
@@ -729,7 +732,7 @@
             let statusText = autoStatus === 'hold' ? '보류' : (autoStatus === 'urgent' ? '출고임박' : (autoStatus === 'progress' ? '진행 중' : (autoStatus === 'done' ? '완료' : '진행 전')));
 
             const matchedProd = productList.find(p => p.id === log.productId);
-            const pType = matchedProd && matchedProd.productType ? matchedProd.productType : '기타';
+            const pType = matchedProd && matchedProd.productType ? matchedProd.productType : '미분류';
 
             return `
                 <div class="log-card ${statusClass}">
@@ -842,7 +845,7 @@
             if (!log) return;
 
             let product = productList.find(p => p.id === log.productId);
-            let pType = product && product.productType ? product.productType : '기타';
+            let pType = product && product.productType ? product.productType : '미분류';
 
             document.getElementById('detailLogId').value = log.id;
             document.getElementById('detailOldProductId').value = log.productId;
@@ -1007,7 +1010,7 @@
             let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
             let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
 
-            box.innerHTML = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()}):</strong> set <br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
+            box.innerHTML = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()}) set</strong><br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
         }
 
         // 작업기록추가
@@ -1193,7 +1196,7 @@
 
             let html = '<div style="margin-top:5px;">';
             productList.forEach(p => {
-                const pType = p.productType ? p.productType : '기타';
+                const pType = p.productType ? p.productType : '미분류';
                 html += `
                     <div class="simple-list-item" onclick="openProductDetailModal('${p.id}')">
                         <span>📦</span> <span style="font-weight:600; font-size:15px;">${p.name} <span class="tag tag-${pType}">${pType}</span></span>
@@ -1225,7 +1228,7 @@
                 return;
             }
             
-            const pType = p.productType ? p.productType : '기타';
+            const pType = p.productType ? p.productType : '미분류';
             document.getElementById('pdModalTitle').innerHTML = `📦 ${p.name} <strong><span class="tag tag-${pType}">${pType}</span></strong>`;
             
             const weightBox = document.getElementById('pdModalWeightBox');
