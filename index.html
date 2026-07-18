@@ -919,7 +919,7 @@
                     type="hidden" id="hasSetValue" value="X">
             </div>
 
-            <div class="input-group"><label for="regPalletToCarton">아웃박스(BOX)당 카톤 수</label><input type="number"
+            <div class="input-group"><label for="regPalletToCarton">파레트당 카톤 수</label><input type="number"
                     id="regPalletToCarton" placeholder="예: 24" onfocus="this.select()"></div>
             <div id="setFieldsO" class="conditional-fields">
                 <div class="input-group"><label for="regCartonToSet">카톤당 세트케이스 수</label><input type="number"
@@ -937,8 +937,24 @@
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
             <p style="font-size:13px; font-weight:bold; color:#34c759; margin-bottom:10px;">⚖️ 중량 스펙 정보 (자유 텍스트 기입 가능)
             </p>
-            <div class="input-group"><label for="regWeightText">중량 기입 (예: 10g ± 2g)</label><input type="text"
-                    id="regWeightText" placeholder="예: 10g ± 2g" onfocus="this.select()"></div>
+            <div class="input-group">
+                <label for="regWeightInner">단케이스 중량</label>
+                <input type="text" id="regWeightInner" placeholder="예: 50g ± 1g" onfocus="this.select()">
+            </div>
+
+            <!-- 세트케이스 중량 (세트 유무에 따라 표시/숨김) -->
+            <div id="weightFieldsO" class="conditional-fields" style="display:none;">
+                <div class="input-group">
+                    <label for="regWeightSet">세트케이스 중량</label>
+                    <input type="text" id="regWeightSet" placeholder="예: 300g ± 5g" onfocus="this.select()">
+                </div>
+            </div>
+
+            <!-- 카톤 중량 (공통) -->
+            <div class="input-group">
+                <label for="regWeightCarton">카톤 중량</label>
+                <input type="text" id="regWeightCarton" placeholder="예: 5kg ± 0.1kg" onfocus="this.select()">
+            </div>
 
             <button class="main-btn" style="background-color: #34c759;" onclick="saveProductConfig()">등록 완료</button>
             <div id="regStatusMsg" class="status-msg"></div>
@@ -953,17 +969,22 @@
                     onclick="closeEditModal()">닫기</button>
             </h2>
             <input type="hidden" id="editTargetId">
-            <div class="input-group"><label>제품이름</label><input type="text" id="editModalName" onfocus="this.select()">
-            </div>
-            <div class="input-group">
-                <label>제품 종류 태그</label>
-                <select id="editModalType">
-                    <option value="파우치">파우치</option>
-                    <option value="스틱">스틱</option>
-                    <option value="바이알">바이알</option>
-                    <option value="PTP">PTP</option>
-                    <option value="진액고">진액고</option>
-                </select>
+            <div class="input-group" style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 6px;">제품 종류</label>
+                <div id="productTypeGroup" style="display: flex; gap: 4px; justify-content: space-between;">
+                    <!-- 버튼마다 각 타입 클래스를 꼭 추가해줘! -->
+                    <button type="button" class="type-btn 스틱 active" onclick="selectType(this, '스틱')"
+                        style="flex: 1;">스틱</button>
+                    <button type="button" class="type-btn 파우치" onclick="selectType(this, '파우치')"
+                        style="flex: 1;">파우치</button>
+                    <button type="button" class="type-btn 바이알" onclick="selectType(this, '바이알')"
+                        style="flex: 1;">바이알</button>
+                    <button type="button" class="type-btn PTP" onclick="selectType(this, 'PTP')"
+                        style="flex: 1;">PTP</button>
+                    <button type="button" class="type-btn 진액고" onclick="selectType(this, '진액고')"
+                        style="flex: 1;">진액고</button>
+                </div>
+                <input type="hidden" id="regProductType" value="스틱">
             </div>
             <div class="input-group"><label>세트케이스 유무</label>
                 <div class="toggle-container"><button type="button" id="editModalSetBtnO" class="toggle-btn"
@@ -972,7 +993,7 @@
                     type="hidden" id="editModalHasSetValue" value="X">
             </div>
 
-            <div class="input-group"><label>아웃박스당 카톤 수</label><input type="number" id="editModalPtoC"
+            <div class="input-group"><label>파레트당 카톤 수</label><input type="number" id="editModalPtoC"
                     onfocus="this.select()"></div>
             <div id="editModalSetFieldsO" class="conditional-fields">
                 <div class="input-group"><label>카톤당 세트케이스 수</label><input type="number" id="editModalCtoS"
@@ -1943,6 +1964,22 @@
             }
         }
 
+        // 제품 등록 모달 세트 옵션 선택 (중량 필드 제어)
+        function selectSetOption(option, mode) {
+            // 1. (기존 로직: 버튼 활성화 등...)
+
+            // 2. 세트케이스 중량 필드 제어
+            const setWeightField = document.getElementById('weightFieldsO');
+
+            if (option === 'O') {
+                setWeightField.style.display = 'block';
+            } else {
+                setWeightField.style.display = 'none';
+                // 세트가 없는데 혹시라도 값이 들어있을 수 있으니 비워줌
+                document.getElementById('regWeightSet').value = '';
+            }
+        }
+
         // 제품 등록 저장
         async function saveProductConfig() {
             let name = document.getElementById('regProductName').value.trim();
@@ -2053,6 +2090,7 @@
             } catch (e) { alert('❌ 수정 실패'); }
         }
 
+        // 제품 삭제
         async function deleteProduct(id, name) {
             if (confirm(`정말 [${name}] 품목을 삭제하시겠습니까?`)) {
                 try {
