@@ -404,6 +404,7 @@
         loadProductList();
         loadPackingLogs();
 
+        // 식단표 초기화
         function initDietSystem() {
             const weekDates = getThisWeekDates();
             currentMondayKey = weekDates[0].dateStr; 
@@ -418,6 +419,7 @@
             loadDietFromFirestore();
         }
 
+        // 식단표 DB 키값 생성 (이번주 월요일 기준)
         function getThisWeekDates() {
             const now = new Date();
             const day = now.getDay();
@@ -438,6 +440,7 @@
             return week;
         }
 
+        // 식단표 오늘 날짜 강조
         function highlightTodayDiet(weekDates) {
             const daysKeyMap = ['mon', 'tue', 'wed', 'thu', 'fri'];
             const todayObj = new Date();
@@ -453,6 +456,7 @@
             });
         }
 
+        // 식단표 수정 박스 토글
         function toggleDietEdit() {
             const box = document.getElementById('dietEditBox');
             box.style.display = (box.style.display === 'block') ? 'none' : 'block';
@@ -464,6 +468,7 @@
             }
         }
 
+        // 식단표 저장
         async function saveDietTable() {
             const dietData = {};
             ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
@@ -480,6 +485,7 @@
             } catch (e) { alert('❌ 식단 저장 오류'); }
         }
 
+        // 식단표 Firestore에서 불러오기
         async function loadDietFromFirestore() {
             try {
                 const doc = await db.collection('diets').doc(currentMondayKey).get();
@@ -492,6 +498,7 @@
             } catch (e) { console.error(e); }
         }
 
+        // 탭 전환
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -505,6 +512,7 @@
             }
         }
 
+        // 제품 리스트 불러오기
         async function loadProductList() {
             try {
                 const snapshot = await db.collection('products').orderBy('name').get();
@@ -515,6 +523,7 @@
             } catch (e) { console.error(e); }
         }
 
+        // 제품 검색 필터링
         function filterProducts() {
             const keyword = document.getElementById('productSearchInput').value.trim().toLowerCase();
             const dropdown = document.getElementById('productSearchDropdown');
@@ -535,6 +544,7 @@
             dropdown.style.display = 'block';
         }
 
+        // 제품 선택
         function selectProduct(id, name) {
             document.getElementById('productSearchInput').value = name;
             document.getElementById('selectedProductId').value = id;
@@ -543,6 +553,7 @@
             calculateUnits();
         }
 
+        // 계산 모드 설정
         function setCalcMode(mode) {
             currentCalcMode = mode;
             if (mode === 'SET') {
@@ -557,14 +568,17 @@
             }
         }
 
+        // 엔터키 입력 시 계산
         function handleCalcKey(e) {
             if (e.key === 'Enter') calculateUnits();
         }
 
+        // 값 포맷팅 (정수는 천단위 콤마, 소수는 지정된 자리수까지)
         function formatVal(val, decimals = 1) {
             return Number.isInteger(val) ? val.toLocaleString() : val.toFixed(decimals);
         }
 
+        // 계산 수행
         function calculateUnits() {
             const pId = document.getElementById('selectedProductId').value;
             const rawQty = parseFloat(document.getElementById('inputQty').value);
@@ -609,6 +623,7 @@
             resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
+        // 포장일지 불러오기
         async function loadPackingLogs() {
             try {
                 const snapshot = await db.collection('packing_logs').orderBy('dueDate', 'asc').get();
@@ -625,6 +640,7 @@
             }
         }
 
+        // 자동 완료 처리 (하단 자동완료로 완료된 제품 처리)
         async function checkAutoCompletedLogs() {
             const today = new Date().toISOString().substring(0, 10);
             let updated = false;
@@ -640,6 +656,7 @@
             }
         }
 
+        // 포장일지 HTML 렌더링
         function renderPackingLogsHtml() {
             const container = document.getElementById('packingLogContainer');
             
@@ -690,11 +707,13 @@
             container.innerHTML = html;
         }
 
+        // 완료 섹션 토글
         function toggleCompletedSection() {
             isCompletedOpen = !isCompletedOpen;
             renderPackingLogsHtml();
         }
 
+        // 포장일지 카드 HTML 생성
         function createLogCardHtml(log, todayStr, sevenDaysLater) {
             let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
             let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
@@ -731,26 +750,7 @@
             `;
         }
 
-        async function deleteSelectedLogs() {
-            const checkedBoxes = document.querySelectorAll('.log-select-checkbox:checked');
-            if (checkedBoxes.length === 0) {
-                alert('삭제할 일지를 체크박스로 선택해주세요.');
-                return;
-            }
-            if (!confirm(`선택한 ${checkedBoxes.length}개의 일지를 정말 삭제하시겠습니까?`)) return;
-
-            try {
-                for (let cb of checkedBoxes) {
-                    let logId = cb.dataset.id;
-                    await db.collection('packing_logs').doc(logId).delete();
-                }
-                alert('✅ 선택한 일지가 삭제되었습니다.');
-                loadPackingLogs();
-            } catch (e) {
-                alert('❌ 다중 삭제 오류 발생');
-            }
-        }
-
+        // 포장일지 추가 모달 열기
         function openAddLogModal() {
             document.getElementById('logModalProductSearch').value = '';
             document.getElementById('logModalSelectedProductId').value = '';
@@ -760,10 +760,12 @@
             document.getElementById('addLogModal').style.display = 'flex';
         }
 
+        // 포장일지 추가 모달 닫기
         function closeAddLogModal() {
             document.getElementById('addLogModal').style.display = 'none';
         }
 
+        // 포장일지 제품 검색 필터링
         function filterLogModalProducts() {
             const keyword = document.getElementById('logModalProductSearch').value.trim().toLowerCase();
             const dropdown = document.getElementById('logModalProductDropdown');
@@ -784,12 +786,14 @@
             dropdown.style.display = 'block';
         }
 
+        // 포장일지 제품 선택
         function selectLogModalProduct(id, name) {
             document.getElementById('logModalProductSearch').value = name;
             document.getElementById('logModalSelectedProductId').value = id;
             document.getElementById('logModalProductDropdown').style.display = 'none';
         }
 
+        // 포장일지 저장
         async function savePackingLog() {
             let productName = document.getElementById('logModalProductSearch').value.trim();
             let productId = document.getElementById('logModalSelectedProductId').value;
@@ -832,6 +836,7 @@
             }
         }
 
+        // 포장일지 상세 모달 열기
         async function openDetailLogModal(logId) {
             let log = packingLogsList.find(l => l.id === logId);
             if (!log) return;
@@ -867,11 +872,13 @@
             document.getElementById('detailLogModal').style.display = 'flex';
         }
 
+        // 포장일지 상세 모달 닫기
         function closeDetailLogModal() {
             document.getElementById('detailLogModal').style.display = 'none';
             loadPackingLogs();
         }
 
+        // 포장일지 수정 모드 토글
         function toggleEditMode() {
             isEditActive = !isEditActive;
             const editBox = document.getElementById('editBasicContainer');
@@ -903,6 +910,7 @@
             renderWorkLogHistory(packingLogsList.find(l => l.id === document.getElementById('detailLogId').value));
         }
 
+        // 포장일지 수정 모달 제품 검색 필터링
         function filterEditLogProducts() {
             const keyword = document.getElementById('editLogProductSearch').value.trim().toLowerCase();
             const dropdown = document.getElementById('editLogProductDropdown');
@@ -917,12 +925,14 @@
             dropdown.style.display = 'block';
         }
 
+        // 포장일지 수정 모달 제품 선택
         function selectEditLogProduct(id, name) {
             document.getElementById('editLogProductSearch').value = name;
             document.getElementById('editLogSelectedProductId').value = id;
             document.getElementById('editLogProductDropdown').style.display = 'none';
         }
 
+        // 작업 내역 렌더링
         function renderWorkLogHistory(log) {
             const container = document.getElementById('workLogHistoryContainer');
             if (!log.history || log.history.length === 0) {
@@ -964,6 +974,7 @@
             container.innerHTML = html;
         }
 
+        // 남은 목표량 환산 박스 업데이트
         function updateRemainingCalcBox(log) {
             const box = document.getElementById('remainingCalcBox');
             let remaining = log.targetQty - log.currentQty;
@@ -992,6 +1003,7 @@
             box.innerHTML = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()}):</strong><br>🅿️ 기준 박스: <strong>${totalPallets}</strong> 개 | 📦 카톤: <strong>${totalCartons}</strong> 개`;
         }
 
+        // 작업기록추가
         async function addSingleWorkLogRecord() {
             let logId = document.getElementById('detailLogId').value;
             let date = document.getElementById('dailyWorkDate').value;
@@ -1022,6 +1034,7 @@
             }
         }
 
+        //작업기록 삭제에대한 함수
         async function deleteSingleWorkLogRecord(index) {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1044,6 +1057,7 @@
             }
         }
 
+        // 포장일지 수정 저장
         async function saveAllWorkLogsBatch() {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1106,6 +1120,7 @@
             }
         }
 
+        // 포장일지 보류 상태 토글
         async function toggleHoldStatus() {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1117,6 +1132,7 @@
             } catch (e) { alert('상태 변경 오류'); }
         }
 
+        // 포장일지 강제 완료 상태 토글
         async function toggleForceDoneStatus() {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1128,6 +1144,7 @@
             } catch (e) { alert('상태 변경 오류'); }
         }
 
+        // 포장일지 삭제
         async function deletePackingLog() {
             if (!confirm('이 출고 일정을 완전히 삭제하시겠습니까?')) return;
             let logId = document.getElementById('detailLogId').value;
@@ -1137,8 +1154,10 @@
             } catch (e) { alert('삭제 오류'); }
         }
 
+        // 관리자 비밀번호 확인 (엔터키 입력 시)
         function handlePasswordKey(e) { if (e.key === 'Enter') checkAdminPassword(); }
         
+        // 관리자 비밀번호 확인
         function checkAdminPassword() {
             const inputField = document.getElementById('adminPasswordInput');
             const pw = inputField.value;
@@ -1154,6 +1173,7 @@
             }
         }
 
+        // 관리자 제품 리스트 렌더링
         async function renderProductAdminList() {
             await loadProductList();
             const container = document.getElementById('productListContainer');
@@ -1177,6 +1197,7 @@
             container.innerHTML = html;
         }
 
+        // 관리자 제품 리스트 필터링
         function filterAdminList() {
             const keyword = document.getElementById('adminFilterInput').value.trim().toLowerCase();
             const items = document.querySelectorAll('.simple-list-item');
@@ -1189,6 +1210,7 @@
             });
         }
 
+        // 제품 상세 모달 열기
         function openProductDetailModal(id) {
             const p = productList.find(item => item.id === id);
             if (!p) {
@@ -1198,6 +1220,7 @@
             
             const pType = p.productType ? p.productType : '기타';
             document.getElementById('pdModalTitle').innerText = `📦 ${p.name} `;
+            document.getElementById('pdModalType').innerHTML = `<strong><span class="tag tag-${pType}">${pType}</span></strong>`;
             
             const weightBox = document.getElementById('pdModalWeightBox');
             weightBox.innerHTML = `<div>중량 스펙: ${p.weightText || '미등록'}</div>`;
@@ -1226,7 +1249,6 @@
             const specBox = document.getElementById('pdModalSpecBox');
             let cToI = (p.hasSet === 'O') ? `세트당 단케이스: <strong>${p.setToInner}개</strong><br>카톤당 세트: <strong>${p.cartonToSet}개</strong>` : `카톤당 단케이스: <strong>${p.cartonToInner}개</strong>`;
             specBox.innerHTML = `
-                종류: <strong><span class="tag tag-${pType}">${pType}</span></strong><br>
                 아웃박스당 카톤: <strong>${p.palletToCarton || '-'} 박스</strong><br>
                 ${cToI}<br>
                 단케이스당 반제품: <strong>${p.innerToUnit || '-'} 개</strong>
@@ -1243,10 +1265,12 @@
             document.getElementById('productDetailModal').style.display = 'flex';
         }
 
+        // 제품 상세 모달 닫기
         function closeProductDetailModal() {
             document.getElementById('productDetailModal').style.display = 'none';
         }
 
+        // 제품 등록 모달 열기
         function openAddModal() {
             document.getElementById('regProductName').value = '';
             document.getElementById('regProductType').value = '스틱';
@@ -1258,8 +1282,10 @@
             document.getElementById('addProductModal').style.display = 'flex';
         }
 
+        // 제품 등록 모달 닫기
         function closeAddModal() { document.getElementById('addProductModal').style.display = 'none'; }
 
+        // 제품 등록 모달 세트 옵션 선택
         function selectSetOption(val, prefix) {
             document.getElementById('hasSetValue').value = val;
             if (val === 'O') {
@@ -1275,6 +1301,7 @@
             }
         }
 
+        // 제품 등록 저장
         async function saveProductConfig() {
             let name = document.getElementById('regProductName').value.trim();
             let productType = document.getElementById('regProductType').value;
@@ -1311,6 +1338,7 @@
             }
         }
 
+        // 제품 수정 모달 열기
         async function openEditModal(id) {
             let p = productList.find(item => item.id === id);
             if (!p) return;
@@ -1334,8 +1362,10 @@
             document.getElementById('editProductModal').style.display = 'flex';
         }
 
+        // 제품 수정 모달 닫기
         function closeEditModal() { document.getElementById('editProductModal').style.display = 'none'; }
         
+        // 제품 수정 모달 세트 옵션 선택
         function selectModalSetOption(val) {
             document.getElementById('editModalHasSetValue').value = val;
             if (val === 'O') {
@@ -1351,6 +1381,7 @@
             }
         }
 
+        // 제품 수정 저장
         async function updateProductModalSave() {
             const id = document.getElementById('editTargetId').value;
             const name = document.getElementById('editModalName').value;
