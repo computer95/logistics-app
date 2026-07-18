@@ -125,7 +125,7 @@
             <input type="number" id="inputQty" placeholder="수량을 입력하세요" onfocus="this.select()" onkeydown="handleCalcKey(event)">
         </div>
         <button class="main-btn" onclick="calculateUnits()">환산하기</button>
-        <div id="calcResult" class="result-box">제품을 선택하거나 구성을 등록해주세요.</div>
+        <div id="calcResult" class="result-box">제품을 선택해주세요.</div>
     </div>
 
     <div id="logTab" class="container tab-content">
@@ -984,19 +984,19 @@
         // 남은 목표량 환산 박스 업데이트
         function updateRemainingCalcBox(log) {
             const box = document.getElementById('remainingCalcBox');
+            box.style.display = 'block';
+
             let remaining = log.targetQty - log.currentQty;
             if (remaining <= 0) {
                 box.innerHTML = '🎉 목표 수량을 모두 달성했습니다!';
-                box.style.display = 'block';
                 return;
             }
 
             const p = productList.find(item => item.id === log.productId);
             if (!p || (!p.palletToCarton && !p.cartonToInner && !p.setToInner)) {
-                box.style.display = 'none';
+                box.innerHTML = '📦 해당 제품의 포장 정보가 등록되지 않았습니다.';
                 return;
             }
-            box.style.display = 'block';
 
             let cToI = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
             let innerPerCarton = cToI;
@@ -1007,7 +1007,7 @@
             let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
             let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
 
-            box.innerHTML = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()}):</strong><br>🅿️ 기준 박스: <strong>${totalPallets}</strong> 개 | 📦 카톤: <strong>${totalCartons}</strong> 개`;
+            box.innerHTML = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()}):</strong> set <br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
         }
 
         // 작업기록추가
