@@ -943,7 +943,7 @@
             </div>
 
             <!-- 세트케이스 중량 (세트 유무에 따라 표시/숨김) -->
-            <div id="weightFieldsO" class="conditional-fields" style="display:none;">
+            <div id="weightFieldsSet" class="conditional-fields" style="display:none;">
                 <div class="input-group">
                     <label for="regWeightSet">세트케이스 중량</label>
                     <input type="text" id="regWeightSet" placeholder="예: 300g ± 5g" onfocus="this.select()">
@@ -1651,7 +1651,7 @@
             let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
             let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
 
-            box.innerHTML = `📌 <strong>남은 목표량 환산 (${remaining.toLocaleString()}) set</strong><br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
+            box.innerHTML = `📌 <strong>남은 목표량 환산 : ${remaining.toLocaleString()} set</strong><br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
         }
 
         // 작업기록추가
@@ -1951,16 +1951,30 @@
         // 제품 등록 모달 세트 옵션 선택
         function selectSetOption(val, prefix) {
             document.getElementById('hasSetValue').value = val;
+
+            // 1. 버튼 활성화/비활성화 처리
             if (val === 'O') {
                 document.getElementById('setBtnO').classList.add('active');
                 document.getElementById('setBtnX').classList.remove('active');
+
+                // 수량 필드 전환
                 document.getElementById('setFieldsO').style.display = 'block';
                 document.getElementById('setFieldsX').style.display = 'none';
+
+                // 중량 필드 보이기 (새로 추가한 코드)
+                document.getElementById('weightFieldsSet').style.display = 'block';
             } else {
                 document.getElementById('setBtnX').classList.add('active');
                 document.getElementById('setBtnO').classList.remove('active');
+
+                // 수량 필드 전환
                 document.getElementById('setFieldsO').style.display = 'none';
                 document.getElementById('setFieldsX').style.display = 'block';
+
+                // 중량 필드 숨기기 (새로 추가한 코드)
+                document.getElementById('weightFieldsSet').style.display = 'none';
+                // 선택 해제 시 값 초기화 (필요시)
+                document.getElementById('regWeightSet').value = '';
             }
         }
 
