@@ -1952,16 +1952,16 @@
         function selectSetOption(val, prefix) {
             document.getElementById('hasSetValue').value = val;
 
-            // 버튼 활성화 처리
+            // 1. 버튼 활성화 처리
             if (val === 'O') {
                 document.getElementById('setBtnO').classList.add('active');
                 document.getElementById('setBtnX').classList.remove('active');
                 document.getElementById('setFieldsO').style.display = 'block';
                 document.getElementById('setFieldsX').style.display = 'none';
 
-                // 요소가 있는지 먼저 확인하고 스타일 변경
-                const weightField = document.getElementById('weightFieldsSet');
-                if (weightField) weightField.style.display = 'block';
+                // 2. 세트 중량 필드 보이기
+                const setField = document.getElementById('weightFieldsSet');
+                if (setField) setField.style.display = 'block';
 
             } else {
                 document.getElementById('setBtnX').classList.add('active');
@@ -1969,11 +1969,12 @@
                 document.getElementById('setFieldsO').style.display = 'none';
                 document.getElementById('setFieldsX').style.display = 'block';
 
-                // 요소가 있는지 먼저 확인하고 스타일 변경
-                const weightField = document.getElementById('weightFieldsSet');
-                if (weightField) {
-                    weightField.style.display = 'none';
-                    document.getElementById('regWeightSet').value = '';
+                // 3. 세트 중량 필드 숨기기 및 값 초기화 (요소가 있을 때만 실행)
+                const setField = document.getElementById('weightFieldsSet');
+                if (setField) {
+                    setField.style.display = 'none';
+                    const weightInput = document.getElementById('regWeightSet');
+                    if (weightInput) weightInput.value = ''; // 여기서 에러가 났던 것
                 }
             }
         }
