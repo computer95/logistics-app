@@ -849,7 +849,12 @@
             
             document.getElementById('detailLogSummary').innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span style="font-size:15px;">📌 <strong>제품:</strong> ${log.productName}</span> <strong><span class="tag tag-${pType}">${pType}</span></strong>
+                    <span style="font-size:15px; display:flex; align-items:center;">
+                        📌 <strong>제품:</strong> ${log.productName}
+                    </span>
+                    <strong>
+                        <span style="margin-left:8px;"><strong><span class="tag tag-${pType}">${pType}</span></strong></span>
+                    </strong>
                     <button class="sub-btn" style="background:#e1f0ff; color:#007aff; padding:4px 8px; font-size:12px; border:1px solid #b3d1ff;" onclick="openProductDetailModal('${log.productId}')">상세정보</button>
                 </div>
                 <div>📅 <strong>출고일:</strong> ${log.dueDate}</div>
