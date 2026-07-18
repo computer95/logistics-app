@@ -848,17 +848,17 @@
             document.getElementById('detailOldProductId').value = log.productId;
             
             document.getElementById('detailLogSummary').innerHTML = `
-                <div style="display:flex; align-items:center; margin-bottom:6px; gap: 10px;">
-                 <span style="font-size:15px; display:flex; align-items:center;">
-                📌 <strong>제품:</strong> ${log.productName} 
-               <span style="margin-left:8px;"><strong><span class="tag tag-${pType}">${pType}</span></strong></span>
-               </span> 
-               <!-- 상세정보 버튼을 여기로 바로 붙임 -->
-             <button class="sub-btn" style="background:#e1f0ff; color:#007aff; padding:4px 8px; font-size:12px; border:1px solid #b3d1ff;" onclick="openProductDetailModal('${log.productId}')">상세정보</button>
-             </div>
-                <div>📅 <strong>출고일:</strong> ${log.dueDate}</div>
-                <div style="margin-top:2px;">🎯 <strong>목표량:</strong> ${log.targetQty.toLocaleString()} set</div>
-                <div style="margin-top:2px; color:#555;">💬 <strong>메모:</strong> ${log.memo || '없음'}</div>
+            <div style="display:flex; align-items:center; margin-bottom:6px;">
+            <span style="font-size:15px; display:flex; align-items:center;">
+            📌 <strong>제품:</strong> ${log.productName} 
+            <span style="margin-left:8px;"><strong><span class="tag tag-${pType}">${pType}</span></strong></span>
+            </span> 
+        
+            <button class="sub-btn" style="margin-left: auto; background:#e1f0ff; color:#007aff; padding:4px 8px; font-size:12px; border:1px solid #b3d1ff;" onclick="openProductDetailModal('${log.productId}')">상세정보</button>
+            </div>
+            <div>📅 <strong>출고일:</strong> ${log.dueDate}</div>
+            <div style="margin-top:2px;">🎯 <strong>목표량:</strong> ${log.targetQty.toLocaleString()} set</div>
+            <div style="margin-top:2px; color:#555;">💬 <strong>메모:</strong> ${log.memo || '없음'}</div>
             `;
             
             isEditActive = false;
