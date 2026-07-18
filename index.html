@@ -1219,12 +1219,7 @@
             }
             
             const pType = p.productType ? p.productType : '기타';
-            document.getElementById('pdModalTitle').innerText = `📦 ${p.name} `;
-
-            const tagElement = document.getElementById('pdModalTypeTag');
-            if (tagElement) {
-                tagElement.innerHTML = `<span class="tag tag-${pType}">${pType}</span>`;
-            }
+            document.getElementById('pdModalTitle').innerHTML = `📦 ${p.name} <strong><span class="tag tag-${pType}">${pType}</span></strong>`;
             
             const weightBox = document.getElementById('pdModalWeightBox');
             weightBox.innerHTML = `<div>중량 스펙: ${p.weightText || '미등록'}</div>`;
