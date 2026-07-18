@@ -841,12 +841,15 @@
             let log = packingLogsList.find(l => l.id === logId);
             if (!log) return;
 
+            let product = productList.find(p => p.id === log.productId);
+            let pType = product && product.productType ? product.productType : '기타';
+
             document.getElementById('detailLogId').value = log.id;
             document.getElementById('detailOldProductId').value = log.productId;
             
             document.getElementById('detailLogSummary').innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span style="font-size:15px;">📌 <strong>제품:</strong> ${log.productName}</span> 
+                    <span style="font-size:15px;">📌 <strong>제품:</strong> ${log.productName}</span> <strong><span class="tag tag-${pType}">${pType}</span></strong>
                     <button class="sub-btn" style="background:#e1f0ff; color:#007aff; padding:4px 8px; font-size:12px; border:1px solid #b3d1ff;" onclick="openProductDetailModal('${log.productId}')">상세정보</button>
                 </div>
                 <div>📅 <strong>출고일:</strong> ${log.dueDate}</div>
