@@ -1246,9 +1246,8 @@
             }
 
             const specBox = document.getElementById('pdModalSpecBox');
-            let cToI = (p.hasSet === 'O') ? `세트당 단케이스: <strong>${p.setToInner}개</strong><br>카톤당 세트: <strong>${p.cartonToSet}개</strong>` : `카톤당 단케이스: <strong>${p.cartonToInner}개</strong>`;
+            let cToI = (p.hasSet === 'O') ? `카톤당 세트: <strong>${p.cartonToSet}개</strong><br> 세트당 단케이스: <strong>${p.setToInner}개</strong>` : `카톤당 단케이스: <strong>${p.cartonToInner}개</strong>`;
             specBox.innerHTML = `
-                종류: <strong><span class="tag tag-${pType}">${pType}</span></strong><br>
                 아웃박스당 카톤: <strong>${p.palletToCarton || '-'} 박스</strong><br>
                 ${cToI}<br>
                 단케이스당 반제품: <strong>${p.innerToUnit || '-'} 개</strong>
