@@ -1220,6 +1220,7 @@
             
             const pType = p.productType ? p.productType : '기타';
             document.getElementById('pdModalTitle').innerText = `📦 ${p.name} `;
+            document.getElementById('pdModalTypeTag').innerHTML = `<span class="tag tag-${pType}">${pType}</span>`;
             
             const weightBox = document.getElementById('pdModalWeightBox');
             weightBox.innerHTML = `<div>중량 스펙: ${p.weightText || '미등록'}</div>`;
