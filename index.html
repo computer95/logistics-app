@@ -1952,29 +1952,29 @@
         function selectSetOption(val, prefix) {
             document.getElementById('hasSetValue').value = val;
 
-            // 1. 버튼 활성화/비활성화 처리
+            // 버튼 활성화 처리
             if (val === 'O') {
                 document.getElementById('setBtnO').classList.add('active');
                 document.getElementById('setBtnX').classList.remove('active');
-
-                // 수량 필드 전환
                 document.getElementById('setFieldsO').style.display = 'block';
                 document.getElementById('setFieldsX').style.display = 'none';
 
-                // 중량 필드 보이기 (새로 추가한 코드)
-                document.getElementById('weightFieldsSet').style.display = 'block';
+                // 요소가 있는지 먼저 확인하고 스타일 변경
+                const weightField = document.getElementById('weightFieldsSet');
+                if (weightField) weightField.style.display = 'block';
+
             } else {
                 document.getElementById('setBtnX').classList.add('active');
                 document.getElementById('setBtnO').classList.remove('active');
-
-                // 수량 필드 전환
                 document.getElementById('setFieldsO').style.display = 'none';
                 document.getElementById('setFieldsX').style.display = 'block';
 
-                // 중량 필드 숨기기 (새로 추가한 코드)
-                document.getElementById('weightFieldsSet').style.display = 'none';
-                // 선택 해제 시 값 초기화 (필요시)
-                document.getElementById('regWeightSet').value = '';
+                // 요소가 있는지 먼저 확인하고 스타일 변경
+                const weightField = document.getElementById('weightFieldsSet');
+                if (weightField) {
+                    weightField.style.display = 'none';
+                    document.getElementById('regWeightSet').value = '';
+                }
             }
         }
 
