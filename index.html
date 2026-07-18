@@ -846,7 +846,7 @@
             
             document.getElementById('detailLogSummary').innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span style="font-size:15px;">📌 <strong>제품:</strong> ${log.productName}</span>
+                    <span style="font-size:15px;">📌 <strong>제품:</strong> ${log.productName}</span> <strong><span class="tag tag-${pType}">${pType}</span></strong>
                     <button class="sub-btn" style="background:#e1f0ff; color:#007aff; padding:4px 8px; font-size:12px; border:1px solid #b3d1ff;" onclick="openProductDetailModal('${log.productId}')">상세정보</button>
                 </div>
                 <div>📅 <strong>출고일:</strong> ${log.dueDate}</div>
@@ -1248,7 +1248,7 @@
             const specBox = document.getElementById('pdModalSpecBox');
             let cToI = (p.hasSet === 'O') ? `카톤당 세트: <strong>${p.cartonToSet}개</strong><br> 세트당 단케이스: <strong>${p.setToInner}개</strong>` : `카톤당 단케이스: <strong>${p.cartonToInner}개</strong>`;
             specBox.innerHTML = `
-                아웃박스당 카톤: <strong>${p.palletToCarton || '-'} 박스</strong><br>
+                파레트당 카톤: <strong>${p.palletToCarton || '-'} 박스</strong><br>
                 ${cToI}<br>
                 단케이스당 반제품: <strong>${p.innerToUnit || '-'} 개</strong>
             `;
