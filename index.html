@@ -2144,7 +2144,7 @@
             const headerInfo = document.getElementById('editHeaderInfo');
             if (headerInfo) {
                 const type = p.productType || '미분류';
-                headerInfo.innerHTML = `<strong>${p.name}</strong> <span class="tag tag-">${type}</span>`;
+                headerInfo.innerHTML = `<strong>${p.name}</strong> <span class="tag tag-${type}">${type}</span>`;
             }
 
             // 2. 입력칸 값 채우기 (등록창과 동일한 로직)
