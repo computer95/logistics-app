@@ -995,7 +995,7 @@
                 style="margin-bottom: 15px; padding: 10px; background: #fff8f0; border-radius: 8px; border: 1px solid #ffe5cc; display: flex; align-items: center; gap: 10px;">
                 <!-- 이 영역이 자바스크립트로 채워짐 -->
             </div>
-            <input type="hidden" id="editProductType" value="스틱">
+            <input type="hidden" id="editTargetId">
             <div class="input-group" style="margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 6px;">제품 종류</label>
                 <div id="productTypeGroup" style="display: flex; gap: 4px; justify-content: space-between;">
@@ -1924,23 +1924,15 @@
 
         // 제품 타입 선택
         function selectType(btnElement, type) {
-            // 1. 같은 그룹 내 모든 버튼의 active 제거
+            // 1. 같은 그룹 안에 있는 모든 버튼의 active를 지움
             const parent = btnElement.parentElement;
             parent.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
 
-            // 2. 누른 버튼만 active 추가
+            // 2. 지금 누른 버튼에만 active 추가
             btnElement.classList.add('active');
 
-            // 3. 누른 버튼이 속한 모달(부모)을 찾아서 그 안에 있는 hidden input을 찾음
-            const modal = btnElement.closest('.modal-overlay');
-
-            // 모달 안에 있는 'productType' 관련 hidden input을 찾아서 값을 넣음
-            // 등록창은 'regProductType', 수정창은 'editProductType'으로 ID를 다르게 써야 함!
-            const hiddenInput = modal.querySelector('input[type="hidden"][id$="ProductType"]');
-
-            if (hiddenInput) {
-                hiddenInput.value = type;
-            }
+            // 3. 숨겨진 input(id="regProductType")에 값(스틱, 파우치 등)을 입력
+            document.getElementById('regProductType').value = type;
         }
 
         // 제품 상세 모달 열기
