@@ -947,27 +947,36 @@
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
             <p style="font-size:13px; font-weight:bold; color:#007aff; margin-bottom:10px;">⚖️ 중량 스펙 정보
             </p>
+            <!-- 단케이스 중량 -->
             <div class="input-group">
                 <label>단케이스 중량</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
                     <input type="number" id="weightInnerMain" placeholder="50" style="flex:1;"> g
-                    <span>±</span>
+                    <span> ± </span>
                     <input type="number" id="weightInnerRange" placeholder="1" style="flex:1;"> g
                 </div>
             </div>
 
-            <!-- 세트케이스 중량 (세트 유무에 따라 표시/숨김) -->
+            <!-- 세트케이스 중량 -->
             <div id="weightFieldsSet" class="conditional-fields" style="display:none;">
                 <div class="input-group">
-                    <label for="regWeightSet">세트케이스 중량</label>
-                    <input type="text" id="regWeightSet" placeholder="예: 300g ± 5g" onfocus="this.select()">
+                    <label>세트케이스 중량</label>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <input type="number" id="weightSetMain" placeholder="300" style="flex:1;"> g
+                        <span> ± </span>
+                        <input type="number" id="weightSetRange" placeholder="5" style="flex:1;"> g
+                    </div>
                 </div>
             </div>
 
-            <!-- 카톤 중량 (공통) -->
+            <!-- 카톤 중량 -->
             <div class="input-group">
-                <label for="regWeightCarton">카톤 중량</label>
-                <input type="text" id="regWeightCarton" placeholder="예: 5kg ± 0.1kg" onfocus="this.select()">
+                <label>카톤 중량</label>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="number" id="weightCartonMain" placeholder="5" style="flex:1;"> kg
+                    <span> ± </span>
+                    <input type="number" id="weightCartonRange" placeholder="0.1" style="flex:1;"> kg
+                </div>
             </div>
 
             <button class="main-btn" style="background-color: #34c759;" onclick="saveProductConfig()">등록 완료</button>
@@ -2066,16 +2075,14 @@
                 cartonToInner = parseInt(document.getElementById('regCartonToInnerX').value);
             }
 
-            // --- 중량 데이터 결합 로직 ---
-            // 입력창에서 값 가져오기
-            let mainVal = document.getElementById('weightInnerMain').value.trim();
-            let rangeVal = document.getElementById('weightInnerRange').value.trim();
-            // 데이터 합치기 (변수명 중복 없이 하나로 처리)
-            let weightInner = `${mainVal}g ± ${rangeVal}g`;
+            // 모든 중량 데이터 결합
+            let weightInner = `${document.getElementById('weightInnerMain').value}g ± ${document.getElementById('weightInnerRange').value}g`;
 
-            let weightSet = hasSet === 'O' ? document.getElementById('regWeightSet').value.trim() : '';
-            let weightCarton = document.getElementById('regWeightCarton').value.trim();
-            // ----------------------------
+            let weightSet = (hasSet === 'O')
+                ? `${document.getElementById('weightSetMain').value}g ± ${document.getElementById('weightSetRange').value}g`
+                : '';
+
+            let weightCarton = `${document.getElementById('weightCartonMain').value}kg ± ${document.getElementById('weightCartonRange').value}kg`;
 
             if (!name || isNaN(palletToCarton) || isNaN(innerToUnit)) {
                 alert('필수 입력 항목을 정확히 입력해 주세요.');
@@ -2085,9 +2092,7 @@
             try {
                 await db.collection('products').add({
                     name, productType, hasSet, palletToCarton, cartonToSet, setToInner, cartonToInner, innerToUnit,
-                    weightInner,
-                    weightSet,
-                    weightCarton,
+                    weightInner, weightSet, weightCarton,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 closeAddModal();
@@ -2097,7 +2102,7 @@
                 alert('제품 등록 오류: ' + e.message);
             }
         }
-        
+
         // 제품 수정 모달 열기
         async function openEditModal(id) {
             let p = productList.find(item => item.id === id);
