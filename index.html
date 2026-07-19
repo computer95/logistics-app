@@ -2047,31 +2047,28 @@
         }
 
         // 제품 등록 모달 세트 옵션 선택 (중량 필드 제어)
-        function selectSetOption(val) {
-            // 1. 값 저장 (HTML에 추가했던 그 ID)
+        function selectSetOption(val, mode) {
+            // 1. 값 저장 (hidden 필드)
             const hidden = document.getElementById('hasSetValue');
             if (hidden) hidden.value = val;
 
-            // 2. 버튼 활성화/비활성화 (HTML ID가 setBtnO, setBtnX니까 이걸로 변경!)
+            // 2. 버튼 활성화/비활성화
             const btnO = document.getElementById('setBtnO');
             const btnX = document.getElementById('setBtnX');
 
             if (btnO && btnX) {
-                if (val === 'O') {
-                    btnO.classList.add('active');
-                    btnX.classList.remove('active');
-                } else {
-                    btnX.classList.add('active');
-                    btnO.classList.remove('active');
-                }
+                btnO.classList.toggle('active', val === 'O');
+                btnX.classList.toggle('active', val === 'X');
             }
 
-            // 3. 입력창 보이기/숨기기 (이 ID들도 HTML에 있는 거랑 똑같은지 확인해 봐!)
-            const fieldsO = document.getElementById('regModalSetFieldsO');
-            const fieldsX = document.getElementById('regModalSetFieldsX');
+            // 3. 영역 보이기/숨기기 (HTML ID와 완벽 일치!)
+            const fieldsO = document.getElementById('setFieldsO');
+            const fieldsX = document.getElementById('setFieldsX');
+            const weightFields = document.getElementById('weightFieldsSet');
 
             if (fieldsO) fieldsO.style.display = (val === 'O') ? 'block' : 'none';
             if (fieldsX) fieldsX.style.display = (val === 'X') ? 'block' : 'none';
+            if (weightFields) weightFields.style.display = (val === 'O') ? 'block' : 'none';
         }
 
         // 제품 존재 여부 확인
