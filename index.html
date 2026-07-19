@@ -2143,7 +2143,8 @@
             // 1. 상단 정보창 채우기
             const headerInfo = document.getElementById('editHeaderInfo');
             if (headerInfo) {
-                headerInfo.innerHTML = `<strong>${p.name}</strong> <span class="tag">${p.productType}</span>`;
+                const type = p.productType || '미분류';
+                headerInfo.innerHTML = `<strong>${p.name}</strong> <span class="tag tag-">${type}</span>`;
             }
 
             // 2. 입력칸 값 채우기 (등록창과 동일한 로직)
