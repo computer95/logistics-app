@@ -771,18 +771,20 @@
 
     <div id="addLogModal" class="modal-overlay">
         <div class="modal-box">
-            <h2 style="font-size: 18px; color: #007aff; margin-bottom: 15px;">
-                📋 출고 일정 등록
+            <h2
+                style="font-size: 18px; color: #007aff; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <span>📋 출고 일정 등록</span>
                 <div style="display: flex; gap: 5px;">
                     <button type="button" class="sub-btn"
-                        style="padding: 4px 8px; font-size: 12px; background-color: #34c759; color: white; border: none; border-radius: 4px;"
+                        style="padding: 4px 8px; font-size: 12px; background-color: #34c759; color: white; border: none; border-radius: 4px; cursor: pointer;"
                         onclick="openAddModal()">+ 제품 추가</button>
-                    <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;"
+                    <button type="button" class="sub-btn del-btn"
+                        style="padding: 4px 8px; font-size: 12px; cursor: pointer;"
                         onclick="closeAddLogModal()">닫기</button>
                 </div>
             </h2>
             <div class="input-group">
-                <label>제품 검색 및 입력 (신규명 입력 시 자동등록)</label>
+                <label>제품 검색 및 입력</label>
                 <input type="text" id="logModalProductSearch" placeholder="제품명을 입력해 검색하거나 작성하세요"
                     oninput="filterLogModalProducts()" autocomplete="off">
                 <div id="logModalProductDropdown" class="search-dropdown"></div>
@@ -1421,15 +1423,23 @@
         function filterLogModalProducts() {
             const keyword = document.getElementById('logModalProductSearch').value.trim().toLowerCase();
             const dropdown = document.getElementById('logModalProductDropdown');
+
+            // 1. 검색어 없으면 숨김
             if (!keyword) {
                 dropdown.style.display = 'none';
                 return;
             }
+
             const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
+
+            // 2. 검색 결과가 없을 때 피드백 제공 (삭제 대신 메시지 표시)
             if (filtered.length === 0) {
-                dropdown.style.display = 'none';
+                dropdown.innerHTML = `<div class="search-item" style="color: #999;">검색 결과 없음 (제품 추가 버튼을 눌러주세요)</div>`;
+                dropdown.style.display = 'block';
                 return;
             }
+
+            // 3. 결과 있을 때 리스트 표시
             let html = '';
             filtered.forEach(p => {
                 html += `<div class="search-item" onclick="selectLogModalProduct('${p.id}', '${p.name}')">${p.name}</div>`;
@@ -1447,44 +1457,42 @@
 
         // 포장일지 저장
         async function savePackingLog() {
-            let productName = document.getElementById('logModalProductSearch').value.trim();
-            let productId = document.getElementById('logModalSelectedProductId').value;
-            let dueDate = document.getElementById('logModalDueDate').value;
-            let targetQty = parseInt(document.getElementById('logModalTargetQty').value);
-            let memo = document.getElementById('logModalMemo').value.trim();
+            const productName = document.getElementById('logModalProductSearch').value.trim();
+            const productId = document.getElementById('logModalSelectedProductId').value;
+            const dueDate = document.getElementById('logModalDueDate').value;
+            const targetQty = document.getElementById('logModalTargetQty').value;
 
-            if (!productName) { alert('제품명을 입력해 주세요.'); return; }
-            if (!dueDate) { alert('출고일을 선택해 주세요.'); return; }
-            if (isNaN(targetQty) || targetQty <= 0) { alert('목표 수량을 올바르게 입력해 주세요.'); return; }
-
-            if (!productId) {
-                let match = productList.find(p => p.name === productName);
-                if (match) {
-                    productId = match.id;
-                } else {
-                    try {
-                        let newRef = await db.collection('products').add({
-                            name: productName, productType: '스틱', hasSet: 'X', palletToCarton: 24, cartonToInner: 30, innerToUnit: 10,
-                            weightText: '10g ± 2g', createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        productId = newRef.id;
-                        await loadProductList();
-                    } catch (e) {
-                        alert('신규 제품 자동 등록 실패');
-                        return;
-                    }
-                }
+            // 1. 필수값 체크
+            if (!productName || !productId || !dueDate || !targetQty) {
+                alert('모든 항목을 입력하고 정확한 제품을 선택해 주세요.');
+                return;
             }
 
+            // 2. 제품 검증: 선택된 ID가 진짜 존재하는지 확인
+            // (여기서 리스트에 없는 제품이면 저장을 원천 차단함)
             try {
-                await db.collection('packing_logs').add({
-                    productId, productName, dueDate, targetQty, currentQty: 0, memo, history: [],
-                    isHold: false, isForceDone: false, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                const productRef = await db.collection('products').doc(productId).get();
+                if (!productRef.exists) {
+                    alert('등록되지 않은 제품입니다. [+ 제품 추가] 버튼을 눌러 먼저 등록해 주세요.');
+                    return;
+                }
+
+                // 3. 저장 로직
+                await db.collection('packingLogs').add({
+                    productId: productId,
+                    productName: productName,
+                    dueDate: dueDate,
+                    targetQty: parseInt(targetQty),
+                    memo: document.getElementById('logModalMemo').value,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+
+                alert('✅ 출고 일정이 등록되었습니다.');
                 closeAddLogModal();
-                loadPackingLogs();
+                // 필요시 리스트 새로고침 함수 호출
+                renderPackingLogs();
             } catch (e) {
-                alert('일정 저장 오류');
+                alert('일정 저장 중 오류가 발생했습니다.');
             }
         }
 
@@ -2020,6 +2028,19 @@
                 weightFieldsSet.style.display = 'none'; // 세트케이스 중량 숨김
                 document.getElementById('regWeightSet').value = ''; // 값 초기화
             }
+        }
+
+        // 제품 존재 여부 확인
+        function checkProductExists(inputName) {
+            // DB의 제품 목록을 가져와서 비교
+            const productList = getProductListFromMemory(); // 현재 로드된 제품 리스트
+            const isExists = productList.find(p => p.name === inputName);
+
+            if (!isExists) {
+                alert("등록되지 않은 제품입니다. 제품 관리 메뉴에서 먼저 등록해 주세요.");
+                return false;
+            }
+            return true;
         }
 
         // 제품 등록 저장
