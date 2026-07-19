@@ -2042,27 +2042,26 @@
         }
 
         // 제품 등록 모달 세트 옵션 선택 (중량 필드 제어)
-        function selectSetOption(option, mode) {
-            // 1. 버튼 활성화 로직 (기존 코드 유지)
-            document.getElementById('setBtnO').classList.toggle('active', option === 'O');
-            document.getElementById('setBtnX').classList.toggle('active', option === 'X');
-            document.getElementById('hasSetValue').value = option;
+        function selectSetOption(val) {
+            // 1. 등록 모달용 ID (수정 모달 ID는 여기서 아예 안 찾음!)
+            const hidden = document.getElementById('hasSetValue');
+            const btnO = document.getElementById('addModalSetBtnO');
+            const btnX = document.getElementById('addModalSetBtnX');
+            const fieldsO = document.getElementById('regModalSetFieldsO');
+            const fieldsX = document.getElementById('regModalSetFieldsX');
 
-            // 2. 세트케이스 유무에 따른 필드 표시/숨김 제어
-            const setFieldsO = document.getElementById('setFieldsO');
-            const setFieldsX = document.getElementById('setFieldsX');
-            const weightFieldsSet = document.getElementById('weightFieldsSet'); // 수정된 ID
+            // 2. 값 설정
+            if (hidden) hidden.value = val;
 
-            if (option === 'O') {
-                setFieldsO.style.display = 'block';
-                setFieldsX.style.display = 'none';
-                weightFieldsSet.style.display = 'block'; // 세트케이스 중량 표시
-            } else {
-                setFieldsO.style.display = 'none';
-                setFieldsX.style.display = 'block';
-                weightFieldsSet.style.display = 'none'; // 세트케이스 중량 숨김
-                document.getElementById('regWeightSet').value = ''; // 값 초기화
+            // 3. 버튼 클래스 조절
+            if (btnO && btnX) {
+                btnO.classList.toggle('active', val === 'O');
+                btnX.classList.toggle('active', val === 'X');
             }
+
+            // 4. 입력창 표시 제어 (null 체크 추가해서 에러 방지)
+            if (fieldsO) fieldsO.style.display = (val === 'O') ? 'block' : 'none';
+            if (fieldsX) fieldsX.style.display = (val === 'X') ? 'block' : 'none';
         }
 
         // 제품 존재 여부 확인
