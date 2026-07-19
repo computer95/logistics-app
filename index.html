@@ -1937,11 +1937,22 @@
         function openAddModal() {
             document.getElementById('regProductName').value = '';
             document.getElementById('regProductType').value = '스틱';
+
+            // 이 함수 안에서 regWeightSet을 초기화하고 있으니 여기서 중복 호출 안 해도 됨
             selectSetOption('X', 'reg');
+
             document.getElementById('regPalletToCarton').value = '';
             document.getElementById('regCartonToInnerX').value = '';
             document.getElementById('regInnerToUnit').value = '';
-            document.getElementById('regWeightText').value = '';
+
+            // 존재하지 않는 ID 대신 실제 있는 ID로 수정
+            const weightInner = document.getElementById('regWeightInner');
+            if (weightInner) weightInner.value = '';
+
+            // 카톤 중량도 초기화하고 싶다면 추가
+            const weightCarton = document.getElementById('regWeightCarton');
+            if (weightCarton) weightCarton.value = '';
+
             document.getElementById('addProductModal').style.display = 'flex';
         }
 
