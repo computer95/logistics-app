@@ -1032,14 +1032,14 @@
                     onfocus="this.select()"></div>
 
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
-            <p style="font-size:13px; font-weight:bold; color:#ff9500; margin-bottom:10px;">⚖️ 중량 스펙 정보 수정</p>
+            <p style="font-size:13px; font-weight:bold; color:#007aff; margin-bottom:10px;">⚖️ 중량 스펙 정보
 
-            <!-- 단케이스 중량 -->
+                <!-- 단케이스 중량 -->
             <div class="input-group">
                 <label>단케이스 중량 (g)</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
                     <input type="number" id="editWeightInnerMain" placeholder="50" style="flex:1;"> g
-                    <span>±</span>
+                    <span> ± </span>
                     <input type="number" id="editWeightInnerRange" placeholder="1" style="flex:1;"> g
                 </div>
             </div>
@@ -1049,7 +1049,7 @@
                     <label>세트케이스 중량 (g)</label>
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <input type="number" id="editWeightSetMain" placeholder="300" style="flex:1;"> g
-                        <span>±</span>
+                        <span> ± </span>
                         <input type="number" id="editWeightSetRange" placeholder="5" style="flex:1;"> g
                     </div>
                 </div>
@@ -1059,7 +1059,7 @@
                 <label>카톤 중량 (kg)</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
                     <input type="number" id="editWeightCartonMain" placeholder="5" style="flex:1;"> kg
-                    <span>±</span>
+                    <span> ± </span>
                     <input type="number" id="editWeightCartonRange" placeholder="0.1" style="flex:1;"> kg
                 </div>
             </div>
@@ -2026,24 +2026,27 @@
 
         // 제품 등록 모달 세트 옵션 선택
         function selectModalSetOption(val) {
-            // ID가 없을 수도 있는 환경을 고려하여 안전하게 처리
+            // 1. 값 저장
             const hidden = document.getElementById('editModalHasSetValue');
             if (hidden) hidden.value = val;
 
+            // 2. 버튼 활성화/비활성화
             const btnO = document.getElementById('editModalSetBtnO');
             const btnX = document.getElementById('editModalSetBtnX');
+
             if (btnO && btnX) {
                 btnO.classList.toggle('active', val === 'O');
                 btnX.classList.toggle('active', val === 'X');
             }
 
+            // 3. 영역 보이기/숨기기 (제공해 준 HTML ID와 완벽 일치!)
             const fieldsO = document.getElementById('editModalSetFieldsO');
             const fieldsX = document.getElementById('editModalSetFieldsX');
-            const setWeight = document.getElementById('editModalSetWeightFields');
+            const weightFields = document.getElementById('editModalSetWeightFields');
 
             if (fieldsO) fieldsO.style.display = (val === 'O') ? 'block' : 'none';
             if (fieldsX) fieldsX.style.display = (val === 'X') ? 'block' : 'none';
-            if (setWeight) setWeight.style.display = (val === 'O') ? 'block' : 'none';
+            if (weightFields) weightFields.style.display = (val === 'O') ? 'block' : 'none';
         }
 
         // 제품 등록 모달 세트 옵션 선택 (중량 필드 제어)
@@ -2133,41 +2136,41 @@
             let p = productList.find(item => item.id === id);
             if (!p) return;
 
-            // 1. 기본 정보 매핑
+            // 1. 기본 정보 매핑 (수정 모달 ID 기준)
             document.getElementById('editTargetId').value = p.id;
-            document.getElementById('editModalName').value = p.name;
-            document.getElementById('editModalType').value = p.productType || '스틱';
+
+            // 혹시 HTML에 이름 입력창 ID가 다를 수 있으니 확인해봐! (네 HTML엔 이름 입력창이 안보여서 추가했어)
+            const nameInput = document.getElementById('editModalName');
+            if (nameInput) nameInput.value = p.name;
+
+            // 제품 종류 hidden값 업데이트
+            document.getElementById('regProductType').value = p.productType || '스틱';
 
             // 버튼 및 hidden 필드 업데이트
             selectModalSetOption(p.hasSet || 'X');
-            document.getElementById('editModalPtoC').value = p.palletToCarton;
+            document.getElementById('editModalPtoC').value = p.palletToCarton || '';
 
             // 2. 구성 수량 및 세트 중량 표시 제어
             if (p.hasSet === 'O') {
                 document.getElementById('editModalCtoS').value = p.cartonToSet || '';
                 document.getElementById('editModalStoI').value = p.setToInner || '';
-                document.getElementById('editModalSetWeightFields').style.display = 'block';
             } else {
                 document.getElementById('editModalCtoIX').value = p.cartonToInner || '';
-                document.getElementById('editModalSetWeightFields').style.display = 'none';
             }
 
-            document.getElementById('editModalItoU').value = p.innerToUnit;
+            document.getElementById('editModalItoU').value = p.innerToUnit || '';
 
-            // 3. 중량 값 파싱 함수 (오류 방지)
+            // 3. 중량 값 파싱
             const parse = (str) => {
                 if (!str) return { main: '', range: '' };
-                // "50g ± 1g" 또는 "5kg ± 0.1kg"에서 숫자 추출
                 const match = str.match(/([\d\.]+).*? ± ([\d\.]+)/);
                 return match ? { main: match[1], range: match[2] } : { main: '', range: '' };
             };
 
-            // 4. 각 필드에 값 입력 (ID가 존재할 때만 실행)
             const inner = parse(p.weightInner);
             const set = parse(p.weightSet);
             const carton = parse(p.weightCarton);
 
-            // 이제 HTML에 추가한 새 ID들만 정확히 참조함
             document.getElementById('editWeightInnerMain').value = inner.main;
             document.getElementById('editWeightInnerRange').value = inner.range;
 
