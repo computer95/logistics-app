@@ -637,7 +637,7 @@
         <div class="input-group">
             <label>입력 기준 선택</label>
             <div class="toggle-container">
-                <button type="button" id="calcModeSet" class="toggle-btn active" onclick="setCalcMode('SET')">세트케이스(SET)
+                <button type="button" id="calcModeSet" class="toggle-btn active" onclick="setCalcMode('SET')">세트(SET)
                     기준</button>
                 <button type="button" id="calcModeEa" class="toggle-btn" onclick="setCalcMode('EA')">반제품(EA) 기준</button>
             </div>
@@ -1981,17 +1981,25 @@
 
         // 제품 등록 모달 세트 옵션 선택 (중량 필드 제어)
         function selectSetOption(option, mode) {
-            // 1. (기존 로직: 버튼 활성화 등...)
+            // 1. 버튼 활성화 로직 (기존 코드 유지)
+            document.getElementById('setBtnO').classList.toggle('active', option === 'O');
+            document.getElementById('setBtnX').classList.toggle('active', option === 'X');
+            document.getElementById('hasSetValue').value = option;
 
-            // 2. 세트케이스 중량 필드 제어
-            const setWeightField = document.getElementById('weightFieldsSetO');
+            // 2. 세트케이스 유무에 따른 필드 표시/숨김 제어
+            const setFieldsO = document.getElementById('setFieldsO');
+            const setFieldsX = document.getElementById('setFieldsX');
+            const weightFieldsSet = document.getElementById('weightFieldsSet'); // 수정된 ID
 
             if (option === 'O') {
-                setWeightField.style.display = 'block';
+                setFieldsO.style.display = 'block';
+                setFieldsX.style.display = 'none';
+                weightFieldsSet.style.display = 'block'; // 세트케이스 중량 표시
             } else {
-                setWeightField.style.display = 'none';
-                // 세트가 없는데 혹시라도 값이 들어있을 수 있으니 비워줌
-                document.getElementById('regWeightSet').value = '';
+                setFieldsO.style.display = 'none';
+                setFieldsX.style.display = 'block';
+                weightFieldsSet.style.display = 'none'; // 세트케이스 중량 숨김
+                document.getElementById('regWeightSet').value = ''; // 값 초기화
             }
         }
 
