@@ -2059,7 +2059,12 @@
                 cartonToInner = parseInt(document.getElementById('regCartonToInnerX').value);
             }
 
-            let weightText = document.getElementById('regWeightText').value.trim();
+            // --- 오류 수정 구간 ---
+            // regWeightText 대신 실제 HTML에 있는 ID들을 사용해
+            let weightInner = document.getElementById('regWeightInner').value.trim();
+            let weightSet = hasSet === 'O' ? document.getElementById('regWeightSet').value.trim() : '';
+            let weightCarton = document.getElementById('regWeightCarton').value.trim();
+            // ----------------------
 
             if (!name || isNaN(palletToCarton) || isNaN(innerToUnit)) {
                 alert('필수 입력 항목을 정확히 입력해 주세요.');
@@ -2069,17 +2074,18 @@
             try {
                 await db.collection('products').add({
                     name, productType, hasSet, palletToCarton, cartonToSet, setToInner, cartonToInner, innerToUnit,
-                    weightText,
+                    weightInner, // 수정된 중량 필드
+                    weightSet,
+                    weightCarton,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 closeAddModal();
                 renderProductAdminList();
                 alert('✅ 제품이 등록되었습니다.');
             } catch (e) {
-                alert('제품 등록 오류');
+                alert('제품 등록 오류: ' + e.message);
             }
         }
-
         // 제품 수정 모달 열기
         async function openEditModal(id) {
             let p = productList.find(item => item.id === id);
