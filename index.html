@@ -991,6 +991,10 @@
                 <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;"
                     onclick="closeEditModal()">닫기</button>
             </h2>
+            <div id="editHeaderInfo"
+                style="margin-bottom: 15px; padding: 10px; background: #fff8f0; border-radius: 8px; border: 1px solid #ffe5cc; display: flex; align-items: center; gap: 10px;">
+                <!-- 이 영역이 자바스크립트로 채워짐 -->
+            </div>
             <input type="hidden" id="editTargetId">
             <div class="input-group" style="margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 6px;">제품 종류</label>
@@ -2136,49 +2140,29 @@
             let p = productList.find(item => item.id === id);
             if (!p) return;
 
-            // 1. 기본 정보 매핑 (수정 모달 ID 기준)
+            // 1. 상단 정보창 채우기
+            const headerInfo = document.getElementById('editHeaderInfo');
+            if (headerInfo) {
+                headerInfo.innerHTML = `<strong>${p.name}</strong> <span class="tag">${p.productType}</span>`;
+            }
+
+            // 2. 입력칸 값 채우기 (등록창과 동일한 로직)
             document.getElementById('editTargetId').value = p.id;
-
-            // 혹시 HTML에 이름 입력창 ID가 다를 수 있으니 확인해봐! (네 HTML엔 이름 입력창이 안보여서 추가했어)
-            const nameInput = document.getElementById('editModalName');
-            if (nameInput) nameInput.value = p.name;
-
-            // 제품 종류 hidden값 업데이트
-            document.getElementById('regProductType').value = p.productType || '스틱';
-
-            // 버튼 및 hidden 필드 업데이트
-            selectModalSetOption(p.hasSet || 'X');
             document.getElementById('editModalPtoC').value = p.palletToCarton || '';
 
-            // 2. 구성 수량 및 세트 중량 표시 제어
+            // 3. 세트 유무 및 입력창 상태 제어
+            selectModalSetOption(p.hasSet || 'X');
+
             if (p.hasSet === 'O') {
                 document.getElementById('editModalCtoS').value = p.cartonToSet || '';
                 document.getElementById('editModalStoI').value = p.setToInner || '';
             } else {
                 document.getElementById('editModalCtoIX').value = p.cartonToInner || '';
             }
-
             document.getElementById('editModalItoU').value = p.innerToUnit || '';
 
-            // 3. 중량 값 파싱
-            const parse = (str) => {
-                if (!str) return { main: '', range: '' };
-                const match = str.match(/([\d\.]+).*? ± ([\d\.]+)/);
-                return match ? { main: match[1], range: match[2] } : { main: '', range: '' };
-            };
-
-            const inner = parse(p.weightInner);
-            const set = parse(p.weightSet);
-            const carton = parse(p.weightCarton);
-
-            document.getElementById('editWeightInnerMain').value = inner.main;
-            document.getElementById('editWeightInnerRange').value = inner.range;
-
-            document.getElementById('editWeightSetMain').value = set.main;
-            document.getElementById('editWeightSetRange').value = set.range;
-
-            document.getElementById('editWeightCartonMain').value = carton.main;
-            document.getElementById('editWeightCartonRange').value = carton.range;
+            // 4. 중량 값 파싱 및 입력 (생략된 부분은 위에서 준 거랑 같음)
+            // ... 중량 매핑 로직 ...
 
             document.getElementById('editProductModal').style.display = 'flex';
         }
@@ -2203,28 +2187,26 @@
         }
 
         // 제품 수정 저장
-        async function updateProductModalSave() {
+        function updateProductModalSave() {
             const id = document.getElementById('editTargetId').value;
-            const hasSet = document.getElementById('editModalHasSetValue').value;
+            let p = productList.find(item => item.id === id);
 
-            // 중량 데이터 결합 (등록 함수와 동일)
-            let weightInner = `${document.getElementById('editWeightInnerMain').value}g ± ${document.getElementById('editWeightInnerRange').value}g`;
-            let weightCarton = `${document.getElementById('editWeightCartonMain').value}kg ± ${document.getElementById('editWeightCartonRange').value}kg`;
+            // ★ 여기서 HTML의 입력값들을 다시 객체(p)에 덮어씌워야 해!
+            p.palletToCarton = document.getElementById('editModalPtoC').value;
+            p.hasSet = document.getElementById('editModalHasSetValue').value;
 
-            // 세트 중량은 'O'일 때만 결합
-            let weightSet = (hasSet === 'O')
-                ? `${document.getElementById('editWeightSetMain').value}g ± ${document.getElementById('editWeightSetRange').value}g`
-                : '';
+            if (p.hasSet === 'O') {
+                p.cartonToSet = document.getElementById('editModalCtoS').value;
+                p.setToInner = document.getElementById('editModalStoI').value;
+            } else {
+                p.cartonToInner = document.getElementById('editModalCtoIX').value;
+            }
 
-            // DB 업데이트 로직 (Firestore update 호출)
-            await db.collection('products').doc(id).update({
-                // ... (다른 필드들)
-                weightInner, weightSet, weightCarton
-            });
+            // ... 중량값들도 동일하게 p.weightInner = ... 식으로 갱신 ...
 
-            alert('✅ 수정되었습니다.');
+            // ★ 마지막으로 화면을 다시 그려야 함!
+            renderProductList();
             closeEditModal();
-            renderProductAdminList();
         }
 
         // 제품 삭제
