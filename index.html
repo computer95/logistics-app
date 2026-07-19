@@ -2122,7 +2122,23 @@
             }
 
             document.getElementById('editModalItoU').value = p.innerToUnit;
-            document.getElementById('editModalWeightText').value = p.weightText || '';
+
+            // --- 중량 데이터 분리 매핑 ---
+            // p.weightInner가 "50g ± 1g" 형태라고 가정하고 숫자만 추출
+            const parseWeight = (str) => {
+                if (!str) return { main: '', range: '' };
+                const match = str.match(/([\d\.]+)g?kg? ± ([\d\.]+)g?kg?/);
+                return match ? { main: match[1], range: match[2] } : { main: '', range: '' };
+            };
+
+            const inner = parseWeight(p.weightInner);
+            const carton = parseWeight(p.weightCarton);
+
+            // 이제 수정 모달 HTML에도 아래 ID들이 있어야 해!
+            document.getElementById('editWeightInnerMain').value = inner.main;
+            document.getElementById('editWeightInnerRange').value = inner.range;
+            document.getElementById('editWeightCartonMain').value = carton.main;
+            document.getElementById('editWeightCartonRange').value = carton.range;
 
             document.getElementById('editProductModal').style.display = 'flex';
         }
