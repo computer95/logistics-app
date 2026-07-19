@@ -2020,33 +2020,29 @@
         function closeAddModal() { document.getElementById('addProductModal').style.display = 'none'; }
 
         // 제품 등록 모달 세트 옵션 선택
-        function selectSetOption(val, prefix) {
+        function selectSetOption(val) {
+            // 1. 등록 모달용 ID들
+            const btnO = document.getElementById('addModalSetBtnO'); // ID 이름을 실제 코드에 맞게 수정해!
+            const btnX = document.getElementById('addModalSetBtnX');
+            const hidden = document.getElementById('hasSetValue'); // 등록용 hidden 필드
+            const fieldsO = document.getElementById('regModalSetFieldsO');
+            const fieldsX = document.getElementById('regModalSetFieldsX');
+
+            // 2. 만약 수정 모달용 ID가 있다면 (에러 방지용 체크)
+            if (!btnO) return;
+
+            // 3. 로직 실행
             document.getElementById('hasSetValue').value = val;
-
-            // 1. 버튼 활성화 처리
             if (val === 'O') {
-                document.getElementById('setBtnO').classList.add('active');
-                document.getElementById('setBtnX').classList.remove('active');
-                document.getElementById('setFieldsO').style.display = 'block';
-                document.getElementById('setFieldsX').style.display = 'none';
-
-                // 2. 세트 중량 필드 보이기
-                const setField = document.getElementById('weightFieldsSet');
-                if (setField) setField.style.display = 'block';
-
+                btnO.classList.add('active');
+                btnX.classList.remove('active');
+                if (fieldsO) fieldsO.style.display = 'block';
+                if (fieldsX) fieldsX.style.display = 'none';
             } else {
-                document.getElementById('setBtnX').classList.add('active');
-                document.getElementById('setBtnO').classList.remove('active');
-                document.getElementById('setFieldsO').style.display = 'none';
-                document.getElementById('setFieldsX').style.display = 'block';
-
-                // 3. 세트 중량 필드 숨기기 및 값 초기화 (요소가 있을 때만 실행)
-                const setField = document.getElementById('weightFieldsSet');
-                if (setField) {
-                    setField.style.display = 'none';
-                    const weightInput = document.getElementById('regWeightSet');
-                    if (weightInput) weightInput.value = ''; // 여기서 에러가 났던 것
-                }
+                btnX.classList.add('active');
+                btnO.classList.remove('active');
+                if (fieldsO) fieldsO.style.display = 'none';
+                if (fieldsX) fieldsX.style.display = 'block';
             }
         }
 
@@ -2140,47 +2136,45 @@
             document.getElementById('editTargetId').value = p.id;
             document.getElementById('editModalName').value = p.name;
             document.getElementById('editModalType').value = p.productType || '스틱';
+
+            // 버튼 및 hidden 필드 업데이트
             selectModalSetOption(p.hasSet || 'X');
             document.getElementById('editModalPtoC').value = p.palletToCarton;
 
+            // 2. 구성 수량 및 세트 중량 표시 제어
             if (p.hasSet === 'O') {
                 document.getElementById('editModalCtoS').value = p.cartonToSet || '';
                 document.getElementById('editModalStoI').value = p.setToInner || '';
-                if (document.getElementById('editModalSetWeightFields')) {
-                    document.getElementById('editModalSetWeightFields').style.display = 'block';
-                }
+                document.getElementById('editModalSetWeightFields').style.display = 'block';
             } else {
                 document.getElementById('editModalCtoIX').value = p.cartonToInner || '';
-                if (document.getElementById('editModalSetWeightFields')) {
-                    document.getElementById('editModalSetWeightFields').style.display = 'none';
-                }
+                document.getElementById('editModalSetWeightFields').style.display = 'none';
             }
 
             document.getElementById('editModalItoU').value = p.innerToUnit;
 
-            // 2. 중량 값 파싱 (안전하게 ID 존재 확인 포함)
+            // 3. 중량 값 파싱 함수 (오류 방지)
             const parse = (str) => {
                 if (!str) return { main: '', range: '' };
+                // "50g ± 1g" 또는 "5kg ± 0.1kg"에서 숫자 추출
                 const match = str.match(/([\d\.]+).*? ± ([\d\.]+)/);
                 return match ? { main: match[1], range: match[2] } : { main: '', range: '' };
             };
 
+            // 4. 각 필드에 값 입력 (ID가 존재할 때만 실행)
             const inner = parse(p.weightInner);
             const set = parse(p.weightSet);
             const carton = parse(p.weightCarton);
 
-            // ID가 없을 경우 에러가 안 나도록 체크
-            const setVal = (id, val) => {
-                let el = document.getElementById(id);
-                if (el) el.value = val;
-            };
+            // 이제 HTML에 추가한 새 ID들만 정확히 참조함
+            document.getElementById('editWeightInnerMain').value = inner.main;
+            document.getElementById('editWeightInnerRange').value = inner.range;
 
-            setVal('editWeightInnerMain', inner.main);
-            setVal('editWeightInnerRange', inner.range);
-            setVal('editWeightSetMain', set.main);
-            setVal('editWeightSetRange', set.range);
-            setVal('editWeightCartonMain', carton.main);
-            setVal('editWeightCartonRange', carton.range);
+            document.getElementById('editWeightSetMain').value = set.main;
+            document.getElementById('editWeightSetRange').value = set.range;
+
+            document.getElementById('editWeightCartonMain').value = carton.main;
+            document.getElementById('editWeightCartonRange').value = carton.range;
 
             document.getElementById('editProductModal').style.display = 'flex';
         }
