@@ -900,7 +900,7 @@
             </h2>
             <div class="input-group"><label for="regProductName">제품이름</label><input type="text" id="regProductName"
                     placeholder="예: 홍삼진액스틱" onfocus="this.select()"></div>
-
+            <input type="hidden" id="hasSetValue" value="X">
             <div class="input-group" style="margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 6px;">제품 종류</label>
                 <div id="productTypeGroup" style="display: flex; gap: 4px; justify-content: space-between;">
@@ -1992,28 +1992,33 @@
 
         // 제품 등록 모달 열기
         function openAddModal() {
-            document.getElementById('addProductModal').style.display = 'flex';
+            // 1. 등록 모달을 먼저 보여주고
+            const modal = document.getElementById('addProductModal');
+            if (modal) modal.style.display = 'flex';
 
-            // 1. 제품명 및 기본값 설정
-            document.getElementById('regProductName').value = '';
+            // 2. 초기화 작업 (ID가 있을 때만 실행!)
+            const setHidden = document.getElementById('hasSetValue');
+            if (setHidden) setHidden.value = 'X'; // 기본값 X
 
-            // 제품 종류를 강제로 '스틱'으로 설정하고 UI 업데이트
-            const typeButtons = document.querySelectorAll('.type-btn');
-            typeButtons.forEach(btn => btn.classList.remove('active'));
-            document.querySelector('.type-btn.스틱').classList.add('active');
-            document.getElementById('regProductType').value = '스틱';
+            // 초기 버튼 상태 리셋
+            const btnO = document.getElementById('addModalSetBtnO');
+            const btnX = document.getElementById('addModalSetBtnX');
+            if (btnO && btnX) {
+                btnO.classList.remove('active');
+                btnX.classList.add('active');
+            }
 
-            // 2. 초기화 (세트케이스 없음 모드)
-            selectSetOption('X', 'reg');
+            // 입력창 표시 상태 리셋
+            const fieldsO = document.getElementById('regModalSetFieldsO');
+            const fieldsX = document.getElementById('regModalSetFieldsX');
+            if (fieldsO) fieldsO.style.display = 'none';
+            if (fieldsX) fieldsX.style.display = 'block';
 
-            // 3. 숫자 입력창 및 중량창 초기화
-            document.getElementById('regPalletToCarton').value = '';
-            document.getElementById('regInnerToUnit').value = '';
+            // 나머지 초기값들 (ID가 있는지 안전하게 체크)
+            const ptoC = document.getElementById('regModalPtoC');
+            if (ptoC) ptoC.value = '';
 
-            // 중량 입력창 모두 비우기
-            document.getElementById('weightInnerMain').value = ''; // 아래 설명 참고
-            document.getElementById('weightInnerRange').value = '';
-            document.getElementById('regWeightCarton').value = '';
+            // ... 혹시 다른 초기화할 값이 있으면 여기서 하면 돼.
         }
 
         // 제품 등록 모달 닫기
