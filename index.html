@@ -757,7 +757,8 @@
             <div class="detail-section-title">⚙️ 포장 구성 사양</div>
             <div id="pdModalSpecBox" class="spec-info-box"></div>
 
-            <div style="display:flex; gap:10px; margin-top:20px;">
+            <!-- 수정/삭제 버튼 영역 숨김 또는 제외 처리 완료 (읽기 전용) -->
+            <div style="display:none; gap:10px; margin-top:20px;" id="pdModalActionButtons">
                 <button id="pdModalEditBtn" class="main-btn"
                     style="background-color:#ff9500; margin-top:0; font-size:14px;">수정하기</button>
                 <button id="pdModalDeleteBtn" class="main-btn"
@@ -916,13 +917,12 @@
             </div>
 
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
-            <p style="font-size:13px; font-weight:bold; color:#007aff; margin-bottom:10px;">⚙️ 포장 구성 사양
+            <p style="font-size:13px; font-weight:bold; color:#007aff; margin-bottom:10px;">⚙️ 포장 구성 사양</p>
 
             <div class="input-group"><label>세트케이스 유무</label>
                 <div class="toggle-container"><button type="button" id="setBtnO" class="toggle-btn"
                         onclick="selectSetOption('O', 'reg')">있음 (O)</button><button type="button" id="setBtnX"
-                        class="toggle-btn active" onclick="selectSetOption('X', 'reg')">없음 (X)</button></div><input
-                    type="hidden" id="hasSetValue" value="X">
+                        class="toggle-btn active" onclick="selectSetOption('X', 'reg')">없음 (X)</button></div>
             </div>
 
             <div class="input-group"><label for="regPalletToCarton">파레트당 카톤 수</label><input type="number"
@@ -941,14 +941,13 @@
                     id="regInnerToUnit" placeholder="예: 10" onfocus="this.select()"></div>
 
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
-            <p style="font-size:13px; font-weight:bold; color:#007aff; margin-bottom:10px;">⚖️ 중량 스펙 정보
-            </p>
+            <p style="font-size:13px; font-weight:bold; color:#007aff; margin-bottom:10px;">⚖️ 중량 스펙 정보</p>
             <div class="input-group">
                 <label>단케이스 중량</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="number" id="weightInnerMain" placeholder="50" style="flex:1;"> g
+                    <input type="number" id="weightInnerMain" placeholder="최소값" style="flex:1;"> g
                     <span> ~ </span>
-                    <input type="number" id="weightInnerRange" placeholder="1" style="flex:1;"> g
+                    <input type="number" id="weightInnerRange" placeholder="최대값" style="flex:1;"> g
                 </div>
             </div>
 
@@ -956,9 +955,9 @@
                 <div class="input-group">
                     <label>세트케이스 중량</label>
                     <div style="display: flex; align-items: center; gap: 5px;">
-                        <input type="number" id="weightSetMain" placeholder="300" style="flex:1;"> g
+                        <input type="number" id="weightSetMain" placeholder="최소값" style="flex:1;"> g
                         <span> ~ </span>
-                        <input type="number" id="weightSetRange" placeholder="5" style="flex:1;"> g
+                        <input type="number" id="weightSetRange" placeholder="최대값" style="flex:1;"> g
                     </div>
                 </div>
             </div>
@@ -966,9 +965,9 @@
             <div class="input-group">
                 <label>카톤 중량</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="number" id="weightCartonMain" placeholder="5" style="flex:1;"> kg
+                    <input type="number" id="weightCartonMain" placeholder="최소값" style="flex:1;"> kg
                     <span> ~ </span>
-                    <input type="number" id="weightCartonRange" placeholder="0.1" style="flex:1;"> kg
+                    <input type="number" id="weightCartonRange" placeholder="최대값" style="flex:1;"> kg
                 </div>
             </div>
 
@@ -990,19 +989,14 @@
             <input type="hidden" id="editTargetId">
             <div class="input-group" style="margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 6px;">제품 종류</label>
-                <div id="productTypeGroup" style="display: flex; gap: 4px; justify-content: space-between;">
-                    <button type="button" class="type-btn 스틱 active" onclick="selectType(this, '스틱')"
-                        style="flex: 1;">스틱</button>
-                    <button type="button" class="type-btn 파우치" onclick="selectType(this, '파우치')"
-                        style="flex: 1;">파우치</button>
-                    <button type="button" class="type-btn 바이알" onclick="selectType(this, '바이알')"
-                        style="flex: 1;">바이알</button>
-                    <button type="button" class="type-btn PTP" onclick="selectType(this, 'PTP')"
-                        style="flex: 1;">PTP</button>
-                    <button type="button" class="type-btn 진액고" onclick="selectType(this, '진액고')"
-                        style="flex: 1;">진액고</button>
+                <div id="productTypeGroupEdit" style="display: flex; gap: 4px; justify-content: space-between;">
+                    <button type="button" class="type-btn 스틱" onclick="selectEditType(this, '스틱')" style="flex: 1;">스틱</button>
+                    <button type="button" class="type-btn 파우치" onclick="selectEditType(this, '파우치')" style="flex: 1;">파우치</button>
+                    <button type="button" class="type-btn 바이알" onclick="selectEditType(this, '바이알')" style="flex: 1;">바이알</button>
+                    <button type="button" class="type-btn PTP" onclick="selectEditType(this, 'PTP')" style="flex: 1;">PTP</button>
+                    <button type="button" class="type-btn 진액고" onclick="selectEditType(this, '진액고')" style="flex: 1;">진액고</button>
                 </div>
-                <input type="hidden" id="regProductType" value="스틱">
+                <input type="hidden" id="editProductType" value="스틱">
             </div>
             <div class="input-group"><label>세트케이스 유무</label>
                 <div class="toggle-container"><button type="button" id="editModalSetBtnO" class="toggle-btn"
@@ -1027,32 +1021,32 @@
                     onfocus="this.select()"></div>
 
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
-            <p style="font-size:13px; font-weight:bold; color:#007aff; margin-bottom:10px;">⚖️ 중량 스펙 정보
+            <p style="font-size:13px; font-weight:bold; color:#007aff; margin-bottom:10px;">⚖️ 중량 스펙 정보</p>
 
             <div class="input-group">
                 <label>단케이스 중량 (g)</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="number" id="editWeightInnerMain" placeholder="50" style="flex:1;"> g
+                    <input type="number" id="editWeightInnerMain" placeholder="최소값" style="flex:1;"> g
                     <span> ~ </span>
-                    <input type="number" id="editWeightInnerRange" placeholder="1" style="flex:1;"> g
+                    <input type="number" id="editWeightInnerRange" placeholder="최대값" style="flex:1;"> g
                 </div>
             </div>
             <div id="editModalSetWeightFields" style="display:none;">
                 <div class="input-group">
                     <label>세트케이스 중량 (g)</label>
                     <div style="display: flex; align-items: center; gap: 5px;">
-                        <input type="number" id="editWeightSetMain" placeholder="300" style="flex:1;"> g
+                        <input type="number" id="editWeightSetMain" placeholder="최소값" style="flex:1;"> g
                         <span> ~ </span>
-                        <input type="number" id="editWeightSetRange" placeholder="5" style="flex:1;"> g
+                        <input type="number" id="editWeightSetRange" placeholder="최대값" style="flex:1;"> g
                     </div>
                 </div>
             </div>
             <div class="input-group">
                 <label>카톤 중량 (kg)</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="number" id="editWeightCartonMain" placeholder="5" style="flex:1;"> kg
+                    <input type="number" id="editWeightCartonMain" placeholder="최소값" style="flex:1;"> kg
                     <span> ~ </span>
-                    <input type="number" id="editWeightCartonRange" placeholder="0.1" style="flex:1;"> kg
+                    <input type="number" id="editWeightCartonRange" placeholder="최대값" style="flex:1;"> kg
                 </div>
             </div>
 
@@ -1088,10 +1082,9 @@
         let isCompletedOpen = false;
 
         initDietSystem();
-        initRealtimeProductListener(); // 실시간 제품 리스너 구동
+        initRealtimeProductListener(); 
         loadPackingLogs();
 
-        // 🟢 실시간 제품 리스너 구동 함수 (Firestore onSnapshot 적용)
         function initRealtimeProductListener() {
             db.collection('products').orderBy('name').onSnapshot(snapshot => {
                 productList = [];
@@ -1099,7 +1092,6 @@
                     productList.push({ id: doc.id, ...doc.data() });
                 });
 
-                // 관리자 탭이 활성화되어 있고 로그인 상태면 리스트 즉시 렌더링
                 if (isAdminAuthenticated && document.getElementById('manageTab').classList.contains('active')) {
                     renderProductAdminListUI();
                 }
@@ -1108,7 +1100,6 @@
             });
         }
 
-        // 식단표 초기화
         function initDietSystem() {
             const weekDates = getThisWeekDates();
             currentMondayKey = weekDates[0].dateStr;
@@ -1203,7 +1194,6 @@
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
             if (tabId === 'calcTab') {
-                // 실시간 리스너가 productList를 상시 동기화하므로 별도 호출 불필요
             } else if (tabId === 'logTab') {
                 loadPackingLogs();
             } else if (tabId === 'dietTab') {
@@ -1213,9 +1203,7 @@
             }
         }
 
-        // 구버전 호환용 (단순 내부 호출 대용)
         async function loadProductList() {
-            // 실시간 리스너(initRealtimeProductListener)가 있으므로 productList는 항상 최신 상태 유지됨
         }
 
         function filterProducts() {
@@ -1677,7 +1665,7 @@
             let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
             let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
 
-            box.innerHTML = `📌 <strong>남은 목표량 환산 : ${remaining.toLocaleString()} set</strong><br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
+            box.innerHTML = `📌 <strong>남은 목표량 환산 : ${remaining.toLocaleString()} SET</strong><br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
         }
 
         async function addSingleWorkLogRecord() {
@@ -1841,7 +1829,6 @@
             }
         }
 
-        // 🟢 관리자 제품 리스트 UI 렌더링 함수
         function renderProductAdminListUI() {
             const container = document.getElementById('productListContainer');
             document.getElementById('listCountLabel').innerText = `등록된 품목 리스트 (${productList.length})`;
@@ -1864,7 +1851,6 @@
             container.innerHTML = html;
         }
 
-        // 기존 함수 이름 유지용 래퍼
         function renderProductAdminList() {
             renderProductAdminListUI();
         }
@@ -1888,6 +1874,13 @@
             document.getElementById('regProductType').value = type;
         }
 
+        function selectEditType(btnElement, type) {
+            const parent = btnElement.parentElement;
+            parent.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            document.getElementById('editProductType').value = type;
+        }
+
         function openProductDetailModal(id) {
             const p = productList.find(item => item.id === id);
             if (!p) {
@@ -1899,7 +1892,12 @@
             document.getElementById('pdModalTitle').innerHTML = `📦 ${p.name} <strong><span class="tag tag-${pType}">${pType}</span></strong>`;
 
             const weightBox = document.getElementById('pdModalWeightBox');
-            weightBox.innerHTML = `<div>중량 스펙: ${p.weightText || '미등록'}</div>`;
+            let weightInfoHtml = `<div>단케이스 중량: ${p.weightInner || '미등록'}</div>`;
+            if (p.hasSet === 'O' && p.weightSet) {
+                weightInfoHtml += `<div>세트케이스 중량: ${p.weightSet}</div>`;
+            }
+            weightInfoHtml += `<div>카톤 중량: ${p.weightCarton || '미등록'}</div>`;
+            weightBox.innerHTML = weightInfoHtml;
 
             const historyBox = document.getElementById('pdModalHistoryBox');
             let relatedLogs = packingLogsList.filter(log => log.productId === id && (log.currentQty > 0 || log.isForceDone));
@@ -1915,7 +1913,7 @@
                     hHtml += `
                         <div style="padding:6px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
                             <span>📅 ${log.dueDate} ${statusTxt}</span>
-                            <strong>${log.currentQty.toLocaleString()}</strong>
+                            <strong>${log.currentQty.toLocaleString()} SET</strong>
                         </div>
                     `;
                 });
@@ -1923,20 +1921,16 @@
             }
 
             const specBox = document.getElementById('pdModalSpecBox');
-            let cToI = (p.hasSet === 'O') ? `카톤당 세트: <strong>${p.cartonToSet}개</strong><br> 세트당 단케이스: <strong>${p.setToInner}개</strong>` : `카톤당 단케이스: <strong>${p.cartonToInner}개</strong>`;
+            let cToI = (p.hasSet === 'O') ? `카톤당 세트: <strong>${p.cartonToSet}개</strong><br> 세트당 단케이스: <strong>${p.setToInner} 개</strong>` : `카톤당 단케이스: <strong>${p.cartonToInner} 개</strong>`;
             specBox.innerHTML = `
                 파레트당 카톤: <strong>${p.palletToCarton || '-'} 박스</strong><br>
                 ${cToI}<br>
                 단케이스당 반제품: <strong>${p.innerToUnit || '-'} 개</strong>
             `;
 
-            document.getElementById('pdModalEditBtn').onclick = () => {
-                closeProductDetailModal();
-                openEditModal(p.id);
-            };
-            document.getElementById('pdModalDeleteBtn').onclick = () => {
-                deleteProduct(p.id, p.name);
-            };
+            // 요청하신 대로 상세 정보 진입 시 수정/삭제 버튼을 숨기고 내용 확인만 가능하게 설정
+            const actionButtons = document.getElementById('pdModalActionButtons');
+            if (actionButtons) actionButtons.style.display = 'none';
 
             document.getElementById('productDetailModal').style.display = 'flex';
         }
@@ -2061,9 +2055,9 @@
 
             document.getElementById('editTargetId').value = p.id;
             document.getElementById('editModalPtoC').value = p.palletToCarton || '';
-            document.getElementById('regProductType').value = p.productType || '스틱';
+            document.getElementById('editProductType').value = p.productType || '스틱';
 
-            const typeButtons = document.querySelectorAll('#productTypeGroup .type-btn');
+            const typeButtons = document.querySelectorAll('#productTypeGroupEdit .type-btn');
             typeButtons.forEach(btn => {
                 if (btn.textContent.trim() === (p.productType || '스틱')) {
                     btn.classList.add('active');
@@ -2082,6 +2076,29 @@
             }
             document.getElementById('editModalItoU').value = p.innerToUnit || '';
 
+            // 기존 중량 스펙 데이터 파싱 및 폼 채우기
+            if (p.weightInner) {
+                let parts = p.weightInner.split('g ±');
+                if (parts.length >= 2) {
+                    document.getElementById('editWeightInnerMain').value = parts[0].trim();
+                    document.getElementById('editWeightInnerRange').value = parts[1].replace('g', '').trim();
+                }
+            }
+            if (p.hasSet === 'O' && p.weightSet) {
+                let partsSet = p.weightSet.split('g ±');
+                if (partsSet.length >= 2) {
+                    document.getElementById('editWeightSetMain').value = partsSet[0].trim();
+                    document.getElementById('editWeightSetRange').value = partsSet[1].replace('g', '').trim();
+                }
+            }
+            if (p.weightCarton) {
+                let partsCarton = p.weightCarton.split('kg ±');
+                if (partsCarton.length >= 2) {
+                    document.getElementById('editWeightCartonMain').value = partsCarton[0].trim();
+                    document.getElementById('editWeightCartonRange').value = partsCarton[1].replace('kg', '').trim();
+                }
+            }
+
             document.getElementById('editProductModal').style.display = 'flex';
         }
 
@@ -2092,31 +2109,35 @@
             let p = productList.find(item => item.id === id);
             if (!p) return;
 
-            p.palletToCarton = document.getElementById('editModalPtoC').value;
-            p.hasSet = document.getElementById('editModalHasSetValue').value;
-            p.productType = document.getElementById('regProductType').value;
+            let palletToCarton = parseInt(document.getElementById('editModalPtoC').value) || 0;
+            let hasSet = document.getElementById('editModalHasSetValue').value;
+            let productType = document.getElementById('editProductType').value;
+            let innerToUnit = parseInt(document.getElementById('editModalItoU').value) || 0;
 
-            if (p.hasSet === 'O') {
-                p.cartonToSet = document.getElementById('editModalCtoS').value;
-                p.setToInner = document.getElementById('editModalStoI').value;
-                p.cartonToInner = '';
+            let cartonToSet = 0, setToInner = 0, cartonToInner = 0;
+            if (hasSet === 'O') {
+                cartonToSet = parseInt(document.getElementById('editModalCtoS').value) || 0;
+                setToInner = parseInt(document.getElementById('editModalStoI').value) || 0;
             } else {
-                p.cartonToInner = document.getElementById('editModalCtoIX').value;
-                p.cartonToSet = '';
-                p.setToInner = '';
+                cartonToInner = parseInt(document.getElementById('editModalCtoIX').value) || 0;
             }
 
-            p.innerToUnit = document.getElementById('editModalItoU').value || '';
+            let weightInner = `${document.getElementById('editWeightInnerMain').value}g ± ${document.getElementById('editWeightInnerRange').value}g`;
+            let weightSet = (hasSet === 'O') ? `${document.getElementById('editWeightSetMain').value}g ± ${document.getElementById('editWeightSetRange').value}g` : '';
+            let weightCarton = `${document.getElementById('editWeightCartonMain').value}kg ± ${document.getElementById('editWeightCartonRange').value}kg`;
 
             try {
                 await db.collection("products").doc(id).update({
-                    palletToCarton: p.palletToCarton,
-                    hasSet: p.hasSet,
-                    cartonToSet: p.cartonToSet,
-                    setToInner: p.setToInner,
-                    cartonToInner: p.cartonToInner,
-                    innerToUnit: p.innerToUnit,
-                    productType: p.productType
+                    palletToCarton: palletToCarton,
+                    hasSet: hasSet,
+                    cartonToSet: cartonToSet,
+                    setToInner: setToInner,
+                    cartonToInner: cartonToInner,
+                    innerToUnit: innerToUnit,
+                    productType: productType,
+                    weightInner: weightInner,
+                    weightSet: weightSet,
+                    weightCarton: weightCarton
                 });
 
                 closeEditModal();
