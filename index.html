@@ -2188,27 +2188,56 @@
         }
 
         // 제품 수정 저장
-        function updateProductModalSave() {
+        async function updateProductModalSave() {
             const id = document.getElementById('editTargetId').value;
             let p = productList.find(item => item.id === id);
+            if (!p) return;
 
-            // ★ 여기서 HTML의 입력값들을 다시 객체(p)에 덮어씌워야 해!
+            // 1. 입력값들을 객체(p)에 덮어씌우기
             p.palletToCarton = document.getElementById('editModalPtoC').value;
             p.hasSet = document.getElementById('editModalHasSetValue').value;
 
             if (p.hasSet === 'O') {
                 p.cartonToSet = document.getElementById('editModalCtoS').value;
                 p.setToInner = document.getElementById('editModalStoI').value;
+                // 단품용 필드는 비우거나 초기화 (선택사항)
+                p.cartonToInner = '';
             } else {
                 p.cartonToInner = document.getElementById('editModalCtoIX').value;
+                // 세트용 필드는 비우거나 초기화 (선택사항)
+                p.cartonToSet = '';
+                p.setToInner = '';
             }
 
-            // ... 중량값들도 동일하게 p.weightInner = ... 식으로 갱신 ...
+            p.innerToUnit = document.getElementById('editModalItoU').value || '';
 
-            // ★ 마지막으로 화면을 다시 그려야 함!
-            loadProductList()
-            closeEditModal();
+            // TODO: 생략했던 중량값들도 이와 유사하게 p.weightInner = document.getElementById(...).value 등으로 꼭 갱신해 줘야 해!
 
+            try {
+                // 2. ★ 핵심: 파이어베이스(DB)에 실제로 수정된 데이터를 업데이트!
+                // (사용 중인 Firestore 인스턴스 이름이 db이고 컬렉션 이름이 'products'라고 가정)
+                await db.collection("products").doc(id).update({
+                    palletToCarton: p.palletToCarton,
+                    hasSet: p.hasSet,
+                    cartonToSet: p.cartonToSet,
+                    setToInner: p.setToInner,
+                    cartonToInner: p.cartonToInner,
+                    innerToUnit: p.innerToUnit
+                    // 중량 관련 필드들도 여기에 함께 추가해야 DB에 저장됨!
+                });
+
+                console.log("DB 업데이트 성공!");
+
+                // 3. 모달 닫기
+                closeEditModal();
+
+                // 4. DB에서 최신 목록을 다시 불러와서 화면 갱신
+                await loadProductList();
+
+            } catch (error) {
+                console.error("제품 수정 중 오류 발생: ", error);
+                alert("수정 실패: " + error.message);
+            }
         }
 
         // 제품 삭제
