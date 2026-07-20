@@ -757,7 +757,7 @@
             <div class="detail-section-title">⚙️ 포장 구성 사양</div>
             <div id="pdModalSpecBox" class="spec-info-box"></div>
 
-            <!-- 수정/삭제 버튼 영역 숨김 또는 제외 처리 완료 (읽기 전용) -->
+            <!-- 제품관리 진입 시에만 표시되는 수정/삭제 버튼 영역 -->
             <div style="display:none; gap:10px; margin-top:20px;" id="pdModalActionButtons">
                 <button id="pdModalEditBtn" class="main-btn"
                     style="background-color:#ff9500; margin-top:0; font-size:14px;">수정하기</button>
@@ -1511,6 +1511,7 @@
             document.getElementById('detailLogId').value = log.id;
             document.getElementById('detailOldProductId').value = log.productId;
 
+            // 포장일지 -> 상세작업 -> 상세정보 경로이므로 false(상세보기 전용)로 호출
             document.getElementById('detailLogSummary').innerHTML = `
             <div style="display:flex; align-items:center; margin-bottom:6px;">
             <span style="font-size:15px; display:flex; align-items:center;">
@@ -1518,7 +1519,7 @@
             <span style="margin-left:8px;"><strong><span class="tag tag-${pType}">${pType}</span></strong></span>
             </span> 
         
-            <button class="sub-btn" style="margin-left: auto; background:#e1f0ff; color:#007aff; padding:4px 8px; font-size:12px; border:1px solid #b3d1ff;" onclick="openProductDetailModal('${log.productId}')">상세정보</button>
+            <button class="sub-btn" style="margin-left: auto; background:#e1f0ff; color:#007aff; padding:4px 8px; font-size:12px; border:1px solid #b3d1ff;" onclick="openProductDetailModal('${log.productId}', false)">상세정보</button>
             </div>
             <div>📅 <strong>출고일:</strong> ${log.dueDate}</div>
             <div style="margin-top:2px;">🎯 <strong>목표량:</strong> ${log.targetQty.toLocaleString()} set</div>
@@ -1842,7 +1843,7 @@
             productList.forEach(p => {
                 const pType = p.productType ? p.productType : '미분류';
                 html += `
-                    <div class="simple-list-item" onclick="openProductDetailModal('${p.id}')">
+                    <div class="simple-list-item" onclick="openProductDetailModal('${p.id}', true)">
                         <span>📦</span> <span style="font-weight:600; font-size:15px;">${p.name} <span class="tag tag-${pType}">${pType}</span></span>
                     </div>
                 `;
@@ -1881,7 +1882,8 @@
             document.getElementById('editProductType').value = type;
         }
 
-        function openProductDetailModal(id) {
+        // 제품 상세정보 모달 오픈 (isAdmin이 true면 제품관리 진입: 수정/삭제 가능, false면 포장일지 진입: 내용만 확인)
+        function openProductDetailModal(id, isAdmin = false) {
             const p = productList.find(item => item.id === id);
             if (!p) {
                 alert('제품 스펙이 아직 등록되지 않은 임시 제품입니다.');
@@ -1928,9 +1930,15 @@
                 단케이스당 반제품: <strong>${p.innerToUnit || '-'} 개</strong>
             `;
 
-            // 요청하신 대로 상세 정보 진입 시 수정/삭제 버튼을 숨기고 내용 확인만 가능하게 설정
+            // 진입 경로에 따른 수정/삭제 버튼 제어
             const actionButtons = document.getElementById('pdModalActionButtons');
-            if (actionButtons) actionButtons.style.display = 'none';
+            if (isAdmin) {
+                actionButtons.style.display = 'flex';
+                document.getElementById('pdModalEditBtn').setAttribute('onclick', `closeProductDetailModal(); openEditModal('${p.id}')`);
+                document.getElementById('pdModalDeleteBtn').setAttribute('onclick', `deleteProduct('${p.id}', '${p.name}')`);
+            } else {
+                actionButtons.style.display = 'none';
+            }
 
             document.getElementById('productDetailModal').style.display = 'flex';
         }
@@ -2076,7 +2084,6 @@
             }
             document.getElementById('editModalItoU').value = p.innerToUnit || '';
 
-            // 기존 중량 스펙 데이터 파싱 및 폼 채우기
             if (p.weightInner) {
                 let parts = p.weightInner.split('g ±');
                 if (parts.length >= 2) {
