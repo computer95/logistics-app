@@ -2188,50 +2188,47 @@
         }
 
         // 제품 수정 저장
+        // 제품 수정 저장
         async function updateProductModalSave() {
             const id = document.getElementById('editTargetId').value;
             let p = productList.find(item => item.id === id);
             if (!p) return;
 
-            // 1. 입력값들을 객체(p)에 덮어씌우기
+            // 1. 기존 입력값 갱신
             p.palletToCarton = document.getElementById('editModalPtoC').value;
             p.hasSet = document.getElementById('editModalHasSetValue').value;
 
             if (p.hasSet === 'O') {
                 p.cartonToSet = document.getElementById('editModalCtoS').value;
                 p.setToInner = document.getElementById('editModalStoI').value;
-                // 단품용 필드는 비우거나 초기화 (선택사항)
                 p.cartonToInner = '';
             } else {
                 p.cartonToInner = document.getElementById('editModalCtoIX').value;
-                // 세트용 필드는 비우거나 초기화 (선택사항)
                 p.cartonToSet = '';
                 p.setToInner = '';
             }
 
             p.innerToUnit = document.getElementById('editModalItoU').value || '';
 
-            // TODO: 생략했던 중량값들도 이와 유사하게 p.weightInner = document.getElementById(...).value 등으로 꼭 갱신해 줘야 해!
+            // ★ [핵심] 제품 종류(타입) 변경값 반영하기
+            // 만약 제품 종류를 선택하는 input, select, 혹은 hidden 값의 id가 'editModalProductType'이라면:
+            p.productType = document.getElementById('editModalProductType').value;
+            // 혹은 제품 종류를 버튼 등으로 선택해서 저장하는 변수가 있다면 그 변수값을 넣어주면 돼!
 
             try {
-                // 2. ★ 핵심: 파이어베이스(DB)에 실제로 수정된 데이터를 업데이트!
-                // (사용 중인 Firestore 인스턴스 이름이 db이고 컬렉션 이름이 'products'라고 가정)
+                // 2. DB 업데이트 시 productType도 함께 저장되도록 추가!
                 await db.collection("products").doc(id).update({
                     palletToCarton: p.palletToCarton,
                     hasSet: p.hasSet,
                     cartonToSet: p.cartonToSet,
                     setToInner: p.setToInner,
                     cartonToInner: p.cartonToInner,
-                    innerToUnit: p.innerToUnit
-                    // 중량 관련 필드들도 여기에 함께 추가해야 DB에 저장됨!
+                    innerToUnit: p.innerToUnit,
+                    productType: p.productType // <--- 이 부분이 빠져있었을 거야!
                 });
 
                 console.log("DB 업데이트 성공!");
-
-                // 3. 모달 닫기
                 closeEditModal();
-
-                // 4. DB에서 최신 목록을 다시 불러와서 화면 갱신
                 await loadProductList();
 
             } catch (error) {
