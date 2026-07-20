@@ -2200,7 +2200,7 @@
             }
         }
 
-        // 제품 수정 저장
+        // 제품 수정 모달 저장
         async function updateProductModalSave() {
             const id = document.getElementById('editTargetId').value;
             let p = productList.find(item => item.id === id);
@@ -2234,12 +2234,20 @@
                     setToInner: p.setToInner,
                     cartonToInner: p.cartonToInner,
                     innerToUnit: p.innerToUnit,
-                    productType: p.productType // <--- 이제 에러 없이 정상적으로 DB에 반영됨
+                    productType: p.productType
                 });
 
                 console.log("제품 종류 및 정보 수정 성공!");
                 closeEditModal();
+
+                // 제품 목록을 최신화하고
                 await loadProductList();
+
+                // 3. ★ [핵심] 작업현황(또는 포장일지 목록)을 화면에 다시 그려주는 함수를 여기서 호출해 줘야 함!
+                // (프로젝트에 있는 실제 작업현황 로드 함수명으로 바꿔서 넣어주면 돼. 예: loadLogList(), renderWorkStatus() 등)
+                if (typeof loadLogList === 'function') {
+                    loadLogList();
+                }
 
             } catch (error) {
                 console.error("제품 수정 중 오류 발생: ", error);
