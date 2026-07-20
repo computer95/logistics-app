@@ -2060,6 +2060,22 @@
             if (weightFields) weightFields.style.display = (val === 'O') ? 'block' : 'none';
         }
 
+        // 중량 입력 값 포맷팅 헬퍼 함수
+        function formatWeight(mainVal, rangeVal, unit) {
+            const min = mainVal ? mainVal.trim() : '';
+            const max = rangeVal ? rangeVal.trim() : '';
+            
+            if (min && max) {
+                return `${min}${unit} ~ ${max}${unit}`;
+            } else if (min && !max) {
+                return `${min}${unit} 이상`;
+            } else if (!min && max) {
+                return `${max}${unit} 이하`;
+            } else {
+                return '미등록';
+            }
+        }
+
         // 신규 품목 DB 저장 등록
         async function saveProductConfig() {
             let name = document.getElementById('regProductName').value.trim();
@@ -2076,9 +2092,21 @@
                 cartonToInner = parseInt(document.getElementById('regCartonToInnerX').value);
             }
 
-            let weightInner = `${document.getElementById('weightInnerMain').value}g ~ ${document.getElementById('weightInnerRange').value}g`;
-            let weightSet = (hasSet === 'O') ? `${document.getElementById('weightSetMain').value}g ~ ${document.getElementById('weightSetRange').value}g` : '';
-            let weightCarton = `${document.getElementById('weightCartonMain').value}kg ~ ${document.getElementById('weightCartonRange').value}kg`;
+            let weightInner = formatWeight(
+                document.getElementById('weightInnerMain').value,
+                document.getElementById('weightInnerRange').value,
+                'g'
+            );
+            let weightSet = (hasSet === 'O') ? formatWeight(
+                document.getElementById('weightSetMain').value,
+                document.getElementById('weightSetRange').value,
+                'g'
+            ) : '';
+            let weightCarton = formatWeight(
+                document.getElementById('weightCartonMain').value,
+                document.getElementById('weightCartonRange').value,
+                'kg'
+            );
 
             if (!name || isNaN(palletToCarton) || isNaN(innerToUnit)) {
                 alert('필수 입력 항목을 정확히 입력해 주세요.');
@@ -2100,7 +2128,7 @@
 
         // DB 문자열 중량 데이터 파싱 복원 함수
         function extractWeightValues(weightStr) {
-            if (!weightStr) return { main: '', range: '' };
+            if (!weightStr || weightStr === '미등록') return { main: '', range: '' };
             
             if (weightStr.includes('이상')) {
                 return { main: weightStr.replace(/[^0-9.]/g, ''), range: '' };
@@ -2194,9 +2222,21 @@
                 cartonToInner = parseInt(document.getElementById('editModalCtoIX').value) || 0;
             }
 
-            let weightInner = `${document.getElementById('editWeightInnerMain').value}g ~ ${document.getElementById('editWeightInnerRange').value}g`;
-            let weightSet = (hasSet === 'O') ? `${document.getElementById('editWeightSetMain').value}g ~ ${document.getElementById('editWeightSetRange').value}g` : '';
-            let weightCarton = `${document.getElementById('editWeightCartonMain').value}kg ~ ${document.getElementById('editWeightCartonRange').value}kg`;
+            let weightInner = formatWeight(
+                document.getElementById('editWeightInnerMain').value,
+                document.getElementById('editWeightInnerRange').value,
+                'g'
+            );
+            let weightSet = (hasSet === 'O') ? formatWeight(
+                document.getElementById('editWeightSetMain').value,
+                document.getElementById('editWeightSetRange').value,
+                'g'
+            ) : '';
+            let weightCarton = formatWeight(
+                document.getElementById('editWeightCartonMain').value,
+                document.getElementById('editWeightCartonRange').value,
+                'kg'
+            );
 
             try {
                 await db.collection("products").doc(id).update({
