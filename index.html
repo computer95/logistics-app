@@ -1719,7 +1719,7 @@
             log.currentQty = log.history.reduce((sum, h) => sum + h.qty, 0);
 
             try {
-                await db.collection('packingLogs').doc(logId).update({
+                await db.collection('packing_logs').doc(logId).update({
                     history: log.history,
                     currentQty: log.currentQty
                 });
@@ -1741,7 +1741,7 @@
             log.currentQty = log.history.reduce((sum, h) => sum + (h.qty || 0), 0);
 
             try {
-                await db.collection('packingLogs').doc(logId).update({
+                await db.collection('packing_logs').doc(logId).update({
                     history: log.history,
                     currentQty: log.currentQty
                 });
@@ -1802,7 +1802,7 @@
             }
 
             try {
-                await db.collection('packingLogs').doc(logId).update({
+                await db.collection('packing_logs').doc(logId).update({
                     productId, productName, dueDate, targetQty, memo,
                     history: log.history || [],
                     currentQty: log.currentQty || 0
@@ -1821,7 +1821,7 @@
             if (!log) return;
             let newHold = !log.isHold;
             try {
-                await db.collection('packingLogs').doc(logId).update({ isHold: newHold });
+                await db.collection('packing_logs').doc(logId).update({ isHold: newHold });
                 closeDetailLogModal();
             } catch (e) { alert('상태 변경 오류'); }
         }
@@ -1833,7 +1833,7 @@
             if (!log) return;
             let newForce = !log.isForceDone;
             try {
-                await db.collection('packingLogs').doc(logId).update({ isForceDone: newForce });
+                await db.collection('packing_logs').doc(logId).update({ isForceDone: newForce });
                 closeDetailLogModal();
             } catch (e) { alert('상태 변경 오류'); }
         }
@@ -1843,7 +1843,7 @@
             if (!confirm('이 출고 일정을 완전히 삭제하시겠습니까?')) return;
             let logId = document.getElementById('detailLogId').value;
             try {
-                await db.collection('packingLogs').doc(logId).delete();
+                await db.collection('packing_logs').doc(logId).delete();
                 closeDetailLogModal();
             } catch (e) { alert('삭제 오류'); }
         }
