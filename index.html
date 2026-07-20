@@ -2085,21 +2085,21 @@
             document.getElementById('editModalItoU').value = p.innerToUnit || '';
 
             if (p.weightInner) {
-                let parts = p.weightInner.split('g ±');
+                let parts = p.weightInner.split('g ~');
                 if (parts.length >= 2) {
                     document.getElementById('editWeightInnerMain').value = parts[0].trim();
                     document.getElementById('editWeightInnerRange').value = parts[1].replace('g', '').trim();
                 }
             }
             if (p.hasSet === 'O' && p.weightSet) {
-                let partsSet = p.weightSet.split('g ±');
+                let partsSet = p.weightSet.split('g ~');
                 if (partsSet.length >= 2) {
                     document.getElementById('editWeightSetMain').value = partsSet[0].trim();
                     document.getElementById('editWeightSetRange').value = partsSet[1].replace('g', '').trim();
                 }
             }
             if (p.weightCarton) {
-                let partsCarton = p.weightCarton.split('kg ±');
+                let partsCarton = p.weightCarton.split('kg ~');
                 if (partsCarton.length >= 2) {
                     document.getElementById('editWeightCartonMain').value = partsCarton[0].trim();
                     document.getElementById('editWeightCartonRange').value = partsCarton[1].replace('kg', '').trim();
