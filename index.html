@@ -1320,7 +1320,7 @@
         // 포장일지 데이터 호출 및 자동 상태 체크
         async function loadPackingLogs() {
             try {
-                const snapshot = await db.collection('packingLogs').orderBy('dueDate', 'asc').get();
+                const snapshot = await db.collection('packing_logs').orderBy('dueDate', 'asc').get();
                 packingLogsList = [];
                 snapshot.forEach(doc => {
                     packingLogsList.push({ id: doc.id, ...doc.data() });
@@ -1342,7 +1342,7 @@
                 if (log.dueDate < today && !log.isForceDone && log.currentQty < log.targetQty && !log.isHold) {
                     log.isForceDone = true;
                     updated = true;
-                    await db.collection('packingLogs').doc(log.id).update({ isForceDone: true });
+                    await db.collection('packing_logs').doc(log.id).update({ isForceDone: true });
                 }
             }
             if (updated && document.getElementById('logTab').classList.contains('active')) {
