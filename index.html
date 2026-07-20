@@ -1208,9 +1208,6 @@
             }
         }
 
-        async function loadProductList() {
-        }
-
         function filterProducts() {
             const keyword = document.getElementById('productSearchInput').value.trim().toLowerCase();
             const dropdown = document.getElementById('productSearchDropdown');
@@ -1516,7 +1513,6 @@
             document.getElementById('detailLogId').value = log.id;
             document.getElementById('detailOldProductId').value = log.productId;
 
-            // 포장일지 -> 상세작업 -> 상세정보 경로이므로 false(상세보기 전용)로 호출
             document.getElementById('detailLogSummary').innerHTML = `
             <div style="display:flex; align-items:center; margin-bottom:6px;">
             <span style="font-size:15px; display:flex; align-items:center;">
@@ -1764,7 +1760,7 @@
                     try {
                         let newRef = await db.collection('products').add({
                             name: productName, productType: '스틱', hasSet: 'X', palletToCarton: 24, cartonToInner: 30, innerToUnit: 10,
-                            weightText: '10g ± 2g', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            weightText: '10g ~ 2g', createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
                         productId = newRef.id;
                     } catch (e) {
@@ -1857,10 +1853,6 @@
             container.innerHTML = html;
         }
 
-        function renderProductAdminList() {
-            renderProductAdminListUI();
-        }
-
         function filterAdminList() {
             const keyword = document.getElementById('adminFilterInput').value.trim().toLowerCase();
             const items = document.querySelectorAll('.simple-list-item');
@@ -1887,7 +1879,6 @@
             document.getElementById('editProductType').value = type;
         }
 
-        // 제품 상세정보 모달 오픈 (isAdmin이 true면 제품관리 진입: 수정/삭제 가능, false면 포장일지 진입: 내용만 확인)
         function openProductDetailModal(id, isAdmin = false) {
             const p = productList.find(item => item.id === id);
             if (!p) {
@@ -1935,7 +1926,6 @@
                 단케이스당 반제품: <strong>${p.innerToUnit || '-'} 개</strong>
             `;
 
-            // 진입 경로에 따른 수정/삭제 버튼 제어
             const actionButtons = document.getElementById('pdModalActionButtons');
             if (isAdmin) {
                 actionButtons.style.display = 'flex';
@@ -1956,7 +1946,6 @@
             const modal = document.getElementById('addProductModal');
             if (modal) modal.style.display = 'flex';
 
-            // 입력 필드 전체 초기화
             document.getElementById('regProductName').value = '';
             document.getElementById('regPalletToCarton').value = '';
             document.getElementById('regCartonToSet').value = '';
@@ -1964,7 +1953,6 @@
             document.getElementById('regCartonToInnerX').value = '';
             document.getElementById('regInnerToUnit').value = '';
 
-            // 중량 입력란 전체 초기화
             document.getElementById('weightInnerMain').value = '';
             document.getElementById('weightInnerRange').value = '';
             document.getElementById('weightSetMain').value = '';
@@ -2047,9 +2035,9 @@
                 cartonToInner = parseInt(document.getElementById('regCartonToInnerX').value);
             }
 
-            let weightInner = `${document.getElementById('weightInnerMain').value}g ± ${document.getElementById('weightInnerRange').value}g`;
-            let weightSet = (hasSet === 'O') ? `${document.getElementById('weightSetMain').value}g ± ${document.getElementById('weightSetRange').value}g` : '';
-            let weightCarton = `${document.getElementById('weightCartonMain').value}kg ± ${document.getElementById('weightCartonRange').value}kg`;
+            let weightInner = `${document.getElementById('weightInnerMain').value}g ~ ${document.getElementById('weightInnerRange').value}g`;
+            let weightSet = (hasSet === 'O') ? `${document.getElementById('weightSetMain').value}g ~ ${document.getElementById('weightSetRange').value}g` : '';
+            let weightCarton = `${document.getElementById('weightCartonMain').value}kg ~ ${document.getElementById('weightCartonRange').value}kg`;
 
             if (!name || isNaN(palletToCarton) || isNaN(innerToUnit)) {
                 alert('필수 입력 항목을 정확히 입력해 주세요.');
@@ -2067,6 +2055,30 @@
             } catch (e) {
                 alert('제품 등록 오류: ' + e.message);
             }
+        }
+
+        function extractWeightValues(weightStr) {
+            if (!weightStr) return { main: '', range: '' };
+            
+            // "이상" 또는 "이하" 패턴 처리
+            if (weightStr.includes('이상')) {
+                return { main: weightStr.replace(/[^0-9.]/g, ''), range: '' };
+            }
+            if (weightStr.includes('이하')) {
+                return { main: '', range: weightStr.replace(/[^0-9.]/g, '') };
+            }
+            
+            // "~" 또는 기타 구분자 처리
+            let parts = weightStr.split(/~|-/);
+            if (parts.length >= 2) {
+                return {
+                    main: parts[0].replace(/[^0-9.]/g, '').trim(),
+                    range: parts[1].replace(/[^0-9.]/g, '').trim()
+                };
+            }
+            
+            let val = weightStr.replace(/[^0-9.]/g, '').trim();
+            return { main: val, range: '' };
         }
 
         async function openEditModal(id) {
@@ -2103,49 +2115,19 @@
             document.getElementById('editModalItoU').value = p.innerToUnit || '';
 
             // --- 단케이스 중량 파싱 및 복원 ---
-            document.getElementById('editWeightInnerMain').value = '';
-            document.getElementById('editWeightInnerRange').value = '';
-            if (p.weightInner) {
-                if (p.weightInner.includes('~')) {
-                    let parts = p.weightInner.split('~');
-                    document.getElementById('editWeightInnerMain').value = parts[0].replace('g', '').trim();
-                    document.getElementById('editWeightInnerRange').value = parts[1].replace('g', '').trim();
-                } else if (p.weightInner.includes('이상')) {
-                    document.getElementById('editWeightInnerMain').value = p.weightInner.replace('g 이상', '').trim();
-                } else if (p.weightInner.includes('이하')) {
-                    document.getElementById('editWeightInnerRange').value = p.weightInner.replace('g 이하', '').trim();
-                }
-            }
+            let innerW = extractWeightValues(p.weightInner);
+            document.getElementById('editWeightInnerMain').value = innerW.main;
+            document.getElementById('editWeightInnerRange').value = innerW.range;
 
             // --- 세트케이스 중량 파싱 및 복원 ---
-            document.getElementById('editWeightSetMain').value = '';
-            document.getElementById('editWeightSetRange').value = '';
-            if (p.hasSet === 'O' && p.weightSet) {
-                if (p.weightSet.includes('~')) {
-                    let partsSet = p.weightSet.split('~');
-                    document.getElementById('editWeightSetMain').value = partsSet[0].replace('g', '').trim();
-                    document.getElementById('editWeightSetRange').value = partsSet[1].replace('g', '').trim();
-                } else if (p.weightSet.includes('이상')) {
-                    document.getElementById('editWeightSetMain').value = p.weightSet.replace('g 이상', '').trim();
-                } else if (p.weightSet.includes('이하')) {
-                    document.getElementById('editWeightSetRange').value = p.weightSet.replace('g 이하', '').trim();
-                }
-            }
+            let setW = extractWeightValues(p.weightSet);
+            document.getElementById('editWeightSetMain').value = setW.main;
+            document.getElementById('editWeightSetRange').value = setW.range;
 
             // --- 카톤 중량 파싱 및 복원 ---
-            document.getElementById('editWeightCartonMain').value = '';
-            document.getElementById('editWeightCartonRange').value = '';
-            if (p.weightCarton) {
-                if (p.weightCarton.includes('~')) {
-                    let partsCarton = p.weightCarton.split('~');
-                    document.getElementById('editWeightCartonMain').value = partsCarton[0].replace('kg', '').trim();
-                    document.getElementById('editWeightCartonRange').value = partsCarton[1].replace('kg', '').trim();
-                } else if (p.weightCarton.includes('이상')) {
-                    document.getElementById('editWeightCartonMain').value = p.weightCarton.replace('kg 이상', '').trim();
-                } else if (p.weightCarton.includes('이하')) {
-                    document.getElementById('editWeightCartonRange').value = p.weightCarton.replace('kg 이하', '').trim();
-                }
-            }
+            let cartonW = extractWeightValues(p.weightCarton);
+            document.getElementById('editWeightCartonMain').value = cartonW.main;
+            document.getElementById('editWeightCartonRange').value = cartonW.range;
 
             document.getElementById('editProductModal').style.display = 'flex';
         }
@@ -2170,9 +2152,9 @@
                 cartonToInner = parseInt(document.getElementById('editModalCtoIX').value) || 0;
             }
 
-            let weightInner = `${document.getElementById('editWeightInnerMain').value}g ± ${document.getElementById('editWeightInnerRange').value}g`;
-            let weightSet = (hasSet === 'O') ? `${document.getElementById('editWeightSetMain').value}g ± ${document.getElementById('editWeightSetRange').value}g` : '';
-            let weightCarton = `${document.getElementById('editWeightCartonMain').value}kg ± ${document.getElementById('editWeightCartonRange').value}kg`;
+            let weightInner = `${document.getElementById('editWeightInnerMain').value}g ~ ${document.getElementById('editWeightInnerRange').value}g`;
+            let weightSet = (hasSet === 'O') ? `${document.getElementById('editWeightSetMain').value}g ~ ${document.getElementById('editWeightSetRange').value}g` : '';
+            let weightCarton = `${document.getElementById('editWeightCartonMain').value}kg ~ ${document.getElementById('editWeightCartonRange').value}kg`;
 
             try {
                 await db.collection("products").doc(id).update({
