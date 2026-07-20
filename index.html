@@ -952,7 +952,7 @@
                 <label>단케이스 중량</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
                     <input type="number" id="weightInnerMain" placeholder="50" style="flex:1;"> g
-                    <span> ± </span>
+                    <span> ~ </span>
                     <input type="number" id="weightInnerRange" placeholder="1" style="flex:1;"> g
                 </div>
             </div>
@@ -963,7 +963,7 @@
                     <label>세트케이스 중량</label>
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <input type="number" id="weightSetMain" placeholder="300" style="flex:1;"> g
-                        <span> ± </span>
+                        <span> ~ </span>
                         <input type="number" id="weightSetRange" placeholder="5" style="flex:1;"> g
                     </div>
                 </div>
@@ -974,7 +974,7 @@
                 <label>카톤 중량</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
                     <input type="number" id="weightCartonMain" placeholder="5" style="flex:1;"> kg
-                    <span> ± </span>
+                    <span> ~ </span>
                     <input type="number" id="weightCartonRange" placeholder="0.1" style="flex:1;"> kg
                 </div>
             </div>
@@ -1043,7 +1043,7 @@
                 <label>단케이스 중량 (g)</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
                     <input type="number" id="editWeightInnerMain" placeholder="50" style="flex:1;"> g
-                    <span> ± </span>
+                    <span> ~ </span>
                     <input type="number" id="editWeightInnerRange" placeholder="1" style="flex:1;"> g
                 </div>
             </div>
@@ -1053,7 +1053,7 @@
                     <label>세트케이스 중량 (g)</label>
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <input type="number" id="editWeightSetMain" placeholder="300" style="flex:1;"> g
-                        <span> ± </span>
+                        <span> ~ </span>
                         <input type="number" id="editWeightSetRange" placeholder="5" style="flex:1;"> g
                     </div>
                 </div>
@@ -1063,7 +1063,7 @@
                 <label>카톤 중량 (kg)</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
                     <input type="number" id="editWeightCartonMain" placeholder="5" style="flex:1;"> kg
-                    <span> ± </span>
+                    <span> ~ </span>
                     <input type="number" id="editWeightCartonRange" placeholder="0.1" style="flex:1;"> kg
                 </div>
             </div>
@@ -2206,8 +2206,9 @@
             // ... 중량값들도 동일하게 p.weightInner = ... 식으로 갱신 ...
 
             // ★ 마지막으로 화면을 다시 그려야 함!
-            renderProductList();
             closeEditModal();
+
+            location.reload(); // 간단하게 새로고침으로 처리
         }
 
         // 제품 삭제
