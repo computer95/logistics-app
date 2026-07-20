@@ -374,7 +374,6 @@
             flex: 1;
             padding: 8px 4px;
             border: 2px solid transparent;
-            /* 기본 테두리는 투명 */
             border-radius: 6px;
             font-size: 13px;
             font-weight: bold;
@@ -382,7 +381,6 @@
             transition: all 0.2s;
         }
 
-        /* 선택 안 됐을 때는 연한 배경색 */
         .type-btn.스틱 {
             background: #e1f0ff;
             color: #777;
@@ -408,7 +406,6 @@
             color: #777;
         }
 
-        /* 선택(active) 되었을 때 진한 색상 */
         .type-btn.active.스틱 {
             border-color: #007aff;
             background: #007aff;
@@ -904,7 +901,6 @@
             <div class="input-group" style="margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 6px;">제품 종류</label>
                 <div id="productTypeGroup" style="display: flex; gap: 4px; justify-content: space-between;">
-                    <!-- 버튼마다 각 타입 클래스를 꼭 추가해줘! -->
                     <button type="button" class="type-btn 스틱 active" onclick="selectType(this, '스틱')"
                         style="flex: 1;">스틱</button>
                     <button type="button" class="type-btn 파우치" onclick="selectType(this, '파우치')"
@@ -947,7 +943,6 @@
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
             <p style="font-size:13px; font-weight:bold; color:#007aff; margin-bottom:10px;">⚖️ 중량 스펙 정보
             </p>
-            <!-- 단케이스 중량 -->
             <div class="input-group">
                 <label>단케이스 중량</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
@@ -957,7 +952,6 @@
                 </div>
             </div>
 
-            <!-- 세트케이스 중량 -->
             <div id="weightFieldsSet" class="conditional-fields" style="display:none;">
                 <div class="input-group">
                     <label>세트케이스 중량</label>
@@ -969,7 +963,6 @@
                 </div>
             </div>
 
-            <!-- 카톤 중량 -->
             <div class="input-group">
                 <label>카톤 중량</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
@@ -993,13 +986,11 @@
             </h2>
             <div id="editHeaderInfo"
                 style="margin-bottom: 15px; padding: 10px; background: #fff8f0; border-radius: 8px; border: 1px solid #ffe5cc; display: flex; align-items: center; gap: 10px;">
-                <!-- 이 영역이 자바스크립트로 채워짐 -->
             </div>
             <input type="hidden" id="editTargetId">
             <div class="input-group" style="margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 6px;">제품 종류</label>
                 <div id="productTypeGroup" style="display: flex; gap: 4px; justify-content: space-between;">
-                    <!-- 버튼마다 각 타입 클래스를 꼭 추가해줘! -->
                     <button type="button" class="type-btn 스틱 active" onclick="selectType(this, '스틱')"
                         style="flex: 1;">스틱</button>
                     <button type="button" class="type-btn 파우치" onclick="selectType(this, '파우치')"
@@ -1038,7 +1029,6 @@
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
             <p style="font-size:13px; font-weight:bold; color:#007aff; margin-bottom:10px;">⚖️ 중량 스펙 정보
 
-                <!-- 단케이스 중량 -->
             <div class="input-group">
                 <label>단케이스 중량 (g)</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
@@ -1047,7 +1037,6 @@
                     <input type="number" id="editWeightInnerRange" placeholder="1" style="flex:1;"> g
                 </div>
             </div>
-            <!-- 세트케이스 중량 (세트 유무에 따라 display 조절됨) -->
             <div id="editModalSetWeightFields" style="display:none;">
                 <div class="input-group">
                     <label>세트케이스 중량 (g)</label>
@@ -1058,7 +1047,6 @@
                     </div>
                 </div>
             </div>
-            <!-- 카톤 중량 -->
             <div class="input-group">
                 <label>카톤 중량 (kg)</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
@@ -1100,8 +1088,25 @@
         let isCompletedOpen = false;
 
         initDietSystem();
-        loadProductList();
+        initRealtimeProductListener(); // 실시간 제품 리스너 구동
         loadPackingLogs();
+
+        // 🟢 실시간 제품 리스너 구동 함수 (Firestore onSnapshot 적용)
+        function initRealtimeProductListener() {
+            db.collection('products').orderBy('name').onSnapshot(snapshot => {
+                productList = [];
+                snapshot.forEach(doc => {
+                    productList.push({ id: doc.id, ...doc.data() });
+                });
+
+                // 관리자 탭이 활성화되어 있고 로그인 상태면 리스트 즉시 렌더링
+                if (isAdminAuthenticated && document.getElementById('manageTab').classList.contains('active')) {
+                    renderProductAdminListUI();
+                }
+            }, error => {
+                console.error("제품 실시간 동기화 오류:", error);
+            });
+        }
 
         // 식단표 초기화
         function initDietSystem() {
@@ -1118,7 +1123,6 @@
             loadDietFromFirestore();
         }
 
-        // 식단표 DB 키값 생성 (이번주 월요일 기준)
         function getThisWeekDates() {
             const now = new Date();
             const day = now.getDay();
@@ -1139,7 +1143,6 @@
             return week;
         }
 
-        // 식단표 오늘 날짜 강조
         function highlightTodayDiet(weekDates) {
             const daysKeyMap = ['mon', 'tue', 'wed', 'thu', 'fri'];
             const todayObj = new Date();
@@ -1155,7 +1158,6 @@
             });
         }
 
-        // 식단표 수정 박스 토글
         function toggleDietEdit() {
             const box = document.getElementById('dietEditBox');
             box.style.display = (box.style.display === 'block') ? 'none' : 'block';
@@ -1167,7 +1169,6 @@
             }
         }
 
-        // 식단표 저장
         async function saveDietTable() {
             const dietData = {};
             ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
@@ -1184,7 +1185,6 @@
             } catch (e) { alert('❌ 식단 저장 오류'); }
         }
 
-        // 식단표 Firestore에서 불러오기
         async function loadDietFromFirestore() {
             try {
                 const doc = await db.collection('diets').doc(currentMondayKey).get();
@@ -1197,32 +1197,27 @@
             } catch (e) { console.error(e); }
         }
 
-        // 탭 전환
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
-            if (tabId === 'calcTab') loadProductList();
-            else if (tabId === 'logTab') loadPackingLogs();
-            else if (tabId === 'dietTab') loadDietFromFirestore();
-            else if (tabId === 'manageTab') {
-                if (isAdminAuthenticated) renderProductAdminList();
+            if (tabId === 'calcTab') {
+                // 실시간 리스너가 productList를 상시 동기화하므로 별도 호출 불필요
+            } else if (tabId === 'logTab') {
+                loadPackingLogs();
+            } else if (tabId === 'dietTab') {
+                loadDietFromFirestore();
+            } else if (tabId === 'manageTab') {
+                if (isAdminAuthenticated) renderProductAdminListUI();
             }
         }
 
-        // 제품 리스트 불러오기
+        // 구버전 호환용 (단순 내부 호출 대용)
         async function loadProductList() {
-            try {
-                const snapshot = await db.collection('products').orderBy('name').get();
-                productList = [];
-                snapshot.forEach(doc => {
-                    productList.push({ id: doc.id, ...doc.data() });
-                });
-            } catch (e) { console.error(e); }
+            // 실시간 리스너(initRealtimeProductListener)가 있으므로 productList는 항상 최신 상태 유지됨
         }
 
-        // 제품 검색 필터링
         function filterProducts() {
             const keyword = document.getElementById('productSearchInput').value.trim().toLowerCase();
             const dropdown = document.getElementById('productSearchDropdown');
@@ -1243,7 +1238,6 @@
             dropdown.style.display = 'block';
         }
 
-        // 제품 선택
         function selectProduct(id, name) {
             document.getElementById('productSearchInput').value = name;
             document.getElementById('selectedProductId').value = id;
@@ -1252,7 +1246,6 @@
             calculateUnits();
         }
 
-        // 계산 모드 설정
         function setCalcMode(mode) {
             currentCalcMode = mode;
             if (mode === 'SET') {
@@ -1267,17 +1260,14 @@
             }
         }
 
-        // 엔터키 입력 시 계산
         function handleCalcKey(e) {
             if (e.key === 'Enter') calculateUnits();
         }
 
-        // 값 포맷팅 (정수는 천단위 콤마, 소수는 지정된 자리수까지)
         function formatVal(val, decimals = 1) {
             return Number.isInteger(val) ? val.toLocaleString() : val.toFixed(decimals);
         }
 
-        // 계산 수행
         function calculateUnits() {
             const pId = document.getElementById('selectedProductId').value;
             const rawQty = parseFloat(document.getElementById('inputQty').value);
@@ -1322,7 +1312,6 @@
             resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        // 포장일지 불러오기
         async function loadPackingLogs() {
             try {
                 const snapshot = await db.collection('packing_logs').orderBy('dueDate', 'asc').get();
@@ -1339,7 +1328,6 @@
             }
         }
 
-        // 자동 완료 처리 (하단 자동완료로 완료된 제품 처리)
         async function checkAutoCompletedLogs() {
             const today = new Date().toISOString().substring(0, 10);
             let updated = false;
@@ -1355,7 +1343,6 @@
             }
         }
 
-        // 포장일지 HTML 렌더링
         function renderPackingLogsHtml() {
             const container = document.getElementById('packingLogContainer');
 
@@ -1406,13 +1393,11 @@
             container.innerHTML = html;
         }
 
-        // 완료 섹션 토글
         function toggleCompletedSection() {
             isCompletedOpen = !isCompletedOpen;
             renderPackingLogsHtml();
         }
 
-        // 포장일지 카드 HTML 생성
         function createLogCardHtml(log, todayStr, sevenDaysLater) {
             let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
             let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
@@ -1449,7 +1434,6 @@
             `;
         }
 
-        // 포장일지 추가 모달 열기
         function openAddLogModal() {
             document.getElementById('logModalProductSearch').value = '';
             document.getElementById('logModalSelectedProductId').value = '';
@@ -1459,17 +1443,14 @@
             document.getElementById('addLogModal').style.display = 'flex';
         }
 
-        // 포장일지 추가 모달 닫기
         function closeAddLogModal() {
             document.getElementById('addLogModal').style.display = 'none';
         }
 
-        // 포장일지 제품 검색 필터링
         function filterLogModalProducts() {
             const keyword = document.getElementById('logModalProductSearch').value.trim().toLowerCase();
             const dropdown = document.getElementById('logModalProductDropdown');
 
-            // 1. 검색어 없으면 숨김
             if (!keyword) {
                 dropdown.style.display = 'none';
                 return;
@@ -1477,14 +1458,12 @@
 
             const filtered = productList.filter(p => p.name.toLowerCase().includes(keyword));
 
-            // 2. 검색 결과가 없을 때 피드백 제공 (삭제 대신 메시지 표시)
             if (filtered.length === 0) {
                 dropdown.innerHTML = `<div class="search-item" style="color: #999;">검색 결과 없음 (제품 추가 버튼을 눌러주세요)</div>`;
                 dropdown.style.display = 'block';
                 return;
             }
 
-            // 3. 결과 있을 때 리스트 표시
             let html = '';
             filtered.forEach(p => {
                 html += `<div class="search-item" onclick="selectLogModalProduct('${p.id}', '${p.name}')">${p.name}</div>`;
@@ -1493,28 +1472,23 @@
             dropdown.style.display = 'block';
         }
 
-        // 포장일지 제품 선택
         function selectLogModalProduct(id, name) {
             document.getElementById('logModalProductSearch').value = name;
             document.getElementById('logModalSelectedProductId').value = id;
             document.getElementById('logModalProductDropdown').style.display = 'none';
         }
 
-        // 포장일지 저장
         async function savePackingLog() {
             const productName = document.getElementById('logModalProductSearch').value.trim();
             const productId = document.getElementById('logModalSelectedProductId').value;
             const dueDate = document.getElementById('logModalDueDate').value;
             const targetQty = document.getElementById('logModalTargetQty').value;
 
-            // 1. 필수값 체크
             if (!productName || !productId || !dueDate || !targetQty) {
                 alert('모든 항목을 입력하고 정확한 제품을 선택해 주세요.');
                 return;
             }
 
-            // 2. 제품 검증: 선택된 ID가 진짜 존재하는지 확인
-            // (여기서 리스트에 없는 제품이면 저장을 원천 차단함)
             try {
                 const productRef = await db.collection('products').doc(productId).get();
                 if (!productRef.exists) {
@@ -1522,7 +1496,6 @@
                     return;
                 }
 
-                // 3. 저장 로직
                 await db.collection('packingLogs').add({
                     productId: productId,
                     productName: productName,
@@ -1534,14 +1507,12 @@
 
                 alert('✅ 출고 일정이 등록되었습니다.');
                 closeAddLogModal();
-                // 필요시 리스트 새로고침 함수 호출
-                renderPackingLogs();
+                loadPackingLogs();
             } catch (e) {
                 alert('일정 저장 중 오류가 발생했습니다.');
             }
         }
 
-        // 포장일지 상세 모달 열기
         async function openDetailLogModal(logId) {
             let log = packingLogsList.find(l => l.id === logId);
             if (!log) return;
@@ -1584,13 +1555,11 @@
             document.getElementById('detailLogModal').style.display = 'flex';
         }
 
-        // 포장일지 상세 모달 닫기
         function closeDetailLogModal() {
             document.getElementById('detailLogModal').style.display = 'none';
             loadPackingLogs();
         }
 
-        // 포장일지 수정 모드 토글
         function toggleEditMode() {
             isEditActive = !isEditActive;
             const editBox = document.getElementById('editBasicContainer');
@@ -1622,7 +1591,6 @@
             renderWorkLogHistory(packingLogsList.find(l => l.id === document.getElementById('detailLogId').value));
         }
 
-        // 포장일지 수정 모달 제품 검색 필터링
         function filterEditLogProducts() {
             const keyword = document.getElementById('editLogProductSearch').value.trim().toLowerCase();
             const dropdown = document.getElementById('editLogProductDropdown');
@@ -1637,14 +1605,12 @@
             dropdown.style.display = 'block';
         }
 
-        // 포장일지 수정 모달 제품 선택
         function selectEditLogProduct(id, name) {
             document.getElementById('editLogProductSearch').value = name;
             document.getElementById('editLogSelectedProductId').value = id;
             document.getElementById('editLogProductDropdown').style.display = 'none';
         }
 
-        // 작업 내역 렌더링
         function renderWorkLogHistory(log) {
             const container = document.getElementById('workLogHistoryContainer');
             if (!log.history || log.history.length === 0) {
@@ -1686,7 +1652,6 @@
             container.innerHTML = html;
         }
 
-        // 남은 목표량 환산 박스 업데이트
         function updateRemainingCalcBox(log) {
             const box = document.getElementById('remainingCalcBox');
             box.style.display = 'block';
@@ -1715,7 +1680,6 @@
             box.innerHTML = `📌 <strong>남은 목표량 환산 : ${remaining.toLocaleString()} set</strong><br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
         }
 
-        // 작업기록추가
         async function addSingleWorkLogRecord() {
             let logId = document.getElementById('detailLogId').value;
             let date = document.getElementById('dailyWorkDate').value;
@@ -1746,7 +1710,6 @@
             }
         }
 
-        //작업기록 삭제에대한 함수
         async function deleteSingleWorkLogRecord(index) {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1769,7 +1732,6 @@
             }
         }
 
-        // 포장일지 수정 저장
         async function saveAllWorkLogsBatch() {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1811,7 +1773,6 @@
                             weightText: '10g ± 2g', createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
                         productId = newRef.id;
-                        await loadProductList();
                     } catch (e) {
                         alert('신규 제품 자동 등록 실패');
                         return;
@@ -1832,7 +1793,6 @@
             }
         }
 
-        // 포장일지 보류 상태 토글
         async function toggleHoldStatus() {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1844,7 +1804,6 @@
             } catch (e) { alert('상태 변경 오류'); }
         }
 
-        // 포장일지 강제 완료 상태 토글
         async function toggleForceDoneStatus() {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1856,7 +1815,6 @@
             } catch (e) { alert('상태 변경 오류'); }
         }
 
-        // 포장일지 삭제
         async function deletePackingLog() {
             if (!confirm('이 출고 일정을 완전히 삭제하시겠습니까?')) return;
             let logId = document.getElementById('detailLogId').value;
@@ -1866,10 +1824,8 @@
             } catch (e) { alert('삭제 오류'); }
         }
 
-        // 관리자 비밀번호 확인 (엔터키 입력 시)
         function handlePasswordKey(e) { if (e.key === 'Enter') checkAdminPassword(); }
 
-        // 관리자 비밀번호 확인
         function checkAdminPassword() {
             const inputField = document.getElementById('adminPasswordInput');
             const pw = inputField.value;
@@ -1877,7 +1833,7 @@
                 isAdminAuthenticated = true;
                 document.getElementById('passwordScreen').style.display = 'none';
                 document.getElementById('adminContent').style.display = 'block';
-                renderProductAdminList();
+                renderProductAdminListUI();
             } else {
                 document.getElementById('pwErrorMsg').style.display = 'block';
                 inputField.value = '';
@@ -1885,9 +1841,8 @@
             }
         }
 
-        // 관리자 제품 리스트 렌더링
-        async function renderProductAdminList() {
-            await loadProductList();
+        // 🟢 관리자 제품 리스트 UI 렌더링 함수
+        function renderProductAdminListUI() {
             const container = document.getElementById('productListContainer');
             document.getElementById('listCountLabel').innerText = `등록된 품목 리스트 (${productList.length})`;
 
@@ -1909,7 +1864,11 @@
             container.innerHTML = html;
         }
 
-        // 관리자 제품 리스트 필터링
+        // 기존 함수 이름 유지용 래퍼
+        function renderProductAdminList() {
+            renderProductAdminListUI();
+        }
+
         function filterAdminList() {
             const keyword = document.getElementById('adminFilterInput').value.trim().toLowerCase();
             const items = document.querySelectorAll('.simple-list-item');
@@ -1922,20 +1881,13 @@
             });
         }
 
-        // 제품 타입 선택
         function selectType(btnElement, type) {
-            // 1. 같은 그룹 안에 있는 모든 버튼의 active를 지움
             const parent = btnElement.parentElement;
             parent.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
-
-            // 2. 지금 누른 버튼에만 active 추가
             btnElement.classList.add('active');
-
-            // 3. 숨겨진 input(id="regProductType")에 값(스틱, 파우치 등)을 입력
             document.getElementById('regProductType').value = type;
         }
 
-        // 제품 상세 모달 열기
         function openProductDetailModal(id) {
             const p = productList.find(item => item.id === id);
             if (!p) {
@@ -1989,52 +1941,39 @@
             document.getElementById('productDetailModal').style.display = 'flex';
         }
 
-        // 제품 상세 모달 닫기
         function closeProductDetailModal() {
             document.getElementById('productDetailModal').style.display = 'none';
         }
 
-        // 제품 등록 모달 열기
         function openAddModal() {
-            // 1. 등록 모달을 먼저 보여주고
             const modal = document.getElementById('addProductModal');
             if (modal) modal.style.display = 'flex';
 
-            // 2. 초기화 작업 (ID가 있을 때만 실행!)
             const setHidden = document.getElementById('hasSetValue');
-            if (setHidden) setHidden.value = 'X'; // 기본값 X
+            if (setHidden) setHidden.value = 'X';
 
-            // 초기 버튼 상태 리셋
-            const btnO = document.getElementById('addModalSetBtnO');
-            const btnX = document.getElementById('addModalSetBtnX');
+            const btnO = document.getElementById('setBtnO');
+            const btnX = document.getElementById('setBtnX');
             if (btnO && btnX) {
                 btnO.classList.remove('active');
                 btnX.classList.add('active');
             }
 
-            // 입력창 표시 상태 리셋
-            const fieldsO = document.getElementById('regModalSetFieldsO');
-            const fieldsX = document.getElementById('regModalSetFieldsX');
+            const fieldsO = document.getElementById('setFieldsO');
+            const fieldsX = document.getElementById('setFieldsX');
             if (fieldsO) fieldsO.style.display = 'none';
             if (fieldsX) fieldsX.style.display = 'block';
 
-            // 나머지 초기값들 (ID가 있는지 안전하게 체크)
-            const ptoC = document.getElementById('regModalPtoC');
+            const ptoC = document.getElementById('regPalletToCarton');
             if (ptoC) ptoC.value = '';
-
-            // ... 혹시 다른 초기화할 값이 있으면 여기서 하면 돼.
         }
 
-        // 제품 등록 모달 닫기
         function closeAddModal() { document.getElementById('addProductModal').style.display = 'none'; }
 
-        // 제품 등록 모달 세트 옵션 선택
         function selectModalSetOption(val) {
-            // 1. 값 저장
             const hidden = document.getElementById('editModalHasSetValue');
             if (hidden) hidden.value = val;
 
-            // 2. 버튼 활성화/비활성화
             const btnO = document.getElementById('editModalSetBtnO');
             const btnX = document.getElementById('editModalSetBtnX');
 
@@ -2043,7 +1982,6 @@
                 btnX.classList.toggle('active', val === 'X');
             }
 
-            // 3. 영역 보이기/숨기기 (제공해 준 HTML ID와 완벽 일치!)
             const fieldsO = document.getElementById('editModalSetFieldsO');
             const fieldsX = document.getElementById('editModalSetFieldsX');
             const weightFields = document.getElementById('editModalSetWeightFields');
@@ -2053,13 +1991,10 @@
             if (weightFields) weightFields.style.display = (val === 'O') ? 'block' : 'none';
         }
 
-        // 제품 등록 모달 세트 옵션 선택 (중량 필드 제어)
         function selectSetOption(val, mode) {
-            // 1. 값 저장 (hidden 필드)
             const hidden = document.getElementById('hasSetValue');
             if (hidden) hidden.value = val;
 
-            // 2. 버튼 활성화/비활성화
             const btnO = document.getElementById('setBtnO');
             const btnX = document.getElementById('setBtnX');
 
@@ -2068,7 +2003,6 @@
                 btnX.classList.toggle('active', val === 'X');
             }
 
-            // 3. 영역 보이기/숨기기 (HTML ID와 완벽 일치!)
             const fieldsO = document.getElementById('setFieldsO');
             const fieldsX = document.getElementById('setFieldsX');
             const weightFields = document.getElementById('weightFieldsSet');
@@ -2078,20 +2012,6 @@
             if (weightFields) weightFields.style.display = (val === 'O') ? 'block' : 'none';
         }
 
-        // 제품 존재 여부 확인
-        function checkProductExists(inputName) {
-            // DB의 제품 목록을 가져와서 비교
-            const productList = getProductListFromMemory(); // 현재 로드된 제품 리스트
-            const isExists = productList.find(p => p.name === inputName);
-
-            if (!isExists) {
-                alert("등록되지 않은 제품입니다. 제품 관리 메뉴에서 먼저 등록해 주세요.");
-                return false;
-            }
-            return true;
-        }
-
-        // 제품 등록 저장
         async function saveProductConfig() {
             let name = document.getElementById('regProductName').value.trim();
             let productType = document.getElementById('regProductType').value;
@@ -2107,13 +2027,8 @@
                 cartonToInner = parseInt(document.getElementById('regCartonToInnerX').value);
             }
 
-            // 모든 중량 데이터 결합
             let weightInner = `${document.getElementById('weightInnerMain').value}g ± ${document.getElementById('weightInnerRange').value}g`;
-
-            let weightSet = (hasSet === 'O')
-                ? `${document.getElementById('weightSetMain').value}g ± ${document.getElementById('weightSetRange').value}g`
-                : '';
-
+            let weightSet = (hasSet === 'O') ? `${document.getElementById('weightSetMain').value}g ± ${document.getElementById('weightSetRange').value}g` : '';
             let weightCarton = `${document.getElementById('weightCartonMain').value}kg ± ${document.getElementById('weightCartonRange').value}kg`;
 
             if (!name || isNaN(palletToCarton) || isNaN(innerToUnit)) {
@@ -2128,33 +2043,26 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 closeAddModal();
-                renderProductAdminList();
                 alert('✅ 제품이 등록되었습니다.');
             } catch (e) {
                 alert('제품 등록 오류: ' + e.message);
             }
         }
 
-        // 제품 수정 모달 열기
         async function openEditModal(id) {
             let p = productList.find(item => item.id === id);
             if (!p) return;
 
-            // 1. 상단 정보창 채우기
             const headerInfo = document.getElementById('editHeaderInfo');
             if (headerInfo) {
                 const type = p.productType || '미분류';
                 headerInfo.innerHTML = `<strong>${p.name}</strong> <span class="tag tag-${type}">${type}</span>`;
             }
 
-            // 2. 입력칸 값 채우기 (등록창과 동일한 로직)
             document.getElementById('editTargetId').value = p.id;
             document.getElementById('editModalPtoC').value = p.palletToCarton || '';
-
-            // ★ [추가] 모달을 열 때 기존 제품의 타입을 regProductType에 세팅하기
             document.getElementById('regProductType').value = p.productType || '스틱';
 
-            // ★ [추가] 해당 제품 종류에 맞는 버튼에 active(선택 효과) 불 켜주기
             const typeButtons = document.querySelectorAll('#productTypeGroup .type-btn');
             typeButtons.forEach(btn => {
                 if (btn.textContent.trim() === (p.productType || '스틱')) {
@@ -2164,7 +2072,6 @@
                 }
             });
 
-            // 3. 세트 유무 및 입력창 상태 제어
             selectModalSetOption(p.hasSet || 'X');
 
             if (p.hasSet === 'O') {
@@ -2175,42 +2082,18 @@
             }
             document.getElementById('editModalItoU').value = p.innerToUnit || '';
 
-            // 4. 중량 값 파싱 및 입력 (생략된 부분은 위에서 준 거랑 같음)
-            // ... 중량 매핑 로직 ...
-
             document.getElementById('editProductModal').style.display = 'flex';
         }
 
-        // 제품 수정 모달 닫기
         function closeEditModal() { document.getElementById('editProductModal').style.display = 'none'; }
 
-        // 제품 수정 모달 세트 옵션 선택
-        function selectModalSetOption(val) {
-            document.getElementById('editModalHasSetValue').value = val;
-            if (val === 'O') {
-                document.getElementById('editModalSetBtnO').classList.add('active');
-                document.getElementById('editModalSetBtnX').classList.remove('active');
-                document.getElementById('editModalSetFieldsO').style.display = 'block';
-                document.getElementById('editModalSetFieldsX').style.display = 'none';
-            } else {
-                document.getElementById('editModalSetBtnX').classList.add('active');
-                document.getElementById('editModalSetBtnO').classList.remove('active');
-                document.getElementById('editModalSetFieldsO').style.display = 'none';
-                document.getElementById('editModalSetFieldsX').style.display = 'block';
-            }
-        }
-
-        // 제품 수정 모달 저장
         async function updateProductModalSave() {
             const id = document.getElementById('editTargetId').value;
             let p = productList.find(item => item.id === id);
             if (!p) return;
 
-            // 1. 입력값들 객체(p)에 덮어씌우기
             p.palletToCarton = document.getElementById('editModalPtoC').value;
             p.hasSet = document.getElementById('editModalHasSetValue').value;
-
-            // ★ 이미 있는 regProductType의 값을 가져와서 제품 종류에 쏙 대입!
             p.productType = document.getElementById('regProductType').value;
 
             if (p.hasSet === 'O') {
@@ -2226,7 +2109,6 @@
             p.innerToUnit = document.getElementById('editModalItoU').value || '';
 
             try {
-                // 2. DB 업데이트 항목에 productType도 포함해서 전송!
                 await db.collection("products").doc(id).update({
                     palletToCarton: p.palletToCarton,
                     hasSet: p.hasSet,
@@ -2237,32 +2119,19 @@
                     productType: p.productType
                 });
 
-                console.log("제품 종류 및 정보 수정 성공!");
                 closeEditModal();
-
-                // 제품 목록을 최신화하고
-                await loadProductList();
-
-                // 3. ★ [핵심] 작업현황(또는 포장일지 목록)을 화면에 다시 그려주는 함수를 여기서 호출해 줘야 함!
-                // (프로젝트에 있는 실제 작업현황 로드 함수명으로 바꿔서 넣어주면 돼. 예: loadLogList(), renderWorkStatus() 등)
-                if (typeof loadLogList === 'function') {
-                    loadLogList();
-                }
-
+                alert('✅ 제품 정보가 수정되었습니다.');
             } catch (error) {
-                console.error("제품 수정 중 오류 발생: ", error);
                 alert("수정 실패: " + error.message);
             }
         }
 
-        // 제품 삭제
         async function deleteProduct(id, name) {
             if (confirm(`정말 [${name}] 품목을 삭제하시겠습니까?`)) {
                 try {
                     await db.collection('products').doc(id).delete();
                     alert(`🗑️ [${name}] 삭제되었습니다.`);
                     closeProductDetailModal();
-                    renderProductAdminList();
                 } catch (e) { alert('❌ 삭제 실패'); }
             }
         }
