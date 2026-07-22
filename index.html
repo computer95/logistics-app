@@ -1366,6 +1366,8 @@
             packingLogsList.forEach(log => {
                 let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
                 let isPastDue = log.dueDate < todayStr;
+
+                console.log(`[디버깅] ID: ${log.id} | 완료여부: ${isDone} (현재:${log.currentQty}, 목표:${log.targetQty}) | 날짜지남: ${isPastDue} (마감:${log.dueDate}, 오늘:${todayStr})`);
                 if (isDone && isPastDue && !log.isHold) {
                     completedList.push(log);
                 } else {
