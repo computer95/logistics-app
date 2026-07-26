@@ -26,6 +26,43 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
+        /* PC 화면 대시보드 및 2단 레이아웃 스타일 */
+        @media (min-width: 900px) {
+            .container {
+                max-width: 950px;
+            }
+            #logTab.container {
+                max-width: 1000px;
+            }
+            #logTab .log-layout-wrapper {
+                display: flex;
+                gap: 20px;
+                align-items: flex-start;
+            }
+            #logTab .log-main-section {
+                flex: 1.3;
+            }
+            #logTab .log-dashboard-section {
+                flex: 1;
+                background: #f8f9fa;
+                border: 1px solid #e1e4e8;
+                border-radius: 10px;
+                padding: 15px;
+                position: sticky;
+                top: 20px;
+            }
+        }
+
+        @media (max-width: 899px) {
+            #logTab .log-dashboard-section {
+                margin-top: 20px;
+                background: #f8f9fa;
+                border: 1px solid #e1e4e8;
+                border-radius: 10px;
+                padding: 15px;
+            }
+        }
+
         h2 {
             margin-top: 0;
             color: #111;
@@ -648,13 +685,50 @@
         <div id="calcResult" class="result-box">제품을 선택해주세요.</div>
     </div>
 
+    <!-- 포장일지 탭 (PC 화면 2단 레이아웃 및 우측 대시보드 적용) -->
     <div id="logTab" class="container tab-content">
         <h2>
             📋 포장일지 <span id="logCountLabel" style="font-size:13px; font-weight:normal; color:#666;">(남은 일정: 0건)</span>
             <button class="add-action-btn" onclick="openAddLogModal()">+ 일정 등록</button>
         </h2>
         <p style="font-size: 12.5px; color: #666; margin-bottom: 12px;">출고 일정 및 작업 진행 현황을 관리합니다. (과거 출고일 자동 완료)</p>
-        <div id="packingLogContainer">데이터를 불러오는 중...</div>
+        
+        <div class="log-layout-wrapper">
+            <!-- 좌측: 포장일지 리스트 메인 -->
+            <div class="log-main-section">
+                <div id="packingLogContainer">데이터를 불러오는 중...</div>
+            </div>
+
+            <!-- 우측: 포장 및 출고대기 현황 대시보드 -->
+            <div class="log-dashboard-section">
+                <h3 style="font-size: 16px; margin-top: 0; margin-bottom: 12px; color: #111; display: flex; justify-content: space-between; align-items: center;">
+                    <span>📊 포장 및 출고대기 현황</span>
+                    <span id="dashTotalCount" style="font-size: 12px; color: #666; font-weight: normal;">총 0건</span>
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px;">
+                    <div style="background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e1e4e8; text-align: center;">
+                        <div style="font-size: 11px; color: #666; font-weight: bold;">출고임박</div>
+                        <div id="dashUrgentCount" style="font-size: 18px; font-weight: bold; color: #ff3b30; margin-top: 4px;">0건</div>
+                    </div>
+                    <div style="background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e1e4e8; text-align: center;">
+                        <div style="font-size: 11px; color: #666; font-weight: bold;">진행 중</div>
+                        <div id="dashProgressCount" style="font-size: 18px; font-weight: bold; color: #007aff; margin-top: 4px;">0건</div>
+                    </div>
+                    <div style="background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e1e4e8; text-align: center;">
+                        <div style="font-size: 11px; color: #666; font-weight: bold;">보류</div>
+                        <div id="dashHoldCount" style="font-size: 18px; font-weight: bold; color: #ffcc00; margin-top: 4px;">0건</div>
+                    </div>
+                    <div style="background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e1e4e8; text-align: center;">
+                        <div style="font-size: 11px; color: #666; font-weight: bold;">완료</div>
+                        <div id="dashDoneCount" style="font-size: 18px; font-weight: bold; color: #34c759; margin-top: 4px;">0건</div>
+                    </div>
+                </div>
+                <div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 6px;">⏰ 출고 대기 및 진행 리스트</div>
+                <div id="dashWaitingListContainer" style="max-height: 280px; overflow-y: auto; font-size: 12.5px;">
+                    데이터를 불러오는 중...
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="dietTab" class="container tab-content">
@@ -757,7 +831,6 @@
             <div class="detail-section-title">⚙️ 포장 구성 사양</div>
             <div id="pdModalSpecBox" class="spec-info-box"></div>
 
-            <!-- 제품관리 진입 시에만 표시되는 수정/삭제 버튼 영역 -->
             <div style="display:none; gap:10px; margin-top:20px;" id="pdModalActionButtons">
                 <button id="pdModalEditBtn" class="main-btn"
                     style="background-color:#ff9500; margin-top:0; font-size:14px;">수정하기</button>
@@ -1119,7 +1192,6 @@
             loadDietFromFirestore();
         }
 
-        // 이번 주 주간 날짜 연산
         function getThisWeekDates() {
             const now = new Date();
             const day = now.getDay();
@@ -1140,7 +1212,6 @@
             return week;
         }
 
-        // 오늘 날짜 하이라이트
         function highlightTodayDiet(weekDates) {
             const daysKeyMap = ['mon', 'tue', 'wed', 'thu', 'fri'];
             const todayObj = new Date();
@@ -1156,7 +1227,6 @@
             });
         }
 
-        // 식단 수정 창 토글
         function toggleDietEdit() {
             const box = document.getElementById('dietEditBox');
             box.style.display = (box.style.display === 'block') ? 'none' : 'block';
@@ -1168,7 +1238,6 @@
             }
         }
 
-        // 식단 저장
         async function saveDietTable() {
             const dietData = {};
             ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
@@ -1185,7 +1254,6 @@
             } catch (e) { alert('❌ 식단 저장 오류'); }
         }
 
-        // 식단 로드
         async function loadDietFromFirestore() {
             try {
                 const doc = await db.collection('diets').doc(currentMondayKey).get();
@@ -1202,15 +1270,12 @@
             } catch (e) { console.error(e); }
         }
 
-        // 탭 전환
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
-            if (tabId === 'calcTab') {
-                // 추가 연산 필요시 기입
-            } else if (tabId === 'logTab') {
+            if (tabId === 'logTab') {
                 loadPackingLogs();
             } else if (tabId === 'dietTab') {
                 loadDietFromFirestore();
@@ -1219,7 +1284,6 @@
             }
         }
 
-        // 제품 검색 필터링
         function filterProducts() {
             const keyword = document.getElementById('productSearchInput').value.trim().toLowerCase();
             const dropdown = document.getElementById('productSearchDropdown');
@@ -1240,7 +1304,6 @@
             dropdown.style.display = 'block';
         }
 
-        // 제품 선택
         function selectProduct(id, name) {
             document.getElementById('productSearchInput').value = name;
             document.getElementById('selectedProductId').value = id;
@@ -1249,7 +1312,6 @@
             calculateUnits();
         }
 
-        // 계산기 모드 설정 (SET / EA)
         function setCalcMode(mode) {
             currentCalcMode = mode;
             if (mode === 'SET') {
@@ -1272,7 +1334,6 @@
             return Number.isInteger(val) ? val.toLocaleString() : val.toFixed(decimals);
         }
 
-        // 수량 단위 환산
         function calculateUnits() {
             const pId = document.getElementById('selectedProductId').value;
             const rawQty = parseFloat(document.getElementById('inputQty').value);
@@ -1317,7 +1378,6 @@
             resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        // 포장일지 데이터 호출 및 자동 상태 체크
         async function loadPackingLogs() {
             try {
                 const snapshot = await db.collection('packing_logs').orderBy('dueDate', 'asc').get();
@@ -1328,13 +1388,13 @@
                 checkAutoCompletedLogs();
                 if (document.getElementById('logTab').classList.contains('active')) {
                     renderPackingLogsHtml();
+                    updatePackingDashboard();
                 }
             } catch (e) {
                 console.error("포장일지 불러오기 오류", e);
             }
         }
 
-        // 지난 일정 완료 처리 자동화
         async function checkAutoCompletedLogs() {
             const today = new Date().toISOString().substring(0, 10);
             let updated = false;
@@ -1347,10 +1407,10 @@
             }
             if (updated && document.getElementById('logTab').classList.contains('active')) {
                 renderPackingLogsHtml();
+                updatePackingDashboard();
             }
         }
 
-        // 포장일지 리스트 UI 렌더링
         function renderPackingLogsHtml() {
             const container = document.getElementById('packingLogContainer');
 
@@ -1404,6 +1464,79 @@
                 html += `</div>`;
             }
             container.innerHTML = html;
+            updatePackingDashboard();
+        }
+
+        // 우측 대시보드 실데이터 연동 및 렌더링 함수
+        function updatePackingDashboard() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+
+            const sevenDaysLater = new Date(today);
+            sevenDaysLater.setDate(today.getDate() + 7);
+
+            let urgentCount = 0;
+            let progressCount = 0;
+            let holdCount = 0;
+            let doneCount = 0;
+            let waitingItems = [];
+
+            packingLogsList.forEach(log => {
+                let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
+                let dueObj = new Date(log.dueDate);
+                dueObj.setHours(0, 0, 0, 0);
+                let isUrgent = (!isDone && log.currentQty === 0 && !log.isHold && dueObj >= new Date(todayStr) && dueObj <= sevenDaysLater);
+
+                if (log.isHold) {
+                    holdCount++;
+                } else if (isDone) {
+                    doneCount++;
+                } else if (isUrgent) {
+                    urgentCount++;
+                    waitingItems.push(log);
+                } else if (log.currentQty > 0) {
+                    progressCount++;
+                    waitingItems.push(log);
+                } else {
+                    waitingItems.push(log);
+                }
+            });
+
+            document.getElementById('dashTotalCount').innerText = `총 ${packingLogsList.length}건`;
+            document.getElementById('dashUrgentCount').innerText = `${urgentCount}건`;
+            document.getElementById('dashProgressCount').innerText = `${progressCount}건`;
+            document.getElementById('dashHoldCount').innerText = `${holdCount}건`;
+            document.getElementById('dashDoneCount').innerText = `${doneCount}건`;
+
+            waitingItems.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            const waitingContainer = document.getElementById('dashWaitingListContainer');
+            if (waitingItems.length === 0) {
+                waitingContainer.innerHTML = '<div style="color:#666; text-align:center; padding:15px;">출고 대기 중인 항목이 없습니다.</div>';
+                return;
+            }
+
+            let html = '';
+            waitingItems.forEach(log => {
+                let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
+                html += `
+                    <div style="background:#fff; border:1px solid #e1e4e8; border-radius:6px; padding:8px 10px; margin-bottom:6px; cursor:pointer;" onclick="openDetailLogModal('${log.id}')">
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; margin-bottom:2px;">
+                            <span>📦 ${log.productName}</span>
+                            <span style="color:#007aff; font-size:11.5px;">${log.dueDate}</span>
+                        </div>
+                        <div style="color:#555; display:flex; justify-content:space-between; font-size:11.5px;">
+                            <span>목표: ${log.targetQty.toLocaleString()} SET (${percent}%)</span>
+                            <span>진행: ${log.currentQty.toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            waitingContainer.innerHTML = html;
         }
 
         function toggleCompletedSection() {
@@ -1411,7 +1544,6 @@
             renderPackingLogsHtml();
         }
 
-        // 카드 컴포넌트 HTML 생성
         function createLogCardHtml(log, todayStr, sevenDaysLater) {
             let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
             let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
@@ -1448,7 +1580,6 @@
             `;
         }
 
-        // 출고 일정 모달 제어
         function openAddLogModal() {
             document.getElementById('logModalProductSearch').value = '';
             document.getElementById('logModalSelectedProductId').value = '';
@@ -1493,7 +1624,6 @@
             document.getElementById('logModalProductDropdown').style.display = 'none';
         }
 
-        // 일정 신규 저장
         async function savePackingLog() {
             const productName = document.getElementById('logModalProductSearch').value.trim();
             const productId = document.getElementById('logModalSelectedProductId').value;
@@ -1512,7 +1642,7 @@
                     return;
                 }
 
-                await db.collection('packingLogs').add({
+                await db.collection('packing_logs').add({
                     productId: productId,
                     productName: productName,
                     dueDate: dueDate,
@@ -1533,7 +1663,6 @@
             }
         }
 
-        // 일정 상세 및 작업 기록 일지 모달 오픈
         async function openDetailLogModal(logId) {
             let log = packingLogsList.find(l => l.id === logId);
             if (!log) return;
@@ -1580,7 +1709,6 @@
             loadPackingLogs();
         }
 
-        // 포장일지 내부 인라인 수정 모드 토글
         function toggleEditMode() {
             isEditActive = !isEditActive;
             const editBox = document.getElementById('editBasicContainer');
@@ -1632,7 +1760,6 @@
             document.getElementById('editLogProductDropdown').style.display = 'none';
         }
 
-        // 작업 누적 내역 리스트 출력
         function renderWorkLogHistory(log) {
             const container = document.getElementById('workLogHistoryContainer');
             if (!log.history || log.history.length === 0) {
@@ -1674,7 +1801,6 @@
             container.innerHTML = html;
         }
 
-        // 잔여 수량 자동 실시간 환산 계산
         function updateRemainingCalcBox(log) {
             const box = document.getElementById('remainingCalcBox');
             box.style.display = 'block';
@@ -1703,7 +1829,6 @@
             box.innerHTML = `📌 <strong>남은 목표량 환산 : ${remaining.toLocaleString()} SET</strong><br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
         }
 
-        // 일일 생산 실적 기록 추가
         async function addSingleWorkLogRecord() {
             let logId = document.getElementById('detailLogId').value;
             let date = document.getElementById('dailyWorkDate').value;
@@ -1734,7 +1859,6 @@
             }
         }
 
-        // 작업 기록 개별 삭제
         async function deleteSingleWorkLogRecord(index) {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1757,7 +1881,6 @@
             }
         }
 
-        // 배치 모드 일괄 저장 처리
         async function saveAllWorkLogsBatch() {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1819,7 +1942,6 @@
             }
         }
 
-        // 보류 설정 토글
         async function toggleHoldStatus() {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1831,7 +1953,6 @@
             } catch (e) { alert('상태 변경 오류'); }
         }
 
-        // 수동 완료 토글
         async function toggleForceDoneStatus() {
             let logId = document.getElementById('detailLogId').value;
             let log = packingLogsList.find(l => l.id === logId);
@@ -1843,7 +1964,6 @@
             } catch (e) { alert('상태 변경 오류'); }
         }
 
-        // 출고 일정 파기 삭제
         async function deletePackingLog() {
             if (!confirm('이 출고 일정을 완전히 삭제하시겠습니까?')) return;
             let logId = document.getElementById('detailLogId').value;
@@ -1855,7 +1975,6 @@
 
         function handlePasswordKey(e) { if (e.key === 'Enter') checkAdminPassword(); }
 
-        // 관리자 패스워드 인증
         function checkAdminPassword() {
             const inputField = document.getElementById('adminPasswordInput');
             const pw = inputField.value;
@@ -1871,7 +1990,6 @@
             }
         }
 
-        // 관리자 전용 제품 리스트 UI 구축
         function renderProductAdminListUI() {
             const container = document.getElementById('productListContainer');
             document.getElementById('listCountLabel').innerText = `등록된 품목 리스트 (${productList.length})`;
@@ -1920,7 +2038,6 @@
             document.getElementById('editProductType').value = type;
         }
 
-        // 품목 상세 팝업 오픈
         function openProductDetailModal(id, isAdmin = false) {
             const p = productList.find(item => item.id === id);
             if (!p) {
@@ -1984,7 +2101,6 @@
             document.getElementById('productDetailModal').style.display = 'none';
         }
 
-        // 제품 등록 모달 열기
         function openAddModal() {
             const modal = document.getElementById('addProductModal');
             if (modal) modal.style.display = 'flex';
@@ -2021,7 +2137,6 @@
 
         function closeAddModal() { document.getElementById('addProductModal').style.display = 'none'; }
 
-        // 수정 모달 내 세트 유무 토글 핸들러
         function selectModalSetOption(val) {
             const hidden = document.getElementById('editModalHasSetValue');
             if (hidden) hidden.value = val;
@@ -2043,7 +2158,6 @@
             if (weightFields) weightFields.style.display = (val === 'O') ? 'block' : 'none';
         }
 
-        // 신규 등록 모달 세트 토글 핸들러
         function selectSetOption(val, mode) {
             const hidden = document.getElementById('hasSetValue');
             if (hidden) hidden.value = val;
@@ -2065,7 +2179,6 @@
             if (weightFields) weightFields.style.display = (val === 'O') ? 'block' : 'none';
         }
 
-        // 중량 입력 값 포맷팅 헬퍼 함수
         function formatWeight(mainVal, rangeVal, unit) {
             const min = mainVal ? mainVal.trim() : '';
             const max = rangeVal ? rangeVal.trim() : '';
@@ -2081,7 +2194,6 @@
             }
         }
 
-        // 신규 품목 DB 저장 등록
         async function saveProductConfig() {
             let name = document.getElementById('regProductName').value.trim();
             let productType = document.getElementById('regProductType').value;
@@ -2131,7 +2243,6 @@
             }
         }
 
-        // DB 문자열 중량 데이터 파싱 복원 함수
         function extractWeightValues(weightStr) {
             if (!weightStr || weightStr === '미등록') return { main: '', range: '' };
             
@@ -2154,7 +2265,6 @@
             return { main: val, range: '' };
         }
 
-        // 수정 편집 모달 오픈 및 기존값 세팅 복원
         async function openEditModal(id) {
             let p = productList.find(item => item.id === id);
             if (!p) return;
@@ -2188,17 +2298,14 @@
             }
             document.getElementById('editModalItoU').value = p.innerToUnit || '';
 
-            // --- 단케이스 중량 파싱 및 복원 ---
             let innerW = extractWeightValues(p.weightInner);
             document.getElementById('editWeightInnerMain').value = innerW.main;
             document.getElementById('editWeightInnerRange').value = innerW.range;
 
-            // --- 세트케이스 중량 파싱 및 복원 ---
             let setW = extractWeightValues(p.weightSet);
             document.getElementById('editWeightSetMain').value = setW.main;
             document.getElementById('editWeightSetRange').value = setW.range;
 
-            // --- 카톤 중량 파싱 및 복원 ---
             let cartonW = extractWeightValues(p.weightCarton);
             document.getElementById('editWeightCartonMain').value = cartonW.main;
             document.getElementById('editWeightCartonRange').value = cartonW.range;
@@ -2208,23 +2315,19 @@
 
         function closeEditModal() { document.getElementById('editProductModal').style.display = 'none'; }
 
-        // 수정 완료 변경 내역 업데이트 저장
         async function updateProductModalSave() {
             const id = document.getElementById('editTargetId').value;
-            let p = productList.find(item => item.id === id);
-            if (!p) return;
-
-            let palletToCarton = parseInt(document.getElementById('editModalPtoC').value) || 0;
-            let hasSet = document.getElementById('editModalHasSetValue').value;
             let productType = document.getElementById('editProductType').value;
-            let innerToUnit = parseInt(document.getElementById('editModalItoU').value) || 0;
+            let hasSet = document.getElementById('editModalHasSetValue').value;
+            let palletToCarton = parseInt(document.getElementById('editModalPtoC').value);
+            let innerToUnit = parseInt(document.getElementById('editModalItoU').value);
 
             let cartonToSet = 0, setToInner = 0, cartonToInner = 0;
             if (hasSet === 'O') {
-                cartonToSet = parseInt(document.getElementById('editModalCtoS').value) || 0;
-                setToInner = parseInt(document.getElementById('editModalStoI').value) || 0;
+                cartonToSet = parseInt(document.getElementById('editModalCtoS').value);
+                setToInner = parseInt(document.getElementById('editModalStoI').value);
             } else {
-                cartonToInner = parseInt(document.getElementById('editModalCtoIX').value) || 0;
+                cartonToInner = parseInt(document.getElementById('editModalCtoIX').value);
             }
 
             let weightInner = formatWeight(
@@ -2243,35 +2346,31 @@
                 'kg'
             );
 
-            try {
-                await db.collection("products").doc(id).update({
-                    palletToCarton: palletToCarton,
-                    hasSet: hasSet,
-                    cartonToSet: cartonToSet,
-                    setToInner: setToInner,
-                    cartonToInner: cartonToInner,
-                    innerToUnit: innerToUnit,
-                    productType: productType,
-                    weightInner: weightInner,
-                    weightSet: weightSet,
-                    weightCarton: weightCarton
-                });
+            if (isNaN(palletToCarton) || isNaN(innerToUnit)) {
+                alert('필수 입력 항목을 정확히 입력해 주세요.');
+                return;
+            }
 
+            try {
+                await db.collection('products').doc(id).update({
+                    productType, hasSet, palletToCarton, cartonToSet, setToInner, cartonToInner, innerToUnit,
+                    weightInner, weightSet, weightCarton
+                });
                 closeEditModal();
                 alert('✅ 제품 정보가 수정되었습니다.');
-            } catch (error) {
-                alert("수정 실패: " + error.message);
+            } catch (e) {
+                alert('수정 오류: ' + e.message);
             }
         }
 
-        // 품목 정보 영구 제거
         async function deleteProduct(id, name) {
-            if (confirm(`정말 [${name}] 품목을 삭제하시겠습니까?`)) {
-                try {
-                    await db.collection('products').doc(id).delete();
-                    alert(`🗑️ [${name}] 삭제되었습니다.`);
-                    closeProductDetailModal();
-                } catch (e) { alert('❌ 삭제 실패'); }
+            if (!confirm(`[${name}] 제품을 정말 삭제하시겠습니까?`)) return;
+            try {
+                await db.collection('products').doc(id).delete();
+                closeProductDetailModal();
+                alert('✅ 제품이 삭제되었습니다.');
+            } catch (e) {
+                alert('삭제 오류: ' + e.message);
             }
         }
     </script>
