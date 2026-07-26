@@ -1947,15 +1947,10 @@
                 });
                 alert('✅ 수정 내용이 저장되었습니다.');
                 //closeDetailLogModal();
-                await fetchpackingLogs();
-
-                if (typeof openDetailLogModal === 'function') {
-                    openDetailLogModal(logId);
-                }
+                openDetailLogModal(logId);
 
             } catch (e) {
-                alert('저장 오류: ' + e.message); // '저장 오류' 대신 실제 에러 원인을 띄워줌
-                console.error(e); // 콘솔창(F12)에서도 확인 가능
+                alert('저장 오류: ' + e.message);
             }
         }
 
