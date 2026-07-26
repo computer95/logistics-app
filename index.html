@@ -1946,9 +1946,7 @@
                     currentQty: log.currentQty || 0
                 });
                 alert('✅ 수정 내용이 저장되었습니다.');
-                //closeDetailLogModal();
                 openDetailLogModal(logId);
-
             } catch (e) {
                 alert('저장 오류: ' + e.message);
             }
@@ -2310,25 +2308,29 @@
             }
             document.getElementById('editModalItoU').value = p.innerToUnit || '';
 
-            let innerW = extractWeightValues(p.weightInner);
-            document.getElementById('editWeightInnerMain').value = innerW.main;
-            document.getElementById('editWeightInnerRange').value = innerW.range;
+            let wInner = extractWeightValues(p.weightInner);
+            document.getElementById('editWeightInnerMain').value = wInner.main;
+            document.getElementById('editWeightInnerRange').value = wInner.range;
 
-            let setW = extractWeightValues(p.weightSet);
-            document.getElementById('editWeightSetMain').value = setW.main;
-            document.getElementById('editWeightSetRange').value = setW.range;
+            if (p.hasSet === 'O') {
+                let wSet = extractWeightValues(p.weightSet);
+                document.getElementById('editWeightSetMain').value = wSet.main;
+                document.getElementById('editWeightSetRange').value = wSet.range;
+            }
 
-            let cartonW = extractWeightValues(p.weightCarton);
-            document.getElementById('editWeightCartonMain').value = cartonW.main;
-            document.getElementById('editWeightCartonRange').value = cartonW.range;
+            let wCarton = extractWeightValues(p.weightCarton);
+            document.getElementById('editWeightCartonMain').value = wCarton.main;
+            document.getElementById('editWeightCartonRange').value = wCarton.range;
 
             document.getElementById('editProductModal').style.display = 'flex';
         }
 
-        function closeEditModal() { document.getElementById('editProductModal').style.display = 'none'; }
+        function closeEditModal() {
+            document.getElementById('editProductModal').style.display = 'none';
+        }
 
         async function updateProductModalSave() {
-            const id = document.getElementById('editTargetId').value;
+            let id = document.getElementById('editTargetId').value;
             let productType = document.getElementById('editProductType').value;
             let hasSet = document.getElementById('editModalHasSetValue').value;
             let palletToCarton = parseInt(document.getElementById('editModalPtoC').value);
@@ -2359,14 +2361,15 @@
             );
 
             if (isNaN(palletToCarton) || isNaN(innerToUnit)) {
-                alert('필수 입력 항목을 정확히 입력해 주세요.');
+                alert('필수 입력 항목을 확인해 주세요.');
                 return;
             }
 
             try {
                 await db.collection('products').doc(id).update({
                     productType, hasSet, palletToCarton, cartonToSet, setToInner, cartonToInner, innerToUnit,
-                    weightInner, weightSet, weightCarton
+                    weightInner, weightSet, weightCarton,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 closeEditModal();
                 alert('✅ 제품 정보가 수정되었습니다.');
