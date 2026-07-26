@@ -1933,7 +1933,13 @@
                     currentQty: log.currentQty || 0
                 });
                 alert('✅ 수정 내용이 저장되었습니다.');
-                closeDetailLogModal();
+                //closeDetailLogModal();
+                await fetchpackingLogs();
+
+                if (typeof openDetailLogModal === 'function') {
+                    openDetailLogModal(logId);
+                }
+                
             } catch (e) {
                 alert('저장 오류');
             }
