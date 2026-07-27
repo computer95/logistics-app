@@ -2374,7 +2374,7 @@
                     weightInner, weightSet, weightCarton,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                closeEditModal();
+                openDetailLogModal(logId);
                 alert('✅ 제품 정보가 수정되었습니다.');
             } catch (e) {
                 alert('수정 오류: ' + e.message);
