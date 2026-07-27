@@ -1681,11 +1681,11 @@
             if (!log) return;
 
             let product = productList.find(p => p.id === log.productId);
+            console.log("찾아낸 제품 데이터:", product); // 👈 이거 추가!
             let pType = product && product.productType ? product.productType : '미분류';
 
             // 파레트당 카톤 수 계산
             let cartonPerPallet = product && product.regPalletToCarton ? product.regPalletToCarton : 0;
-            console.log(`cartonPerPallet: ${cartonPerPallet}`);
             // 세트케이스 여부에 따라 파레트당 총 단케이스 수 계산
             let totalPerPallet = '-';
             if (product) {
