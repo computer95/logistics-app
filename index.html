@@ -1691,7 +1691,7 @@
             if (product) {
                 if (product.hasSet === 'O') {
                     // 세트케이스 O: 카톤당 세트케이스 수 * 1파레트당 카톤 수
-                    let setPerCarton = product.setToInner || 0;
+                    let setPerCarton = product.cartonToSet || 0;
                     totalPerPallet = (cartonPerPallet * setPerCarton).toLocaleString();
                 } else {
                     // 세트케이스 X: 카톤당 단케이스 수 * 1파레트당 카톤 수
