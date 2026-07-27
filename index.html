@@ -1396,7 +1396,7 @@
                 snapshot.forEach(doc => {
                     packingLogsList.push({ id: doc.id, ...doc.data() });
                 });
-                checkAutoCompletedLogs();
+                //checkAutoCompletedLogs();
                 if (document.getElementById('logTab').classList.contains('active')) {
                     renderPackingLogsHtml();
                     updatePackingDashboard();
@@ -1405,7 +1405,8 @@
                 console.error("포장일지 불러오기 오류", e);
             }
         }
-
+        
+        /*
         async function checkAutoCompletedLogs() {
             const today = new Date().toISOString().substring(0, 10);
             let updated = false;
@@ -1421,6 +1422,7 @@
                 updatePackingDashboard();
             }
         }
+        */
 
         function renderPackingLogsHtml() {
             const container = document.getElementById('packingLogContainer');
