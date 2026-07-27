@@ -1564,7 +1564,7 @@
             dueObj.setHours(0, 0, 0, 0);
             let isUrgent = (!isDone && log.currentQty === 0 && !log.isHold && dueObj >= new Date(todayStr) && dueObj <= sevenDaysLater);
 
-            let autoStatus = log.isHold ? 'hold' : (isDone ? 'done' : (isUrgent ? 'urgent' : (log.currentQty > 0 ? 'progress' : 'none')));
+            let autoStatus = log.isHold ? 'hold' : (isDone ? 'done' : (isUrgent ? 'urgent' : (log.currentQty >= 0 ? 'progress' : 'none')));
             let statusClass = `status-${autoStatus}`;
             let badgeClass = `badge-${autoStatus}`;
             let fillClass = `fill-${autoStatus}`;
