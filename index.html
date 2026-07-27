@@ -1405,7 +1405,7 @@
                 console.error("포장일지 불러오기 오류", e);
             }
         }
-        
+
         /*
         async function checkAutoCompletedLogs() {
             const today = new Date().toISOString().substring(0, 10);
@@ -1682,6 +1682,22 @@
 
             let product = productList.find(p => p.id === log.productId);
             let pType = product && product.productType ? product.productType : '미분류';
+
+            // 파레트당 카톤 수 계산
+            let cartonPerPallet = product && product.regPalletToCarton ? product.regPalletToCarton : 0;
+            // 세트케이스 여부에 따라 파레트당 총 단케이스 수 계산
+            let totalPerPallet = '-';
+            if (product) {
+                if (product.setBtnO) {
+                    // 세트케이스 O: 카톤당 세트케이스 수 * 1파레트당 카톤 수
+                    let setPerCarton = product.regCartonToSet || 0;
+                    totalPerPallet = (cartonPerPallet * setPerCarton).toLocaleString();
+                } else {
+                    // 세트케이스 X: 카톤당 단케이스 수 * 1파레트당 카톤 수
+                    let danPerCarton = product.regCartonToInnerX || 0;
+                    totalPerPallet = (cartonPerPallet * danPerCarton).toLocaleString();
+                }
+            }
 
             document.getElementById('detailLogId').value = log.id;
             document.getElementById('detailOldProductId').value = log.productId;
