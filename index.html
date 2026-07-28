@@ -1716,8 +1716,8 @@
                 <div>📅 <strong>출고일:</strong> ${log.dueDate}</div>
                 <div style="margin-top:2px;">🎯 <strong>목표량:</strong> ${log.targetQty.toLocaleString()} set</div>
                 <div style="background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 6px 10px; margin: 6px 0; font-size: 12px; color: #555; display: flex; justify-content: space-between;">
-            <span>📦 1파레트당 카톤: <strong>${cartonDisplay} 카톤</strong></span>
-            <span>📊 1파레트당 세트: <strong>${totalPerPallet} SET</strong></span>
+            <span>1파레트당 📦 카톤: <strong>${cartonDisplay} 카톤</strong></span>
+            <span>📊 세트: <strong>${totalPerPallet} SET</strong></span>
         </div>
                 <div style="margin-top:2px; color:#555;">💬 <strong>메모:</strong> ${log.memo || '없음'}</div>
             `;
@@ -2397,7 +2397,7 @@
                     weightInner, weightSet, weightCarton,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                openDetailLogModal(logId);
+                openDetailLogModal(id);
                 alert('✅ 제품 정보가 수정되었습니다.');
             } catch (e) {
                 alert('수정 오류: ' + e.message);
