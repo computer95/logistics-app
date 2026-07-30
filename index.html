@@ -2415,7 +2415,7 @@
                 captureDiv.style.position = 'fixed';
                 captureDiv.style.left = '-9999px';
                 captureDiv.style.top = '0';
-                captureDiv.style.width = '450px';
+                captureDiv.style.width = '500px';
                 captureDiv.style.background = '#fff';
                 captureDiv.style.padding = '20px';
                 captureDiv.style.borderRadius = '12px';
@@ -2468,7 +2468,7 @@
                         <div class="progress-bar-bg" style="width:100%; background-color:#e9ecef; border-radius:4px; height:7px; overflow:hidden; margin-top:8px; margin-bottom:6px;">
                             <div class="progress-bar-fill ${fillClass}" style="width: ${percent}%; height:100%; border-radius:4px;"></div>
                         </div>
-                        <div style="font-size:11px; color:#555; display:flex; justify-content:space-between; align-items:center; gap: 10px;">
+                        <div style="font-size:13px; color:#555; display:flex; justify-content:space-between; align-items:center; gap: 10px;">
                             <span style="flex-shrink:0;">진행률: <strong>${percent}%</strong> (${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()})</span>
                             <span style="flex-shrink:0; font-weight:bold; ${isUrgent ? 'color:#ff3b30;' : ''}">출고: ${log.dueDate}</span>
                         </div>
