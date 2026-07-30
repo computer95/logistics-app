@@ -2453,7 +2453,7 @@
                 let cartonPerPallet = p.palletToCarton || 24;
                 let unitPerSet = (p.hasSet === 'O') ? (p.palletToCarton * p.cartonToSet) : (p.palletToCarton * p.cartonToInner);
 
-                packSpecText = ` 1 파레트당 📦 ${cartonPerPallet} 카톤 | 📊 : ${unitPerSet} 세트 `;
+                packSpecText = ` 1 파레트당 📦 <strong>${cartonPerPallet} 카톤</strong> | 📊 : <strong>${unitPerSet} 세트</strong> `;
 
             }
 
