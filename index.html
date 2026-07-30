@@ -1463,39 +1463,35 @@
             const sevenDaysLater = new Date(today);
             sevenDaysLater.setDate(today.getDate() + 7);
 
-            let urgentCount = 0;
-            let progressCount = 0;
-            let holdCount = 0;
-            let doneCount = 0;
             let waitingItems = [];
 
             packingLogsList.forEach(log => {
                 let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
                 let dueObj = new Date(log.dueDate);
                 dueObj.setHours(0, 0, 0, 0);
-                let isUrgent = (!isDone && log.currentQty === 0 && !log.isHold && dueObj >= new Date(todayStr) && dueObj <= sevenDaysLater);
 
-                if (log.isHold) {
-                    holdCount++;
-                } else if (isDone) {
-                    doneCount++;
-                } else if (isUrgent) {
-                    urgentCount++;
-                    waitingItems.push(log);
-                } else if (log.currentQty > 0) {
-                    progressCount++;
-                    waitingItems.push(log);
-                } else {
-                    waitingItems.push(log);
+                // 마감 초과 조건 (완료 안 됨 + 보류 아님 + 날짜 지남)
+                let isOverdue = (!isDone && !log.isHold && log.dueDate < todayStr);
+
+                // 출고 임박 조건 (마감초과가 아닐 때만)
+                let isUrgent = (!isDone && log.currentQty === 0 && !log.isHold && !isOverdue && dueObj >= new Date(todayStr) && dueObj <= sevenDaysLater);
+
+                // 완료나 보류가 아닌 항목들만 대시보드 리스트에 수집
+                if (!log.isHold && !isDone) {
+                    waitingItems.push({
+                        ...log,
+                        isOverdue: isOverdue,
+                        isUrgent: isUrgent
+                    });
                 }
             });
 
+            // 총 건수는 전체 리스트 개수 또는 대기 리스트 개수 선택 (여기선 전체)
             document.getElementById('dashTotalCount').innerText = `총 ${packingLogsList.length}건`;
-            document.getElementById('dashUrgentCount').innerText = `${urgentCount}건`;
-            document.getElementById('dashProgressCount').innerText = `${progressCount}건`;
-            document.getElementById('dashHoldCount').innerText = `${holdCount}건`;
-            document.getElementById('dashDoneCount').innerText = `${doneCount}건`;
 
+            // ❌ 에러를 유발하던 대시보드 4개 카운트 DOM 조작 코드는 제거 완료!
+
+            // 마감일 순서대로 정렬
             waitingItems.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
             const waitingContainer = document.getElementById('dashWaitingListContainer');
@@ -1507,18 +1503,33 @@
             let html = '';
             waitingItems.forEach(log => {
                 let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
+
+                // 상태별 뱃지 및 색상 설정
+                let statusBadge = '';
+                if (log.isOverdue) {
+                    statusBadge = `<span style="background:#ff9500; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px;">마감초과</span>`;
+                } else if (log.isUrgent) {
+                    statusBadge = `<span style="background:#ff3b30; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px;">출고임박</span>`;
+                } else if (log.currentQty > 0) {
+                    statusBadge = `<span style="background:#007aff; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px;">진행중</span>`;
+                } else {
+                    statusBadge = `<span style="background:#888; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px;">진행전</span>`;
+                }
+
                 html += `
-                    <div style="background:#fff; border:1px solid #e1e4e8; border-radius:6px; padding:8px 10px; margin-bottom:6px; cursor:pointer;" onclick="openDetailLogModal('${log.id}')">
-                        <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; margin-bottom:2px;">
-                            <span>📦 ${log.productName}</span>
-                            <span style="color:#007aff; font-size:11.5px;">${log.dueDate.replace(/-/g, '. ')}</span>
-                        </div>
-                        <div style="color:#555; display:flex; justify-content:space-between; font-size:11.5px;">
-                            <span>목표: ${log.targetQty.toLocaleString()} SET (${percent}%)</span>
-                            <span>진행: ${log.currentQty.toLocaleString()}</span>
-                        </div>
-                    </div>
-                `;
+            <div style="background:#fff; border:1px solid #e1e4e8; border-radius:6px; padding:6px 10px; margin-bottom:5px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;" onclick="openDetailLogModal('${log.id}')">
+                <div style="display:flex; align-items:center; gap:8px; overflow:hidden; flex:1;">
+                    ${statusBadge}
+                    <span style="font-weight:bold; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${log.productName}</span>
+                </div>
+                <div style="color:#555; font-size:11.5px; white-space:nowrap; margin-left:10px;">
+                    <b style="color:#007aff;">${log.currentQty.toLocaleString()}</b> / ${log.targetQty.toLocaleString()} (${percent}%)
+                </div>
+                <div style="color:#666; font-size:11px; white-space:nowrap; margin-left:10px;">
+                    📅 ${log.dueDate.replace(/-/g, '. ')}
+                </div>
+            </div>
+        `;
             });
             waitingContainer.innerHTML = html;
         }
