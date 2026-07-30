@@ -657,6 +657,7 @@
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 
 <body>
@@ -893,6 +894,7 @@
             <h2 style="font-size: 18px; color: #007aff; margin-bottom: 8px;">
                 📋 상세 작업 현황 및 로그
                 <div style="display:flex; gap:4px;">
+                    <button type="button" class="sub-btn" style="padding: 4px 8px; font-size: 12px; background:#007aff; color:white;" onclick="exportLogAsImage()">출력</button>
                     <button type="button" class="sub-btn edit-btn" id="toggleEditModeBtn"
                         style="padding: 4px 8px; font-size: 12px;" onclick="toggleEditMode()">수정</button>
                     <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;"
@@ -1396,7 +1398,6 @@
                 snapshot.forEach(doc => {
                     packingLogsList.push({ id: doc.id, ...doc.data() });
                 });
-                //checkAutoCompletedLogs();
                 if (document.getElementById('logTab').classList.contains('active')) {
                     renderPackingLogsHtml();
                     updatePackingDashboard();
@@ -1405,24 +1406,6 @@
                 console.error("포장일지 불러오기 오류", e);
             }
         }
-
-        /*
-        async function checkAutoCompletedLogs() {
-            const today = new Date().toISOString().substring(0, 10);
-            let updated = false;
-            for (let log of packingLogsList) {
-                if (log.dueDate < today && !log.isForceDone && log.currentQty < log.targetQty && !log.isHold) {
-                    log.isForceDone = true;
-                    updated = true;
-                    await db.collection('packing_logs').doc(log.id).update({ isForceDone: true });
-                }
-            }
-            if (updated && document.getElementById('logTab').classList.contains('active')) {
-                renderPackingLogsHtml();
-                updatePackingDashboard();
-            }
-        }
-        */
 
         function renderPackingLogsHtml() {
             const container = document.getElementById('packingLogContainer');
@@ -1562,9 +1545,7 @@
 
             let dueObj = new Date(log.dueDate);
             dueObj.setHours(0, 0, 0, 0);
-            // 출고임박 조건: 완료되지 않았고, 현재 수량이 0이며, 보류가 아니고, 오늘부터 7일 이내
             let isUrgent = (!isDone && log.currentQty === 0 && !log.isHold && log.dueDate >= todayStr && dueObj <= sevenDaysLater);
-            // 보류냐? 완료냐? 출고임박이냐? 진행중이냐? 진행전이냐?
             let autoStatus = log.isHold ? 'hold' : (isDone ? 'done' : (isUrgent ? 'urgent' : (log.currentQty > 0 ? 'progress' : 'none')));
             let statusClass = `status-${autoStatus}`;
             let badgeClass = `badge-${autoStatus}`;
@@ -1681,20 +1662,15 @@
             if (!log) return;
 
             let product = productList.find(p => p.id === log.productId);
-            console.log("찾아낸 제품 데이터:", product); // 👈 이거 추가!
             let pType = product && product.productType ? product.productType : '미분류';
 
-            // 파레트당 카톤 수 계산
             let cartonPerPallet = product && product.palletToCarton ? product.palletToCarton : 0;
-            // 세트케이스 여부에 따라 파레트당 총 단케이스 수 계산
             let totalPerPallet = '-';
             if (product) {
                 if (product.hasSet === 'O') {
-                    // 세트케이스 O: 카톤당 세트케이스 수 * 1파레트당 카톤 수
                     let setPerCarton = product.cartonToSet || 0;
                     totalPerPallet = (cartonPerPallet * setPerCarton).toLocaleString();
                 } else {
-                    // 세트케이스 X: 카톤당 단케이스 수 * 1파레트당 카톤 수
                     let danPerCarton = product.cartonToInner || 0;
                     totalPerPallet = (cartonPerPallet * danPerCarton).toLocaleString();
                 }
@@ -1716,9 +1692,9 @@
                 <div>📅 <strong>출고일:</strong> ${log.dueDate}</div>
                 <div style="margin-top:2px;">🎯 <strong>목표량:</strong> ${log.targetQty.toLocaleString()} set</div>
                 <div style="background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 6px 10px; margin: 6px 0; font-size: 12px; color: #555; display: flex; justify-content: space-between;">
-            <span>1파레트당 📦 : <strong>${cartonDisplay} 카톤</strong></span>
-            <span>📊 : <strong>${totalPerPallet} SET</strong></span>
-        </div>
+                    <span>1파레트당 📦 : <strong>${cartonDisplay} 카톤</strong></span>
+                    <span>📊 : <strong>${totalPerPallet} SET</strong></span>
+                </div>
                 <div style="margin-top:2px; color:#555;">💬 <strong>메모:</strong> ${log.memo || '없음'}</div>
             `;
 
@@ -2412,6 +2388,169 @@
                 alert('✅ 제품이 삭제되었습니다.');
             } catch (e) {
                 alert('삭제 오류: ' + e.message);
+            }
+        }
+
+        // 이미지 생성, 저장 및 공유 기능 함수
+        async function exportLogAsImage() {
+            let logId = document.getElementById('detailLogId').value;
+            let log = packingLogsList.find(l => l.id === logId);
+            if (!log) return;
+
+            let captureDiv = document.getElementById('exportCaptureArea');
+            if (!captureDiv) {
+                captureDiv = document.createElement('div');
+                captureDiv.id = 'exportCaptureArea';
+                captureDiv.style.position = 'fixed';
+                captureDiv.style.left = '-9999px';
+                captureDiv.style.top = '0';
+                captureDiv.style.width = '450px';
+                captureDiv.style.background = '#fff';
+                captureDiv.style.padding = '20px';
+                captureDiv.style.borderRadius = '12px';
+                captureDiv.style.boxSizing = 'border-box';
+                captureDiv.style.fontFamily = 'inherit';
+                document.body.appendChild(captureDiv);
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+            const sevenDaysLater = new Date(today);
+            sevenDaysLater.setDate(today.getDate() + 7);
+
+            let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
+            let dueObj = new Date(log.dueDate);
+            dueObj.setHours(0, 0, 0, 0);
+            let isUrgent = (!isDone && log.currentQty === 0 && !log.isHold && log.dueDate >= todayStr && dueObj <= sevenDaysLater);
+            let autoStatus = log.isHold ? 'hold' : (isDone ? 'done' : (isUrgent ? 'urgent' : (log.currentQty > 0 ? 'progress' : 'none')));
+            let statusClass = `status-${autoStatus}`;
+            let badgeClass = `badge-${autoStatus}`;
+            let fillClass = `fill-${autoStatus}`;
+            let statusText = autoStatus === 'hold' ? '보류' : (autoStatus === 'urgent' ? '출고임박' : (autoStatus === 'progress' ? '진행 중' : (autoStatus === 'done' ? '완료' : '진행 전')));
+            let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
+            
+            const matchedProd = productList.find(p => p.id === log.productId);
+            const pType = matchedProd && matchedProd.productType ? matchedProd.productType : '미분류';
+
+            // 상단: 포장일지 리스트 카드 그대로 활용
+            let cardHtml = `
+                <div class="log-card ${statusClass}" style="margin-bottom:12px; margin-top:0;">
+                    <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <span style="font-weight:bold; font-size:15px;">📦 ${log.productName} <span class="tag tag-${pType}">${pType}</span></span>
+                            <span class="log-badge ${badgeClass}">${statusText}</span>
+                        </div>
+                        <div class="progress-bar-bg" style="width:100%; background-color:#e9ecef; border-radius:4px; height:7px; overflow:hidden; margin-top:8px; margin-bottom:6px;">
+                            <div class="progress-bar-fill ${fillClass}" style="width: ${percent}%; height:100%; border-radius:4px;"></div>
+                        </div>
+                        <div style="font-size:13px; color:#555; display:flex; justify-content:space-between; align-items:center;">
+                            <span>진행률: <strong>${percent}%</strong> (${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()})</span>
+                            <span style="font-weight:bold; ${isUrgent ? 'color:#ff3b30;' : ''}">출고: ${log.dueDate}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 중단: 상세페이지에 작업현황을 그대로 활용
+            let historyHtml = '';
+            if (!log.history || log.history.length === 0) {
+                historyHtml = '<div style="color:#666; font-size:13px; text-align:center; padding:10px;">기록된 작업 내역이 없습니다.</div>';
+            } else {
+                let mapped = (log.history || []).map(item => ({ item }));
+                mapped.sort((a, b) => new Date(a.item.date) - new Date(b.item.date));
+                mapped.forEach(obj => {
+                    let h = obj.item;
+                    let formattedMemo = h.memo ? `(${h.memo})` : '';
+                    historyHtml += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #eee; font-size:13px;">
+                            <div><span>${h.date}</span>: <strong>+${h.qty.toLocaleString()}</strong></div>
+                            <div style="text-align:right;"><span style="color:#666; font-size:12px;">${formattedMemo}</span></div>
+                        </div>
+                    `;
+                });
+            }
+
+            // 하단: 상세페이지에 남은 목표량 환산을 그대로 활용
+            let remaining = log.targetQty - log.currentQty;
+            let remainingHtml = '';
+            if (remaining <= 0) {
+                remainingHtml = '🎉 목표 수량을 모두 달성했습니다!';
+            } else {
+                const p = matchedProd;
+                if (!p || (!p.palletToCarton && !p.cartonToInner && !p.setToInner)) {
+                    remainingHtml = '📦 해당 제품의 포장 정보가 등록되지 않았습니다.';
+                } else {
+                    let cToI = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner) : p.cartonToInner;
+                    let innerPerCarton = cToI;
+                    let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit;
+                    let totalEa = remaining * unitPerSet;
+                    let unitsPerPallet = (p.palletToCarton || 24) * innerPerCarton * p.innerToUnit;
+
+                    let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
+                    let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
+                    remainingHtml = `📌 <strong>남은 목표량 환산 : ${remaining.toLocaleString()} SET</strong><br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
+                }
+            }
+
+            captureDiv.innerHTML = `
+                <h2 style="font-size: 18px; color: #111; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">
+                    <span>📋</span> <span>금일 작업</span>
+                </h2>
+                ${cardHtml}
+                <div style="background:#fafafa; border:1px solid #e1e4e8; border-radius:6px; padding:8px 10px; margin-bottom:12px;">
+                    ${historyHtml}
+                </div>
+                <div style="background:#eef4ff; border:1px solid #b3d1ff; padding:10px; border-radius:6px; font-size:13px; line-height:1.6;">
+                    ${remainingHtml}
+                </div>
+            `;
+
+            if (typeof html2canvas === 'undefined') {
+                alert('이미지 생성 라이브러리가 로드되지 않았습니다.');
+                return;
+            }
+
+            try {
+                const canvas = await html2canvas(captureDiv, { scale: 2, useCORS: true });
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        alert('이미지 생성에 실패했습니다.');
+                        return;
+                    }
+                    const file = new File([blob], `금일작업_${log.productName}_${todayStr}.png`, { type: 'image/png' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                title: '금일 작업',
+                                text: `${log.productName} 작업 현황 포장일지`,
+                                files: [file]
+                            });
+                            return;
+                        } catch (err) {
+                            if (err.name !== 'AbortError') {
+                                console.error(err);
+                            }
+                        }
+                    }
+
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `금일작업_${log.productName}_${todayStr}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    alert('✅ 이미지 파일이 저장되었습니다.');
+                }, 'image/png');
+            } catch (e) {
+                console.error(e);
+                alert('이미지 생성 중 오류가 발생했습니다.');
             }
         }
     </script>
