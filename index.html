@@ -1524,7 +1524,7 @@
                     <div style="background:#fff; border:1px solid #e1e4e8; border-radius:6px; padding:8px 10px; margin-bottom:6px; cursor:pointer;" onclick="openDetailLogModal('${log.id}')">
                         <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; margin-bottom:2px;">
                             <span>📦 ${log.productName}</span>
-                            <span style="color:#007aff; font-size:11.5px;">${log.dueDate}</span>
+                            <span style="color:#007aff; font-size:11.5px;">${log.dueDate.replace(/-/g, '. ')}</span>
                         </div>
                         <div style="color:#555; display:flex; justify-content:space-between; font-size:11.5px;">
                             <span>목표: ${log.targetQty.toLocaleString()} SET (${percent}%)</span>
@@ -1569,7 +1569,7 @@
                         </div>
                         <div style="font-size:13px; color:#555; display:flex; justify-content:space-between; align-items:center;">
                             <span>진행률: <strong>${percent}%</strong> (${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()})</span>
-                            <span style="font-weight:bold; ${isUrgent ? 'color:#ff3b30;' : ''}">출고: ${log.dueDate}</span>
+                            <span style="font-weight:bold; ${isUrgent ? 'color:#ff3b30;' : ''}">출고: ${log.dueDate.replace(/-/g, '. ')}</span>
                         </div>
                     </div>
                 </div>
@@ -1691,7 +1691,7 @@
                     </span> 
                     <button class="sub-btn" style="margin-left: auto; background:#e1f0ff; color:#007aff; padding:4px 8px; font-size:12px; border:1px solid #b3d1ff;" onclick="openProductDetailModal('${log.productId}', false)">상세정보</button>
                 </div>
-                <div>📅 <strong>출고일:</strong> ${log.dueDate}</div>
+                <div>📅 <strong>출고일:</strong> ${log.dueDate.replace(/-/g, '. ')}</div>
                 <div style="margin-top:2px;">🎯 <strong>목표량:</strong> ${log.targetQty.toLocaleString()} set</div>
                 <div style="background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 6px 10px; margin: 6px 0; font-size: 12px; color: #555; display: flex; justify-content: flex-start; gap: 16px;">
                     <span>1파레트당 📦 : <strong>${cartonDisplay} 카톤 </strong> | </span>
@@ -2088,7 +2088,7 @@
                     let statusTxt = log.isForceDone ? '<span style="color:#34c759">[완료]</span>' : (isDone ? '<span style="color:#34c759">[완료]</span>' : '<span style="color:#007aff">[진행중]</span>');
                     hHtml += `
                         <div style="padding:6px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                            <span>📅 ${log.dueDate} ${statusTxt}</span>
+                            <span>📅 ${log.dueDate.replace(/-/g, '. ')} ${statusTxt}</span>
                             <strong>${log.currentQty.toLocaleString()} SET</strong>
                         </div>
                     `;
@@ -2474,7 +2474,7 @@
                         진행률: <strong>${percent}%</strong> (${log.currentQty.toLocaleString()} /${log.targetQty.toLocaleString()})
                     </td>
                     <td style="text-align:right; white-space:nowrap; padding:0; ${isUrgent ? 'color:#ff3b30; font-weight:bold;' : ''}">
-                        출고: ${log.dueDate}
+                        출고: ${log.dueDate.replace(/-/g, '. ')}
                     </td>
                 </tr>
             </table>
