@@ -1922,10 +1922,12 @@
             let targetQty = parseInt(document.getElementById('editLogTargetQty').value);
             let memo = document.getElementById('editLogMemo').value.trim();
 
+            /*
             if (!productName || !dueDate || isNaN(targetQty)) {
                 alert('필수 입력 항목을 확인해 주세요.');
                 return;
             }
+            */
 
             let match = productList.find(p => p.id === productId && p.name === productName);
             if (!match) {
@@ -2242,10 +2244,12 @@
                 'kg'
             );
 
+            /*
             if (!name || isNaN(palletToCarton) || isNaN(innerToUnit)) {
                 alert('필수 입력 항목을 정확히 입력해 주세요.');
                 return;
             }
+            */
 
             try {
                 await db.collection('products').add({
@@ -2367,10 +2371,12 @@
                 'kg'
             );
 
+            /*
             if (isNaN(palletToCarton) || isNaN(innerToUnit)) {
                 alert('필수 입력 항목을 확인해 주세요.');
                 return;
             }
+            */
 
             try {
                 await db.collection('products').doc(id).update({
@@ -2506,7 +2512,7 @@
             }
 
             captureDiv.innerHTML = `
-                <h2 style="font-size: 18px; color: #007aff; margin-bottom: 8px">
+                <h2 style="font-size: 18px; color: #007aff; margin-bottom: 8px; text-align: left">
                     <span>📋</span> <span>금일 작업</span>
                 </h2>
                 ${cardHtml}
