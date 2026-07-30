@@ -2466,6 +2466,20 @@
                 </div>
             `;
 
+            //상중단
+            let packSpecText = '';
+            if (matchedProd) {
+                const p = matchedProd;
+                let cartonPerPallet = p.palletToCarton || 24;
+                let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit;
+                let cartonEa = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner * p.innerToUnit) : (p.cartonToInner * p.innerToUnit);
+
+                if (p.hasSet === 'O') {
+                    packSpecText = ` 1 파레트당 📦 ${cartonPerPallet} 카톤 | 📊 : ${unitPerSet} 세트 `;
+                } else {
+                    packSpecText = ` 1 파레트당 📦 ${cartonPerPallet} 카톤 | 📊 : ${cartonEa} 세트 `;
+                }
+
             // 중단: 상세페이지에 작업현황을 그대로 활용
             let historyHtml = '';
             if (!log.history || log.history.length === 0) {
