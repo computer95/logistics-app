@@ -2405,9 +2405,7 @@
         // 이미지 생성, 저장 및 공유 기능 함수
         async function exportLogAsImage() {
             let logId = document.getElementById('detailLogId').value;
-            alert("가져온 logId: " + logId);
             let log = packingLogsList.find(l => l.id === logId);
-            alert("가져온 log: " + JSON.stringify(log));
             if (!log) return;
 
             let captureDiv = document.getElementById('exportCaptureArea');
@@ -2453,14 +2451,10 @@
             if (matchedProd) {
                 const p = matchedProd;
                 let cartonPerPallet = p.palletToCarton || 24;
-                let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit;
-                let cartonEa = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner * p.innerToUnit) : (p.cartonToInner * p.innerToUnit);
+                let unitPerSet = (p.hasSet === 'O') ? (p.palletToCarton * p.cartonToSet) : (p.palletToCarton * p.cartonToInner);
 
-                if (p.hasSet === 'O') {
-                    packSpecText = ` 1 파레트당 📦 ${cartonPerPallet} 카톤 | 📊 : ${unitPerSet} 세트 `;
-                } else {
-                    packSpecText = ` 1 파레트당 📦 ${cartonPerPallet} 카톤 | 📊 : ${cartonEa} 세트 `;
-                }
+                packSpecText = ` 1 파레트당 📦 ${cartonPerPallet} 카톤 | 📊 : ${unitPerSet} 세트 `;
+
             }
 
             // 상단: 포장일지 리스트 카드 그대로 활용
