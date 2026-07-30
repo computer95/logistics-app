@@ -345,6 +345,11 @@
             background: #fffdf5;
         }
 
+        .log-card.status-overdue {
+            border-left-color: #ff9500;
+            background: #fff8f0;
+        }
+
         .log-badge {
             font-size: 10px;
             padding: 2px 6px;
@@ -373,6 +378,11 @@
         .badge-hold {
             background: #ffcc00;
             color: #333;
+        }
+
+        .badge-overdue {
+            background: #ff9500;
+            color: #fff;
         }
 
         .tag {
@@ -509,6 +519,10 @@
 
         .fill-hold {
             background-color: #ffcc00;
+        }
+
+        .fill-overdue {
+            background-color: #ff9500;
         }
 
         .section-toggle-box {
@@ -1547,12 +1561,13 @@
 
             let dueObj = new Date(log.dueDate);
             dueObj.setHours(0, 0, 0, 0);
+            let isOverdue = (!isDone && !log.ishold && log.dueDate < todayStr);
             let isUrgent = (!isDone && log.currentQty === 0 && !log.isHold && log.dueDate >= todayStr && dueObj <= sevenDaysLater);
-            let autoStatus = log.isHold ? 'hold' : (isDone ? 'done' : (isUrgent ? 'urgent' : (log.currentQty > 0 ? 'progress' : 'none')));
+            let autoStatus = log.isHold ? 'hold' : (isDone ? 'done' : (isUrgent ? 'urgent' : (isOverdue ? 'overdue' : (log.currentQty > 0 ? 'progress' : 'none'))));
             let statusClass = `status-${autoStatus}`;
             let badgeClass = `badge-${autoStatus}`;
             let fillClass = `fill-${autoStatus}`;
-            let statusText = autoStatus === 'hold' ? '보류' : (autoStatus === 'urgent' ? '출고임박' : (autoStatus === 'progress' ? '진행 중' : (autoStatus === 'done' ? '완료' : '진행 전')));
+            let statusText = autoStatus === 'hold' ? '보류' : (autoStatus === 'overdue' ? '마감초과' : (autoStatus === 'urgent' ? '출고임박' : (autoStatus === 'progress' ? '진행 중' : (autoStatus === 'done' ? '완료' : '진행 전'))));
 
             const matchedProd = productList.find(p => p.id === log.productId);
             const pType = matchedProd && matchedProd.productType ? matchedProd.productType : '미분류';
@@ -2437,11 +2452,12 @@
             let dueObj = new Date(log.dueDate);
             dueObj.setHours(0, 0, 0, 0);
             let isUrgent = (!isDone && log.currentQty === 0 && !log.isHold && log.dueDate >= todayStr && dueObj <= sevenDaysLater);
-            let autoStatus = log.isHold ? 'hold' : (isDone ? 'done' : (isUrgent ? 'urgent' : (log.currentQty > 0 ? 'progress' : 'none')));
+            let isOverdue = (!isDone && !log.isHold && log.dueDate < todayStr);
+            let autoStatus = log.isHold ? 'hold' : (isDone ? 'done' : (isUrgent ? 'urgent' : (isOverdue ? 'overdue' : (log.currentQty > 0 ? 'progress' : 'none'))));
             let statusClass = `status-${autoStatus}`;
             let badgeClass = `badge-${autoStatus}`;
             let fillClass = `fill-${autoStatus}`;
-            let statusText = autoStatus === 'hold' ? '보류' : (autoStatus === 'urgent' ? '출고임박' : (autoStatus === 'progress' ? '진행 중' : (autoStatus === 'done' ? '완료' : '진행 전')));
+            let statusText = autoStatus === 'hold' ? '보류' : (autoStatus === 'overdue' ? '마감초과' : (autoStatus === 'urgent' ? '출고임박' : (autoStatus === 'progress' ? '진행 중' : (autoStatus === 'done' ? '완료' : '진행 전'))));
             let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
 
             const matchedProd = productList.find(p => p.id === log.productId);
