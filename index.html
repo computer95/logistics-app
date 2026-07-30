@@ -894,7 +894,9 @@
             <h2 style="font-size: 18px; color: #007aff; margin-bottom: 8px;">
                 📋 상세 작업 현황 및 로그
                 <div style="display:flex; gap:4px;">
-                    <button type="button" class="sub-btn" style="padding: 4px 8px; font-size: 12px; background:#007aff; color:white;" onclick="exportLogAsImage()">출력</button>
+                    <button type="button" class="sub-btn"
+                        style="padding: 4px 8px; font-size: 12px; background:#007aff; color:white;"
+                        onclick="exportLogAsImage()">출력</button>
                     <button type="button" class="sub-btn edit-btn" id="toggleEditModeBtn"
                         style="padding: 4px 8px; font-size: 12px;" onclick="toggleEditMode()">수정</button>
                     <button type="button" class="sub-btn del-btn" style="padding: 4px 8px; font-size: 12px;"
@@ -1834,11 +1836,14 @@
             let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit;
             let totalEa = remaining * unitPerSet;
             let unitsPerPallet = (p.palletToCarton || 24) * innerPerCarton * p.innerToUnit;
+            let cartonPerPallet = p.palletToCarton || 24;
 
             let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
             let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
+            let cartonInt = Math.ceil(totalEa / (innerPerCarton * p.innerToUnit));
+            let remainderCarton = cartonInt % cartonPerPallet;
 
-            box.innerHTML = `📌 <strong>남은 목표량 환산 : ${remaining.toLocaleString()} SET</strong><br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
+            box.innerHTML = `📌 <strong>남은 목표량 환산 : ${remaining.toLocaleString()} SET</strong><br>🅿️ 파레트 : <strong>${totalPallets} 개 (+${remainderCarton}카톤)</strong> | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
         }
 
         async function addSingleWorkLogRecord() {
@@ -2432,7 +2437,7 @@
             let fillClass = `fill-${autoStatus}`;
             let statusText = autoStatus === 'hold' ? '보류' : (autoStatus === 'urgent' ? '출고임박' : (autoStatus === 'progress' ? '진행 중' : (autoStatus === 'done' ? '완료' : '진행 전')));
             let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
-            
+
             const matchedProd = productList.find(p => p.id === log.productId);
             const pType = matchedProd && matchedProd.productType ? matchedProd.productType : '미분류';
 
@@ -2466,7 +2471,7 @@
                     let h = obj.item;
                     let formattedMemo = h.memo ? `(${h.memo})` : '';
                     historyHtml += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #eee; font-size:13px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:13px;">
                             <div><span>${h.date}</span>: <strong>+${h.qty.toLocaleString()}</strong></div>
                             <div style="text-align:right;"><span style="color:#666; font-size:12px;">${formattedMemo}</span></div>
                         </div>
@@ -2489,15 +2494,19 @@
                     let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit;
                     let totalEa = remaining * unitPerSet;
                     let unitsPerPallet = (p.palletToCarton || 24) * innerPerCarton * p.innerToUnit;
+                    let cartonsPerPallet = p.palletToCarton || 24;
 
                     let totalPallets = formatVal(totalEa / unitsPerPallet, 1);
                     let totalCartons = formatVal(totalEa / (innerPerCarton * p.innerToUnit), 1);
-                    remainingHtml = `📌 <strong>남은 목표량 환산 : ${remaining.toLocaleString()} SET</strong><br>🅿️ 파레트 : <strong>${totalPallets}</strong> 개 | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
+                    let cartonInt = Math.ceil(totalEa / (innerPerCarton * p.innerToUnit));
+                    let remainderCarton = cartonInt % cartonsPerPallet;
+
+                    remainingHtml = `📌 <strong>남은 목표량 환산 : ${remaining.toLocaleString()} SET</strong><br>🅿️ 파레트 : <strong>${totalPallets} 개 (+${remainderCarton}카톤)</strong> | 📦 카톤 : <strong>${totalCartons}</strong> 개`;
                 }
             }
 
             captureDiv.innerHTML = `
-                <h2 style="font-size: 18px; color: #111; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">
+                <h2 style="font-size: 18px; color: #007aff; margin-bottom: 8px">
                     <span>📋</span> <span>금일 작업</span>
                 </h2>
                 ${cardHtml}
@@ -2522,7 +2531,7 @@
                         return;
                     }
                     const file = new File([blob], `금일작업_${log.productName}_${todayStr}.png`, { type: 'image/png' });
-                    
+
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
