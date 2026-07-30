@@ -2447,6 +2447,20 @@
             const matchedProd = productList.find(p => p.id === log.productId);
             const pType = matchedProd && matchedProd.productType ? matchedProd.productType : '미분류';
 
+            let packSpecText = '';
+            if (matchedProd) {
+                const p = matchedProd;
+                let cartonPerPallet = p.palletToCarton || 24;
+                let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit;
+                let cartonEa = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner * p.innerToUnit) : (p.cartonToInner * p.innerToUnit);
+
+                if (p.hasSet === 'O') {
+                    packSpecText = ` 1 파레트당 📦 ${cartonPerPallet} 카톤 | 📊 : ${unitPerSet} 세트 `;
+                } else {
+                    packSpecText = ` 1 파레트당 📦 ${cartonPerPallet} 카톤 | 📊 : ${cartonEa} 세트 `;
+                }
+            }
+
             // 상단: 포장일지 리스트 카드 그대로 활용
             let cardHtml = `
                 <div class="log-card ${statusClass}" style="margin-bottom:12px; margin-top:0;">
@@ -2462,24 +2476,10 @@
                             <span>진행률: <strong>${percent}%</strong> (${log.currentQty.toLocaleString()} / ${log.targetQty.toLocaleString()})</span>
                             <span style="font-weight:bold; ${isUrgent ? 'color:#ff3b30;' : ''}">출고: ${log.dueDate}</span>
                         </div>
+                        ${packSpecText ? `<div style="font-size:12px; color:#666; border-top:1px dashed #e1e4e8; padding-top:5px; margin-top:4px;">${packSpecText}</div>` : ''}
                     </div>
                 </div>
             `;
-
-            //상중단
-            let packSpecText = '';
-            if (matchedProd) {
-                const p = matchedProd;
-                let cartonPerPallet = p.palletToCarton || 24;
-                let unitPerSet = (p.hasSet === 'O') ? (p.setToInner * p.innerToUnit) : p.innerToUnit;
-                let cartonEa = (p.hasSet === 'O') ? (p.cartonToSet * p.setToInner * p.innerToUnit) : (p.cartonToInner * p.innerToUnit);
-
-                if (p.hasSet === 'O') {
-                    packSpecText = ` 1 파레트당 📦 ${cartonPerPallet} 카톤 | 📊 : ${unitPerSet} 세트 `;
-                } else {
-                    packSpecText = ` 1 파레트당 📦 ${cartonPerPallet} 카톤 | 📊 : ${cartonEa} 세트 `;
-                }
-            }
 
             // 중단: 상세페이지에 작업현황을 그대로 활용
             let historyHtml = '';
