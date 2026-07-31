@@ -1460,6 +1460,9 @@
             const day = String(today.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
 
+            // 현재 년-월 문자열 (예: "2026-08") -> 이번 달 판별용
+            const currentMonthKey = `${year}-${month}`;
+
             const sevenDaysLater = new Date(today);
             sevenDaysLater.setDate(today.getDate() + 7);
 
@@ -1492,10 +1495,9 @@
                 return;
             }
 
-            // 📌 1단계: 월별(YYYY-MM)로 데이터 그룹화하기
+            // 월별로 데이터 그룹화
             const groupedByMonth = {};
             waitingItems.forEach(log => {
-                // log.dueDate가 "2026-06-15" 형태라면 앞 7글자("2026-06")를 추출
                 const monthKey = log.dueDate ? log.dueDate.substring(0, 7) : '미지정';
                 if (!groupedByMonth[monthKey]) {
                     groupedByMonth[monthKey] = [];
@@ -1503,31 +1505,33 @@
                 groupedByMonth[monthKey].push(log);
             });
 
-            // 📌 2단계: 월별 키를 오름차순으로 정렬 (예: 2026-05 -> 2026-06 -> 2026-07)
             const sortedMonths = Object.keys(groupedByMonth).sort();
 
             let html = '';
 
-            // 📌 3단계: 월별 섹션 HTML 생성
             sortedMonths.forEach(monthKey => {
                 const items = groupedByMonth[monthKey];
 
-                // 연도와 월 예쁘게 포맷팅 (예: "2026-06" -> "2026년 6월")
                 let monthTitle = monthKey;
                 if (monthKey !== '미지정') {
                     const [y, m] = monthKey.split('-');
                     monthTitle = `${y}년 ${parseInt(m, 10)}월`;
                 }
 
-                // 월별 헤더 추가
+                // 💡 핵심: 현재 달(currentMonthKey)과 일치하면 기본 오픈('block'), 나머지는 닫힘('none')
+                const isOpen = (monthKey === currentMonthKey);
+                const displayStyle = isOpen ? 'block' : 'none';
+                const arrowIcon = isOpen ? '▼' : '▶';
+
+                // 월별 헤더 (클릭 시 토글 함수 실행)
                 html += `
-            <div style="font-weight:bold; font-size:13px; color:#111; margin: 12px 0 6px 2px; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #ddd; padding-bottom: 4px;">
-                <span>🗓️ ${monthTitle}</span>
+            <div onclick="toggleMonthGroup('${monthKey}')" style="font-weight:bold; font-size:13px; color:#111; margin: 12px 0 6px 2px; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #ddd; padding-bottom: 4px; cursor:pointer; user-select:none;">
+                <span><span id="arrow-${monthKey}" style="margin-right:4px; font-size:11px;">${arrowIcon}</span> 🗓️ ${monthTitle}</span>
                 <span style="font-size:11px; color:#666; font-weight:normal;">${items.length}건</span>
             </div>
+            <div id="month-content-${monthKey}" style="display: ${displayStyle};">
         `;
 
-                // 해당 월에 속한 리스트 아이템들 생성
                 items.forEach(log => {
                     let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
 
@@ -1548,34 +1552,43 @@
 
                     html += `
                 <div style="background:#fff; border:1px solid #e1e4e8; border-radius:6px; padding:6px 10px; margin-bottom:5px; cursor:pointer; display:grid; grid-template-columns: 2fr 1.1fr 0.7fr 0.9fr; align-items:center; gap:6px;" onclick="openDetailLogModal('${log.id}')">
-                    
-                    <!-- 1열: 상태 뱃지 + 제품명 -->
                     <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
                         ${statusBadge}
                         <span style="font-weight:bold; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${log.productName}</span>
                     </div>
-
-                    <!-- 2열: 진행 수량 (우측 정렬) -->
                     <div style="text-align:right; color:#555; font-size:11.5px; white-space:nowrap;">
                         <b style="color:#007aff;">${log.currentQty.toLocaleString()}</b> / ${log.targetQty.toLocaleString()}
                     </div>
-
-                    <!-- 3열: 퍼센트 (좌측 정렬로 괄호 위치 고정) -->
                     <div style="text-align:left; color:#888; font-size:11px; white-space:nowrap; padding-left:2px;">
                         (${percent}%)
                     </div>
-
-                    <!-- 4열: 마감일 (우측 정렬) -->
                     <div style="text-align:right; color:#666; font-size:11px; white-space:nowrap;">
                         📅 ${log.dueDate.replace(/-/g, '. ')}
                     </div>
-
                 </div>
             `;
                 });
+
+                // 월별 컨테이너 닫기
+                html += `</div>`;
             });
 
             waitingContainer.innerHTML = html;
+        }
+
+        // 📌 월별 그룹 열고 닫기를 처리해주는 토글 함수 (아무 데나 전역으로 배치)
+        function toggleMonthGroup(monthKey) {
+            const content = document.getElementById(`month-content-${monthKey}`);
+            const arrow = document.getElementById(`arrow-${monthKey}`);
+            if (content && arrow) {
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    arrow.innerText = '▼';
+                } else {
+                    content.style.display = 'none';
+                    arrow.innerText = '▶';
+                }
+            }
         }
 
         function toggleCompletedSection() {
