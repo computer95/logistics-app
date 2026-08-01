@@ -1452,8 +1452,9 @@
             updatePackingDashboard();
         }
 
-        // 📌 대시보드 전용 완료 품목 제외 상태값 (스크립트 상단 아무 곳이나에 두어도 됨)
-        let hideCompletedDashboard = false;
+        // 📌 상태 저장을 위한 전역 객체들 (스크립트 상단에 위치)
+        let openMonths = {};          // 월별 열림/닫힘 상태 유지
+        let hideCompletedMonths = {}; // 월별 완료 품목 제외 여부 유지
 
         function updatePackingDashboard() {
             const today = new Date();
@@ -1472,12 +1473,6 @@
 
             packingLogsList.forEach(log => {
                 let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
-
-                // 💡 '완료 품목 제외'가 켜져 있고, 완료된 항목이라면 이번 리스트 수집에서 제외함!
-                if (hideCompletedDashboard && isDone) {
-                    return;
-                }
-
                 let dueObj = new Date(log.dueDate);
                 dueObj.setHours(0, 0, 0, 0);
 
@@ -1498,19 +1493,8 @@
             waitingItems.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
             const waitingContainer = document.getElementById('dashWaitingListContainer');
-
-            // 📌 상단 필터바 (완료 품목 제외 체크박스) HTML 생성
-            let html = `
-        <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px; font-size: 11.5px; padding-right: 2px;">
-            <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; color: #555; user-select: none;">
-                <input type="checkbox" ${hideCompletedDashboard ? 'checked' : ''} onchange="toggleHideCompletedDashboard()" style="cursor: pointer; accent-color: #007aff;">
-                완료 품목 제외
-            </label>
-        </div>
-    `;
-
             if (waitingItems.length === 0) {
-                waitingContainer.innerHTML = html + '<div style="color:#666; text-align:center; padding:15px;">조건에 맞는 항목이 없습니다.</div>';
+                waitingContainer.innerHTML = '<div style="color:#666; text-align:center; padding:15px;">출고 대기 중인 항목이 없습니다.</div>';
                 return;
             }
 
@@ -1525,9 +1509,19 @@
             });
 
             const sortedMonths = Object.keys(groupedByMonth).sort();
+            let html = '';
 
             sortedMonths.forEach(monthKey => {
                 const items = groupedByMonth[monthKey];
+
+                // 해당 월의 완료 제외 체크 상태 확인
+                const isHideDone = hideCompletedMonths[monthKey] || false;
+
+                // 완료 제외 옵션이 켜져 있으면 해당 월 아이템들 중 완료된 것 필터링
+                const renderItems = items.filter(log => {
+                    if (isHideDone && log.isDone) return false;
+                    return true;
+                });
 
                 let monthTitle = monthKey;
                 if (monthKey !== '미지정') {
@@ -1535,54 +1529,75 @@
                     monthTitle = `${y}년 ${parseInt(m, 10)}월`;
                 }
 
-                const isOpen = (monthKey === currentMonthKey);
+                // 💡 열림/닫힘 상태 체크 (저장된 상태가 없으면 이번 달만 기본 open)
+                if (openMonths[monthKey] === undefined) {
+                    openMonths[monthKey] = (monthKey === currentMonthKey);
+                }
+                const isOpen = openMonths[monthKey];
                 const displayStyle = isOpen ? 'block' : 'none';
                 const arrowIcon = isOpen ? '▼' : '▶';
 
+                // 월별 헤더 (타이틀 영역과 우측 월별 완료 제외 체크박스 결합)
                 html += `
-            <div onclick="toggleMonthGroup('${monthKey}')" style="font-weight:bold; font-size:13px; color:#111; margin: 10px 0 6px 2px; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #ddd; padding-bottom: 4px; cursor:pointer; user-select:none;">
-                <span><span id="arrow-${monthKey}" style="margin-right:4px; font-size:11px;">${arrowIcon}</span> 🗓️ ${monthTitle}</span>
-                <span style="font-size:11px; color:#666; font-weight:normal;">${items.length}건</span>
+            <div style="font-weight:bold; font-size:12.5px; color:#111; margin: 12px 0 6px 2px; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #ddd; padding-bottom: 4px; user-select:none;">
+                
+                <!-- 왼쪽: 접기/펼치기 클릭 영역 -->
+                <div onclick="toggleMonthGroup('${monthKey}')" style="display:flex; align-items:center; gap:5px; cursor:pointer; flex:1;">
+                    <span id="arrow-${monthKey}" style="font-size:11px;">${arrowIcon}</span>
+                    <span>🗓️ ${monthTitle}</span>
+                    <span style="font-size:11px; color:#666; font-weight:normal;">(${renderItems.length}/${items.length}건)</span>
+                </div>
+
+                <!-- 오른쪽: 해당 월 전용 완료 제외 체크박스 -->
+                <label style="font-size:11px; color:#555; cursor:pointer; display:flex; align-items:center; gap:3px; font-weight:normal;" onclick="event.stopPropagation();">
+                    <input type="checkbox" ${isHideDone ? 'checked' : ''} onchange="toggleMonthHideDone('${monthKey}')" style="cursor:pointer; accent-color:#007aff; width:13px; height:13px;">
+                    완료 제외
+                </label>
+
             </div>
             <div id="month-content-${monthKey}" style="display: ${displayStyle};">
         `;
 
-                items.forEach(log => {
-                    let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
+                if (renderItems.length === 0) {
+                    html += `<div style="color:#888; text-align:center; padding:8px; font-size:11.5px;">표시할 항목이 없습니다.</div>`;
+                } else {
+                    renderItems.forEach(log => {
+                        let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
 
-                    let statusBadge = '';
-                    if (log.isHold) {
-                        statusBadge = `<span style="background:#ffcc00; color:#333; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">보류</span>`;
-                    } else if (log.isDone) {
-                        statusBadge = `<span style="background:#34c759; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">완료</span>`;
-                    } else if (log.isOverdue) {
-                        statusBadge = `<span style="background:#ff9500; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">마감초과</span>`;
-                    } else if (log.isUrgent) {
-                        statusBadge = `<span style="background:#ff3b30; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">출고임박</span>`;
-                    } else if (log.currentQty > 0) {
-                        statusBadge = `<span style="background:#007aff; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">진행중</span>`;
-                    } else {
-                        statusBadge = `<span style="background:#888; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">진행전</span>`;
-                    }
+                        let statusBadge = '';
+                        if (log.isHold) {
+                            statusBadge = `<span style="background:#ffcc00; color:#333; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">보류</span>`;
+                        } else if (log.isDone) {
+                            statusBadge = `<span style="background:#34c759; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">완료</span>`;
+                        } else if (log.isOverdue) {
+                            statusBadge = `<span style="background:#ff9500; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">마감초과</span>`;
+                        } else if (log.isUrgent) {
+                            statusBadge = `<span style="background:#ff3b30; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">출고임박</span>`;
+                        } else if (log.currentQty > 0) {
+                            statusBadge = `<span style="background:#007aff; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">진행중</span>`;
+                        } else {
+                            statusBadge = `<span style="background:#888; color:#fff; padding:2px 6px; font-size:10px; border-radius:4px; white-space:nowrap;">진행전</span>`;
+                        }
 
-                    html += `
-                <div style="background:#fff; border:1px solid #e1e4e8; border-radius:6px; padding:6px 10px; margin-bottom:5px; cursor:pointer; display:grid; grid-template-columns: 2fr 1.1fr 0.7fr 0.9fr; align-items:center; gap:6px;" onclick="openDetailLogModal('${log.id}')">
-                    <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
-                        ${statusBadge}
-                        <span style="font-weight:bold; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${log.productName}</span>
+                        html += `
+                    <div style="background:#fff; border:1px solid #e1e4e8; border-radius:6px; padding:6px 10px; margin-bottom:5px; cursor:pointer; display:grid; grid-template-columns: 2fr 1.1fr 0.7fr 0.9fr; align-items:center; gap:6px;" onclick="openDetailLogModal('${log.id}')">
+                        <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+                            ${statusBadge}
+                            <span style="font-weight:bold; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${log.productName}</span>
+                        </div>
+                        <div style="text-align:right; color:#555; font-size:11.5px; white-space:nowrap;">
+                            <b style="color:#007aff;">${log.currentQty.toLocaleString()}</b> / ${log.targetQty.toLocaleString()}
+                        </div>
+                        <div style="text-align:left; color:#888; font-size:11px; white-space:nowrap; padding-left:2px;">
+                            (${percent}%)
+                        </div>
+                        <div style="text-align:right; color:#666; font-size:11px; white-space:nowrap;">
+                            📅 ${log.dueDate.replace(/-/g, '. ')}
+                        </div>
                     </div>
-                    <div style="text-align:right; color:#555; font-size:11.5px; white-space:nowrap;">
-                        <b style="color:#007aff;">${log.currentQty.toLocaleString()}</b> / ${log.targetQty.toLocaleString()}
-                    </div>
-                    <div style="text-align:left; color:#888; font-size:11px; white-space:nowrap; padding-left:2px;">
-                        (${percent}%)
-                    </div>
-                    <div style="text-align:right; color:#666; font-size:11px; white-space:nowrap;">
-                        📅 ${log.dueDate.replace(/-/g, '. ')}
-                    </div>
-                </div>
-            `;
-                });
+                `;
+                    });
+                }
 
                 html += `</div>`;
             });
@@ -1590,25 +1605,16 @@
             waitingContainer.innerHTML = html;
         }
 
-        // 📌 체크박스 변경 시 대시보드를 다시 그려주는 토글 함수
-        function toggleHideCompletedDashboard() {
-            hideCompletedDashboard = !hideCompletedDashboard;
+        // 📌 월별 접기/펼치기 토글 함수 (상태 저장)
+        function toggleMonthGroup(monthKey) {
+            openMonths[monthKey] = !openMonths[monthKey];
             updatePackingDashboard();
         }
 
-        // 📌 월별 그룹 열고 닫기 토글 함수
-        function toggleMonthGroup(monthKey) {
-            const content = document.getElementById(`month-content-${monthKey}`);
-            const arrow = document.getElementById(`arrow-${monthKey}`);
-            if (content && arrow) {
-                if (content.style.display === 'none') {
-                    content.style.display = 'block';
-                    arrow.innerText = '▼';
-                } else {
-                    content.style.display = 'none';
-                    arrow.innerText = '▶';
-                }
-            }
+        // 📌 특정 월의 완료 품목 제외 체크박스 토글 함수
+        function toggleMonthHideDone(monthKey) {
+            hideCompletedMonths[monthKey] = !hideCompletedMonths[monthKey];
+            updatePackingDashboard();
         }
 
         function toggleCompletedSection() {
