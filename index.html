@@ -1452,6 +1452,9 @@
             updatePackingDashboard();
         }
 
+        // 📌 대시보드 전용 완료 품목 제외 상태값 (스크립트 상단 아무 곳이나에 두어도 됨)
+        let hideCompletedDashboard = false;
+
         function updatePackingDashboard() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -1460,7 +1463,6 @@
             const day = String(today.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
 
-            // 현재 년-월 문자열 (예: "2026-08") -> 이번 달 판별용
             const currentMonthKey = `${year}-${month}`;
 
             const sevenDaysLater = new Date(today);
@@ -1470,6 +1472,12 @@
 
             packingLogsList.forEach(log => {
                 let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
+
+                // 💡 '완료 품목 제외'가 켜져 있고, 완료된 항목이라면 이번 리스트 수집에서 제외함!
+                if (hideCompletedDashboard && isDone) {
+                    return;
+                }
+
                 let dueObj = new Date(log.dueDate);
                 dueObj.setHours(0, 0, 0, 0);
 
@@ -1490,8 +1498,19 @@
             waitingItems.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
             const waitingContainer = document.getElementById('dashWaitingListContainer');
+
+            // 📌 상단 필터바 (완료 품목 제외 체크박스) HTML 생성
+            let html = `
+        <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px; font-size: 11.5px; padding-right: 2px;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; color: #555; user-select: none;">
+                <input type="checkbox" ${hideCompletedDashboard ? 'checked' : ''} onchange="toggleHideCompletedDashboard()" style="cursor: pointer; accent-color: #007aff;">
+                완료 품목 제외
+            </label>
+        </div>
+    `;
+
             if (waitingItems.length === 0) {
-                waitingContainer.innerHTML = '<div style="color:#666; text-align:center; padding:15px;">출고 대기 중인 항목이 없습니다.</div>';
+                waitingContainer.innerHTML = html + '<div style="color:#666; text-align:center; padding:15px;">조건에 맞는 항목이 없습니다.</div>';
                 return;
             }
 
@@ -1507,8 +1526,6 @@
 
             const sortedMonths = Object.keys(groupedByMonth).sort();
 
-            let html = '';
-
             sortedMonths.forEach(monthKey => {
                 const items = groupedByMonth[monthKey];
 
@@ -1518,14 +1535,12 @@
                     monthTitle = `${y}년 ${parseInt(m, 10)}월`;
                 }
 
-                // 💡 핵심: 현재 달(currentMonthKey)과 일치하면 기본 오픈('block'), 나머지는 닫힘('none')
                 const isOpen = (monthKey === currentMonthKey);
                 const displayStyle = isOpen ? 'block' : 'none';
                 const arrowIcon = isOpen ? '▼' : '▶';
 
-                // 월별 헤더 (클릭 시 토글 함수 실행)
                 html += `
-            <div onclick="toggleMonthGroup('${monthKey}')" style="font-weight:bold; font-size:13px; color:#111; margin: 12px 0 6px 2px; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #ddd; padding-bottom: 4px; cursor:pointer; user-select:none;">
+            <div onclick="toggleMonthGroup('${monthKey}')" style="font-weight:bold; font-size:13px; color:#111; margin: 10px 0 6px 2px; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #ddd; padding-bottom: 4px; cursor:pointer; user-select:none;">
                 <span><span id="arrow-${monthKey}" style="margin-right:4px; font-size:11px;">${arrowIcon}</span> 🗓️ ${monthTitle}</span>
                 <span style="font-size:11px; color:#666; font-weight:normal;">${items.length}건</span>
             </div>
@@ -1569,14 +1584,19 @@
             `;
                 });
 
-                // 월별 컨테이너 닫기
                 html += `</div>`;
             });
 
             waitingContainer.innerHTML = html;
         }
 
-        // 📌 월별 그룹 열고 닫기를 처리해주는 토글 함수 (아무 데나 전역으로 배치)
+        // 📌 체크박스 변경 시 대시보드를 다시 그려주는 토글 함수
+        function toggleHideCompletedDashboard() {
+            hideCompletedDashboard = !hideCompletedDashboard;
+            updatePackingDashboard();
+        }
+
+        // 📌 월별 그룹 열고 닫기 토글 함수
         function toggleMonthGroup(monthKey) {
             const content = document.getElementById(`month-content-${monthKey}`);
             const arrow = document.getElementById(`arrow-${monthKey}`);
