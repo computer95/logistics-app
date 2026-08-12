@@ -936,6 +936,14 @@
             <div id="dailyAddSection"
                 style="background:#f9fbfd; padding:10px; border-radius:6px; margin-bottom:10px; border:1px solid #e1e8f0;">
                 <label style="font-size:12px; font-weight:bold; color:#333; margin-bottom:4px;">➕ 일일 작업 현황 추가</label>
+
+                <!-- 🚀 [요청 반영] +1P (1파레트 추가) 버튼 신설 -->
+                <div style="display:flex; gap:4px; margin-bottom:4px;">
+                    <button type="button" class="main-btn"
+                        style="margin-top:0; padding:6px; font-size:12px; background:#007aff; flex:1;"
+                        onclick="addPaletteWorkLogRecord()">📦 +1P (1파레트 추가)</button>
+                </div>
+
                 <div style="display:flex; gap:4px; margin-bottom:4px;">
                     <input type="date" id="dailyWorkDate" style="flex:1; padding:6px; font-size:12px;">
                     <input type="number" id="dailyWorkQty" placeholder="수량" style="flex:1; padding:6px; font-size:12px;"
@@ -1751,6 +1759,57 @@
                 loadPackingLogs();
             } catch (e) {
                 alert('일정 저장 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 📌 1파레트 분량 세트수 자동 계산 및 작업 기록 추가 함수
+        async function addPaletteWorkLogRecord() {
+            let logId = document.getElementById('detailLogId').value;
+            let log = packingLogsList.find(l => l.id === logId);
+            if (!log) return;
+
+            let p = productList.find(item => item.id === log.productId);
+            if (!p || (!p.palletToCarton && !p.cartonToInner && !p.setToInner)) {
+                alert('⚠️ 해당 제품의 파레트 및 포장 사양 정보가 등록되어 있지 않습니다. 제품 관리를 확인해주세요.');
+                return;
+            }
+
+            // 1파레트당 총 세트(SET) 수 계산 로직
+            let cartonPerPallet = p.palletToCarton || 24;
+            let unitsPerPalletSet = 0;
+
+            if (p.hasSet === 'O') {
+                let setPerCarton = p.cartonToSet || 0;
+                unitsPerPalletSet = cartonPerPallet * setPerCarton;
+            } else {
+                let danPerCarton = p.cartonToInner || 0;
+                let unitPerDan = p.innerToUnit || 1;
+                // 세트가 없는 경우 단케이스 기준으로 환산하거나 카톤당 단개수 기준 처리
+                unitsPerPalletSet = cartonPerPallet * danPerCarton;
+            }
+
+            if (unitsPerPalletSet <= 0) {
+                alert('⚠️ 파레트 수량 계산에 필요한 사양 값이 올바르지 않습니다.');
+                return;
+            }
+
+            let date = new Date().toISOString().substring(0, 10);
+            let qty = unitsPerPalletSet;
+            let memo = '1파레트 추가 (+1P)';
+
+            if (!log.history) log.history = [];
+            log.history.push({ date, qty, memo });
+            log.currentQty = log.history.reduce((sum, h) => sum + h.qty, 0);
+
+            try {
+                await db.collection('packing_logs').doc(logId).update({
+                    history: log.history,
+                    currentQty: log.currentQty
+                });
+                alert(`✅ 1파레트 분량(${qty.toLocaleString()} SET)이 작업 현황에 추가되었습니다.`);
+                openDetailLogModal(logId);
+            } catch (e) {
+                alert('❌ 파레트 작업 기록 추가 오류: ' + e.message);
             }
         }
 
