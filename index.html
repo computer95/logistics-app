@@ -1462,6 +1462,7 @@
                 if (document.getElementById('logTab').classList.contains('active')) {
                     renderPackingLogsHtml();
                     updatePackingDashboard();
+                    renderCalendarBoard();
                 }
             } catch (e) {
                 console.error("포장일지 불러오기 오류", e);
@@ -2799,6 +2800,120 @@
                 console.error(e);
                 alert('이미지 생성 중 오류가 발생했습니다.');
             }
+        }
+
+        // 1. 캘린더 기준 날짜 상태 변수
+        let calendarCurrentDate = new Date();
+
+        // 2. 월 이동 함수 (이전 달 / 다음 달)
+        function changeCalendarMonth(direction) {
+            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + direction);
+            renderCalendarBoard();
+        }
+
+        // 3. 오늘 기준 월로 바로 돌아오는 함수
+        function goToCurrentCalendarMonth() {
+            calendarCurrentDate = new Date();
+            renderCalendarBoard();
+        }
+
+        // 4. PC 화면용 캘린더 대형 보드판 렌더링 함수
+        function renderCalendarBoard() {
+            const container = document.getElementById('pcCalendarGridContainer');
+            if (!container) return; // PC 화면이 아니거나 컨테이너가 없으면 중단
+
+            const year = calendarCurrentDate.getFullYear();
+            const month = calendarCurrentDate.getMonth(); // 0 (1월) ~ 11 (12월)
+
+            // 상단 연도/월 타이틀 갱신
+            const titleEl = document.getElementById('calendarCurrentMonthTitle');
+            if (titleEl) {
+                titleEl.innerText = `${year}년 ${month + 1}월`;
+            }
+
+            const firstDayIndex = new Date(year, month, 1).getDay(); // 이번 달 1일의 요일 (0: 일요일)
+            const lastDay = new Date(year, month + 1, 0).getDate();    // 이번 달 마지막 날짜
+            const prevLastDay = new Date(year, month, 0).getDate();    // 저번 달 마지막 날짜
+
+            let html = `
+        <div class="calendar-grid">
+            <div class="calendar-weekday" style="color:#ff3b30;">일</div>
+            <div class="calendar-weekday">월</div>
+            <div class="calendar-weekday">화</div>
+            <div class="calendar-weekday">수</div>
+            <div class="calendar-weekday">목</div>
+            <div class="calendar-weekday">금</div>
+            <div class="calendar-weekday" style="color:#007aff;">토</div>
+    `;
+
+            // 포장일지 데이터를 날짜별(YYYY-MM-DD)로 분류하기 위한 맵핑
+            const logsByDate = {};
+            if (typeof packingLogsList !== 'undefined' && Array.isArray(packingLogsList)) {
+                packingLogsList.forEach(log => {
+                    if (!log.dueDate) return;
+                    if (!logsByDate[log.dueDate]) logsByDate[log.dueDate] = [];
+                    logsByDate[log.dueDate].push(log);
+                });
+            }
+
+            let totalCells = 42; // 달력 전체 칸수 (6주 x 7일 = 42칸 고정)
+            let dayCount = 1;
+            let nextMonthDayCount = 1;
+
+            for (let i = 0; i < totalCells; i++) {
+                let cellDateStr = '';
+                let isOtherMonth = false;
+                let cellDay = 1;
+
+                if (i < firstDayIndex) {
+                    // 1. 이전 달 빈 칸 채우기
+                    cellDay = prevLastDay - (firstDayIndex - 1 - i);
+                    let prevM = month === 0 ? 12 : month;
+                    let prevY = month === 0 ? year - 1 : year;
+                    cellDateStr = `${prevY}-${String(prevM).padStart(2, '0')}-${String(cellDay).padStart(2, '0')}`;
+                    isOtherMonth = true;
+                } else if (dayCount <= lastDay) {
+                    // 2. 이번 달 날짜 채우기
+                    cellDay = dayCount++;
+                    cellDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(cellDay).padStart(2, '0')}`;
+                    isOtherMonth = false;
+                } else {
+                    // 3. 다음 달 빈 칸 채우기
+                    cellDay = nextMonthDayCount++;
+                    let nextM = month === 11 ? 1 : month + 2;
+                    let nextY = month === 11 ? year + 1 : year;
+                    cellDateStr = `${nextY}-${String(nextM).padStart(2, '0')}-${String(cellDay).padStart(2, '0')}`;
+                    isOtherMonth = true;
+                }
+
+                const cellClass = isOtherMonth ? 'calendar-day-cell other-month' : 'calendar-day-cell';
+                const dayLogs = logsByDate[cellDateStr] || [];
+
+                html += `
+            <div class="${cellClass}">
+                <div class="calendar-day-number">${cellDay}</div>
+                <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:2px;">
+        `;
+
+                // 해당 날짜에 등록된 포장일지 아이템들 뿌려주기
+                dayLogs.forEach(log => {
+                    let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
+                    let badgeClass = '';
+                    if (log.isHold) badgeClass = 'hold';
+                    else if (isDone) badgeClass = 'done';
+
+                    html += `
+                <div class="calendar-event-item ${badgeClass}" onclick="openDetailLogModal('${log.id}')" title="${log.productName} (${log.currentQty}/${log.targetQty})">
+                    ${log.productName} (${log.currentQty}/${log.targetQty})
+                </div>
+            `;
+                });
+
+                html += `</div></div>`;
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
         }
     </script>
 </body>
