@@ -78,10 +78,21 @@
             }
         }
 
+        /* 1. PC 화면 전체 레이아웃 (좌우 비율 조정) */
+        .log-layout-wrapper {
+            display: grid;
+            /* 왼쪽(캘린더)을 더 넓게 쓰고 싶다면 앞쪽 숫자를 키워줘! (예: 4fr 1fr 또는 3fr 2fr) */
+            /* 현재 왼쪽 캘린더 영역 : 오른쪽 대시보드 영역 = 약 3:1 또는 원하는 비율로 조절 가능 */
+            grid-template-columns: 3.5fr 1.2fr;
+            gap: 20px;
+            /* 좌우 박스 사이의 여백 */
+            align-items: start;
+        }
+
         /* 1. 전체 달력을 7열 격자 구조로 만듦 */
         .calendar-grid {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            grid-template-columns: repeat(5, 1fr) 0.3fr 0.3fr;
             /* 요일별로 정확히 7개 열 생성 */
             grid-template-rows: repeat(6, 130px);
             gap: 1px;
@@ -118,7 +129,7 @@
             color: #bbb;
         }
 
-        .celender-day-cell > div:last-child {
+        .celender-day-cell>div:last-child {
             flex: 1;
             overflow-y: auto;
         }
