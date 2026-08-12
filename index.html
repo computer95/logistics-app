@@ -42,14 +42,16 @@
             }
 
             /* PC용 상자를 2단 플렉스 레이아웃으로 표시 */
-            #logTabPC {
+            #logTabPC .log-layout-wrapper {
                 display: flex !important;
                 gap: 20px;
                 align-items: flex-start;
+                min-width: 0;
             }
 
             #logTabPC .log-main-section {
-                flex: 1.3;
+                flex: 3.5;
+                min-width: 0;
             }
 
             #logTabPC .log-dashboard-section {
@@ -76,23 +78,6 @@
             #logTabPC {
                 display: none !important;
             }
-        }
-
-        /* 1. PC 화면 전체 레이아웃 (좌우 비율 조정) */
-        .log-layout-wrapper {
-            display: grid !important;
-            /* 왼쪽(캘린더)을 더 넓게 쓰고 싶다면 앞쪽 숫자를 키워줘! (예: 4fr 1fr 또는 3fr 2fr) */
-            /* 현재 왼쪽 캘린더 영역 : 오른쪽 대시보드 영역 = 약 3:1 또는 원하는 비율로 조절 가능 */
-            grid-template-columns: minmax(0, 4fr) minmax(0, 1fr) !important;
-            gap: 20px;
-            /* 좌우 박스 사이의 여백 */
-            align-items: start;
-            min-width: 0;
-        }
-
-        .log-layout-wrapper > div {
-            min-width: 0;
-            overflow: hidden;
         }
 
         /* 1. 전체 달력을 7열 격자 구조로 만듦 */
