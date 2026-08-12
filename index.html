@@ -941,7 +941,7 @@
                 <div style="display:flex; gap:4px; margin-bottom:4px;">
                     <button type="button" class="main-btn"
                         style="margin-top:0; padding:6px; font-size:12px; background:#007aff; flex:1;"
-                        onclick="addPaletteWorkLogRecord()">📦 +1P (1파레트 추가)</button>
+                        onclick="addPaletteWorkLogRecord()">📦 +1 파레트 추가)</button>
                 </div>
 
                 <div style="display:flex; gap:4px; margin-bottom:4px;">
@@ -1800,8 +1800,6 @@
             if (existingEntry) {
                 // [수정] 같은 날짜가 있으면 수량만 추가
                 existingEntry.qty += unitsPerPalletSet;
-                // 필요시 메모 보강 (선택사항)
-                existingEntry.memo = (existingEntry.memo || '포장 작업') + ' (+1P 합산)';
             } else {
                 // [신규] 없으면 새로 기록 추가
                 log.history.push({ date: today, qty: unitsPerPalletSet, memo: '1파레트 추가' });
