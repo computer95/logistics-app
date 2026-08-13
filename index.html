@@ -3117,7 +3117,6 @@
                     let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
                     let badgeClass = '';
                     if (log.isHold) badgeClass = 'hold';
-                    else if (isDone) badgeClass = 'done';
                     else if (!isDone && log.currentQty === 0 && !log.isHold) {
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
@@ -3134,7 +3133,7 @@
                             badgeClass = 'progress';
                         }
                     } else {
-                        badgeClass = 'progress';
+                        badgeClass = 'done';
                     }
 
                     html += `
