@@ -154,10 +154,11 @@
         }
 
         .status-dot {
+            display: inline-block; 
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            display: inline-block;
+            margin-right: 6px;
         }
 
         .status-none {
@@ -3117,10 +3118,11 @@
                     else if (isDone) badgeClass = 'done';
 
                     html += `
-                <div class="calendar-event-item ${badgeClass}" onclick="openDetailLogModal('${log.id}')" title="${log.productName} (${log.currentQty}/${log.targetQty})">
-                    ${log.productName} (${log.currentQty}/${log.targetQty})
-                </div>
-            `;
+    <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${log.productName} (${log.currentQty}/${log.targetQty})">
+        <span class="status-dot ${badgeClass}"></span>
+        ${log.productName}
+    </div>
+`;
                 });
 
                 html += `</div></div>`;
