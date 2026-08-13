@@ -3076,6 +3076,7 @@
             <div class="calendar-weekday" style="color:#007aff;">토</div>
     `;
 
+            // 📌 [수동 휴일 관리] 'YYYY-MM-DD': '휴일 내용' 형태로 입력하면 날짜, 내용 모두 빨간색으로 표시됨!
             const customHolidays = {
                 '2026-01-01': '신정',
                 '2026-02-16': '설날 연휴',
@@ -3099,32 +3100,30 @@
                 '2026-10-05': '대체공휴일',
                 '2026-10-09': '한글날',
                 '2026-12-25': '크리스마스'
-            }
+            };
 
-            // 모드(출고일정 vs 포장내역)에 따라 데이터를 날짜별(YYYY-MM-DD)로 분류하는 로직 분기
+            // 현재 모드 안전하게 가져오기
+            const currentMode = (typeof currentCalendarMode !== 'undefined') ? currentCalendarMode : 'schedule';
+
             const logsByDate = {};
-            const historyByDate = {}; // 포장내역 모드용
+            const historyByDate = {};
 
             if (typeof packingLogsList !== 'undefined' && Array.isArray(packingLogsList)) {
                 packingLogsList.forEach(log => {
-                    // 1. 출고일정 모드용 매핑 (dueDate 기준)
-                    if (currentCalendarMode === 'schedule' || !currentCalendarMode) {
+                    if (currentMode === 'schedule') {
                         if (log.dueDate) {
                             if (!logsByDate[log.dueDate]) logsByDate[log.dueDate] = [];
                             logsByDate[log.dueDate].push(log);
                         }
                     }
-
-                    // 2. 포장내역 모드용 매핑 (history 내부의 date 기준)
-                    if (currentCalendarMode === 'history') {
+                    if (currentMode === 'history') {
                         if (log.history && Array.isArray(log.history)) {
                             log.history.forEach(h => {
                                 if (!h.date) return;
                                 if (!historyByDate[h.date]) historyByDate[h.date] = [];
-                                // 어떤 제품을 몇 개 포장했는지 정보를 함께 담아줍니다.
                                 historyByDate[h.date].push({
                                     ...log,
-                                    historyQty: h.qty // 해당 날짜에 포장한 수량
+                                    historyQty: h.qty
                                 });
                             });
                         }
@@ -3132,8 +3131,7 @@
                 });
             }
 
-            // 현재 모드에 따라 어떤 데이터를 쓸지 결정
-            const activeDataMap = (currentCalendarMode === 'history') ? historyByDate : logsByDate;
+            const activeDataMap = (currentMode === 'history') ? historyByDate : logsByDate;
 
             let totalCells = 42; // 달력 전체 칸수 (6주 x 7일 = 42칸 고정)
             let dayCount = 1;
@@ -3145,19 +3143,16 @@
                 let cellDay = 1;
 
                 if (i < firstDayIndex) {
-                    // 1. 이전 달 빈 칸 채우기
                     cellDay = prevLastDay - (firstDayIndex - 1 - i);
                     let prevM = month === 0 ? 12 : month;
                     let prevY = month === 0 ? year - 1 : year;
                     cellDateStr = `${prevY}-${String(prevM).padStart(2, '0')}-${String(cellDay).padStart(2, '0')}`;
                     isOtherMonth = true;
                 } else if (dayCount <= lastDay) {
-                    // 2. 이번 달 날짜 채우기
                     cellDay = dayCount++;
                     cellDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(cellDay).padStart(2, '0')}`;
                     isOtherMonth = false;
                 } else {
-                    // 3. 다음 달 빈 칸 채우기
                     cellDay = nextMonthDayCount++;
                     let nextM = month === 11 ? 1 : month + 2;
                     let nextY = month === 11 ? year + 1 : year;
@@ -3165,9 +3160,11 @@
                     isOtherMonth = true;
                 }
 
+                // 일요일 및 수동 휴일 판별
                 const isSunday = (i % 7 === 0);
-                const isCustomHoliday = customHolidays.includes(cellDateStr);
-                const isRedDay = isSunday || isCustomHoliday; // 일요일이거나 수동 지정 휴일이면 빨간 날!
+                const holidayName = customHolidays[cellDateStr]; // 등록된 휴일 이름 가져오기
+                const isCustomHoliday = !!holidayName;           // 휴일 이름이 존재하면 true
+                const isRedDay = isSunday || isCustomHoliday;    // 일요일이거나 수동 휴일이면 빨간 날
 
                 const cellClass = isOtherMonth ? 'calendar-day-cell other-month' : 'calendar-day-cell';
                 const dayLogs = activeDataMap[cellDateStr] || [];
@@ -3176,23 +3173,21 @@
 
                 html += `
             <div class="${cellClass}">
-                <div class="calendar-day-number">${cellDay}</div>
+                <div class="calendar-day-number" style="${dayNumberStyle}">${cellDay}</div>
+                ${holidayName ? `<div style="font-size:11px; color:#ff3b30; font-weight:bold; margin-bottom:2px;">${holidayName}</div>` : ''}
                 <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:2px;">
         `;
 
-                // 해당 날짜에 등록된 아이템들 뿌려주기
                 dayLogs.forEach(log => {
                     let badgeClass = '';
                     let displayText = log.productName;
                     let displayTitle = '';
 
-                    if (currentCalendarMode === 'history') {
-                        // [포장내역 모드 스타일 및 텍스트]
-                        badgeClass = 'done'; // 포장 완료된 이력이므로 완료 상태(done) 닷 부여
+                    if (currentMode === 'history') {
+                        badgeClass = 'done';
                         displayText = `${log.productName} +${log.historyQty.toLocaleString()}`;
                         displayTitle = `${log.productName} (포장수량: +${log.historyQty.toLocaleString()})`;
                     } else {
-                        // [출고일정 모드 스타일 및 텍스트 (기존 로직 유지)]
                         let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
                         if (log.isHold) badgeClass = 'hold';
                         else if (isDone) badgeClass = 'done';
@@ -3217,10 +3212,12 @@
                         displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
                     }
 
+                    let itemTextStyle = isRedDay ? 'color:#ff3b30;' : '';
+
                     html += `
-                <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${displayTitle}">
+                <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${displayTitle}" style="${itemTextStyle}">
                     <span class="status-dot ${badgeClass}"></span>
-                    ${displayText}
+                    <span style="${itemTextStyle}">${displayText}</span>
                 </div>
             `;
                 });
