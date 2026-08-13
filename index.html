@@ -3164,14 +3164,21 @@
 
                 // 일요일 및 수동 휴일 판별
                 const isSunday = (i % 7 === 0);
+                const isSaturday = (i % 7 === 6);
                 const holidayName = customHolidays[cellDateStr]; // 등록된 휴일 이름 가져오기
                 const isCustomHoliday = !!holidayName;           // 휴일 이름이 존재하면 true
                 const isRedDay = isSunday || isCustomHoliday;    // 일요일이거나 수동 휴일이면 빨간 날
+                const isBlueDay = isSaturday && !isCustomHoliday; // 파란 날 (토요일이면서 공휴일이 아닐 때)
 
                 const cellClass = isOtherMonth ? 'calendar-day-cell other-month' : 'calendar-day-cell';
                 const dayLogs = activeDataMap[cellDateStr] || [];
 
-                const dayNumberStyle = isRedDay ? 'color:#ff3b30; font-weight:bold;' : '';
+                let dayNumberStyle = '';
+                if (isRedDay) {
+                    dayNumberStyle = 'color:#ff3b30; font-weight:bold;';
+                } else if (isBlueDay) {
+                    dayNumberStyle = 'color:#007aff; font-weight:bold;';
+                }
 
                 html += `
             <div class="${cellClass}">
@@ -3214,7 +3221,12 @@
                         displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
                     }
 
-                    let itemTextStyle = isRedDay ? 'color:#ff3b30;' : '';
+                    let itemTextStyle = '';
+                    if (isRedDay) {
+                        itemTextStyle = 'color:#ff3b30;';
+                    } else if (isBlueDay) {
+                        itemTextStyle = 'color:#007aff;';
+                    }
 
                     html += `
                 <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${displayTitle}" style="${itemTextStyle}">
