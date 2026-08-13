@@ -3118,6 +3118,24 @@
                     let badgeClass = '';
                     if (log.isHold) badgeClass = 'hold';
                     else if (isDone) badgeClass = 'done';
+                    else if (!isDone && log.currentQty === 0 && !log.isHold) {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const dueObj = new Date(log.dueDate);
+                        dueObj.setHours(0, 0, 0, 0);
+                        const sevenDaysLater = new Date(today);
+                        sevenDaysLater.setDate(today.getDate() + 7);
+
+                        if (dueObj >= today && dueObj <= sevenDaysLater) {
+                            badgeClass = 'urgent';
+                        } else if (dueObj < today) {
+                            badgeClass = 'overdue';
+                        } else {
+                            badgeClass = 'progress';
+                        }
+                    } else {
+                        badgeClass = 'progress';
+                    }
 
                     html += `
     <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${log.productName} (${log.currentQty}/${log.targetQty})">
