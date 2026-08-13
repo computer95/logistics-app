@@ -3165,8 +3165,14 @@
                     isOtherMonth = true;
                 }
 
+                const isSunday = (i % 7 === 0);
+                const isCustomHoliday = customHolidays.includes(cellDateStr);
+                const isRedDay = isSunday || isCustomHoliday; // 일요일이거나 수동 지정 휴일이면 빨간 날!
+
                 const cellClass = isOtherMonth ? 'calendar-day-cell other-month' : 'calendar-day-cell';
                 const dayLogs = activeDataMap[cellDateStr] || [];
+
+                const dayNumberStyle = isRedDay ? 'color:#ff3b30; font-weight:bold;' : '';
 
                 html += `
             <div class="${cellClass}">
