@@ -135,9 +135,53 @@
             color: #bbb;
         }
 
-        .celender-day-cell>div:last-child {
+        .calendar-day-cell>div:last-child {
             flex: 1;
             overflow-y: auto;
+        }
+
+        .calendar-item {
+            display: block;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-none {
+            background-color: #ccc;
+        }
+
+        .status-urgent {
+            background-color: #ff3b30;
+        }
+
+        .status-progress {
+            background-color: #007aff;
+        }
+
+        .status-done {
+            background-color: #34c759;
+        }
+
+        .status-hold {
+            background-color: #ffcc00;
+        }
+
+        .status-overdue {
+            background-color: #ff9500;
         }
 
         h2 {
