@@ -3217,12 +3217,10 @@
                         displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
                     }
 
-                    let itemTextStyle = isRedDay ? 'color:#ff3b30;' : '';
-
                     html += `
                 <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${displayTitle}">
                     <span class="status-dot ${badgeClass}"></span>
-                    ${displayText}
+                    <span style="${itemTextStyle}">${displayText}</span>
                 </div>
             `;
                 });
