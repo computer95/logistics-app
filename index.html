@@ -2829,12 +2829,12 @@
                         alert('이미지 생성에 실패했습니다.');
                         return;
                     }
-                    const file = new File([blob], `금일작업_${log.productName}_${todayStr}.png`, { type: 'image/png' });
+                    const file = new File([blob], `오늘작업_${log.productName}_${todayStr}.png`, { type: 'image/png' });
 
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
-                                title: '금일 작업',
+                                title: '오늘 작업',
                                 text: `${log.productName} 작업 현황 포장일지`,
                                 files: [file]
                             });
@@ -2849,7 +2849,7 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `금일작업_${log.productName}_${todayStr}.png`;
+                    a.download = `오늘작업_${log.productName}_${todayStr}.png`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
