@@ -3223,9 +3223,11 @@
 
                     let itemTextStyle = '';
                     if (isRedDay) {
-                        itemTextStyle = 'color:#ff3b30;';
+                        itemTextStyle = 'color:#ff3b30; font-size:11px;';
                     } else if (isBlueDay) {
                         itemTextStyle = 'color:#007aff;';
+                    } else {
+                        itemTextStyle = 'font-size:11px;';
                     }
 
                     html += `
