@@ -922,19 +922,19 @@
             <div class="log-main-section">
                 <div class="calendar-board-header">
                     <div style="display:flex; align-items:center; gap:8px;">
+                        <h3 id="calendarCurrentMonthTitle" style="margin:0; font-size:16px; color:#111;">2026년 8월</h3>
                         <button class="sub-btn" onclick="changeCalendarMonth(-1)"
                             style="padding:6px 10px; font-weight:bold; background:#f1f3f5; color:#333;">◀ 이전 달</button>
-                        <h3 id="calendarCurrentMonthTitle" style="margin:0; font-size:16px; color:#111;">2026년 8월</h3>
                         <button class="sub-btn" onclick="changeCalendarMonth(1)"
                             style="padding:6px 10px; font-weight:bold; background:#f1f3f5; color:#333;">다음 달 ▶</button>
                     </div>
 
                     <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="sub-btn" onclick="goToCurrentCalendarMonth()"
+                            style="padding:6px 12px; background:#f1f3f5; color:#333; font-weight:bold;">오늘</button>
                         <button class="sub-btn" onclick="openAddLogModal()"
                             style="background: #007aff; color: white; font-weight: bold; padding: 6px 12px;">+ 일정
                             등록</button>
-                        <button class="sub-btn" onclick="goToCurrentCalendarMonth()"
-                            style="padding:6px 12px; background:#f1f3f5; color:#333; font-weight:bold;">오늘</button>
                     </div>
                 </div>
 
