@@ -3071,15 +3071,39 @@
             <div class="calendar-weekday" style="color:#007aff;">토</div>
     `;
 
-            // 포장일지 데이터를 날짜별(YYYY-MM-DD)로 분류하기 위한 맵핑
+            // 모드(출고일정 vs 포장내역)에 따라 데이터를 날짜별(YYYY-MM-DD)로 분류하는 로직 분기
             const logsByDate = {};
+            const historyByDate = {}; // 포장내역 모드용
+
             if (typeof packingLogsList !== 'undefined' && Array.isArray(packingLogsList)) {
                 packingLogsList.forEach(log => {
-                    if (!log.dueDate) return;
-                    if (!logsByDate[log.dueDate]) logsByDate[log.dueDate] = [];
-                    logsByDate[log.dueDate].push(log);
+                    // 1. 출고일정 모드용 매핑 (dueDate 기준)
+                    if (currentCalendarMode === 'schedule' || !currentCalendarMode) {
+                        if (log.dueDate) {
+                            if (!logsByDate[log.dueDate]) logsByDate[log.dueDate] = [];
+                            logsByDate[log.dueDate].push(log);
+                        }
+                    }
+
+                    // 2. 포장내역 모드용 매핑 (history 내부의 date 기준)
+                    if (currentCalendarMode === 'history') {
+                        if (log.history && Array.isArray(log.history)) {
+                            log.history.forEach(h => {
+                                if (!h.date) return;
+                                if (!historyByDate[h.date]) historyByDate[h.date] = [];
+                                // 어떤 제품을 몇 개 포장했는지 정보를 함께 담아줍니다.
+                                historyByDate[h.date].push({
+                                    ...log,
+                                    historyQty: h.qty // 해당 날짜에 포장한 수량
+                                });
+                            });
+                        }
+                    }
                 });
             }
+
+            // 현재 모드에 따라 어떤 데이터를 쓸지 결정
+            const activeDataMap = (currentCalendarMode === 'history') ? historyByDate : logsByDate;
 
             let totalCells = 42; // 달력 전체 칸수 (6주 x 7일 = 42칸 고정)
             let dayCount = 1;
@@ -3112,7 +3136,7 @@
                 }
 
                 const cellClass = isOtherMonth ? 'calendar-day-cell other-month' : 'calendar-day-cell';
-                const dayLogs = logsByDate[cellDateStr] || [];
+                const dayLogs = activeDataMap[cellDateStr] || [];
 
                 html += `
             <div class="${cellClass}">
@@ -3120,37 +3144,49 @@
                 <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:2px;">
         `;
 
-                // 해당 날짜에 등록된 포장일지 아이템들 뿌려주기
+                // 해당 날짜에 등록된 아이템들 뿌려주기
                 dayLogs.forEach(log => {
-                    let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
                     let badgeClass = '';
-                    if (log.isHold) badgeClass = 'hold';
-                    else if (isDone) badgeClass = 'done';
-                    else if (!isDone && log.currentQty === 0 && !log.isHold) {
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        const dueObj = new Date(log.dueDate);
-                        dueObj.setHours(0, 0, 0, 0);
-                        const sevenDaysLater = new Date(today);
-                        sevenDaysLater.setDate(today.getDate() + 7);
+                    let displayText = log.productName;
+                    let displayTitle = '';
 
-                        if (dueObj >= today && dueObj <= sevenDaysLater) {
-                            badgeClass = 'urgent';
-                        } else if (dueObj < today) {
-                            badgeClass = 'overdue';
-                        } else {
-                            badgeClass = 'none';
-                        }
+                    if (currentCalendarMode === 'history') {
+                        // [포장내역 모드 스타일 및 텍스트]
+                        badgeClass = 'done'; // 포장 완료된 이력이므로 완료 상태(done) 닷 부여
+                        displayText = `${log.productName} +${log.historyQty.toLocaleString()}`;
+                        displayTitle = `${log.productName} (포장수량: +${log.historyQty.toLocaleString()})`;
                     } else {
-                        badgeClass = 'progress';
+                        // [출고일정 모드 스타일 및 텍스트 (기존 로직 유지)]
+                        let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
+                        if (log.isHold) badgeClass = 'hold';
+                        else if (isDone) badgeClass = 'done';
+                        else if (!isDone && log.currentQty === 0 && !log.isHold) {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const dueObj = new Date(log.dueDate);
+                            dueObj.setHours(0, 0, 0, 0);
+                            const sevenDaysLater = new Date(today);
+                            sevenDaysLater.setDate(today.getDate() + 7);
+
+                            if (dueObj >= today && dueObj <= sevenDaysLater) {
+                                badgeClass = 'urgent';
+                            } else if (dueObj < today) {
+                                badgeClass = 'overdue';
+                            } else {
+                                badgeClass = 'none';
+                            }
+                        } else {
+                            badgeClass = 'progress';
+                        }
+                        displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
                     }
 
                     html += `
-    <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${log.productName} (${log.currentQty}/${log.targetQty})">
-        <span class="status-dot ${badgeClass}"></span>
-        ${log.productName}
-    </div>
-`;
+                <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${displayTitle}">
+                    <span class="status-dot ${badgeClass}"></span>
+                    ${displayText}
+                </div>
+            `;
                 });
 
                 html += `</div></div>`;
@@ -3212,6 +3248,23 @@
                 document.getElementById('labelPC').classList.remove('active');
             }
         });
+
+        let currentCalendarMode = 'schedule'; // 'schedule' 또는 'history'
+
+        function switchCalendarMode(mode) {
+            currentCalendarMode = mode;
+
+            // 버튼 스타일 업데이트
+            const buttons = document.querySelectorAll('.mode-tab-btn');
+            buttons[0].style.background = (mode === 'schedule') ? '#fff' : 'transparent';
+            buttons[0].style.color = (mode === 'schedule') ? '#007aff' : '#666';
+
+            buttons[1].style.background = (mode === 'history') ? '#fff' : 'transparent';
+            buttons[1].style.color = (mode === 'history') ? '#007aff' : '#666';
+
+            // 캘린더 재렌더링
+            renderCalendarBoard();
+        }
     </script>
 </body>
 
