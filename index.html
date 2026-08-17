@@ -3072,14 +3072,14 @@
             const prevLastDay = new Date(year, month, 0).getDate();    // 저번 달 마지막 날짜
 
             let html = `
-        <div class="calendar-grid">
-            <div class="calendar-weekday" style="color:#ff3b30;">일</div>
-            <div class="calendar-weekday">월</div>
-            <div class="calendar-weekday">화</div>
-            <div class="calendar-weekday">수</div>
-            <div class="calendar-weekday">목</div>
-            <div class="calendar-weekday">금</div>
-            <div class="calendar-weekday" style="color:#007aff;">토</div>
+    <div class="calendar-grid">
+        <div class="calendar-weekday" style="color:#ff3b30;">일</div>
+        <div class="calendar-weekday">월</div>
+        <div class="calendar-weekday">화</div>
+        <div class="calendar-weekday">수</div>
+        <div class="calendar-weekday">목</div>
+        <div class="calendar-weekday">금</div>
+        <div class="calendar-weekday" style="color:#007aff;">토</div>
     `;
 
             // 📌 [수동 휴일 관리] 'YYYY-MM-DD': '휴일 내용' 형태로 입력하면 날짜, 내용 모두 빨간색으로 표시됨!
@@ -3177,9 +3177,9 @@
                 const isBlueDay = isSaturday && !isCustomHoliday; // 파란 날 (토요일이면서 공휴일이 아닐 때)
 
                 const isToday = (cellDateStr === todayStr);
-                const cellClass = isOtherMonth ? 'calendar-day-cell other-month' : 'calendar-day-cell';
+                let cellClass = isOtherMonth ? 'calendar-day-cell other-month' : 'calendar-day-cell';
                 if (isToday) cellClass += ' today';
-                
+
                 const dayLogs = activeDataMap[cellDateStr] || [];
 
                 let dayNumberStyle = '';
@@ -3190,11 +3190,11 @@
                 }
 
                 html += `
-            <div class="${cellClass}">
-                <div class="calendar-day-number" style="${dayNumberStyle}">${cellDay}</div>
-                ${holidayName ? `<div style="font-size:11px; color:#ff3b30; font-weight:bold; margin-bottom:2px;">${holidayName}</div>` : ''}
-                <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:2px;">
-        `;
+        <div class="${cellClass}">
+            <div class="calendar-day-number" style="${dayNumberStyle}">${cellDay}</div>
+            ${holidayName ? `<div style="font-size:11px; color:#ff3b30; font-weight:bold; margin-bottom:2px;">${holidayName}</div>` : ''}
+            <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:2px;">
+    `;
 
                 dayLogs.forEach(log => {
                     let badgeClass = '';
@@ -3240,11 +3240,11 @@
                     }
 
                     html += `
-                <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${displayTitle}" style="${itemTextStyle}">
-                    <span class="status-dot ${badgeClass}"></span>
-                    <span style="${itemTextStyle}">${displayText}</span>
-                </div>
-            `;
+            <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${displayTitle}" style="${itemTextStyle}">
+                <span class="status-dot ${badgeClass}"></span>
+                <span style="${itemTextStyle}">${displayText}</span>
+            </div>
+        `;
                 });
 
                 html += `</div></div>`;
