@@ -145,6 +145,11 @@
             overflow-y: auto;
         }
 
+        .calender-day-cell.today {
+            background-color: #f0f8ff;
+            border: 2px solid #007aff;
+        }
+
         .calendar-item {
             display: block;
             align-items: center;
@@ -3054,6 +3059,7 @@
 
             const year = calendarCurrentDate.getFullYear();
             const month = calendarCurrentDate.getMonth(); // 0 (1월) ~ 11 (12월)
+            const todayStr = new Date().toISOString().substring(0, 10);
 
             // 상단 연도/월 타이틀 갱신
             const titleEl = document.getElementById('calendarCurrentMonthTitle');
@@ -3170,7 +3176,10 @@
                 const isRedDay = isSunday || isCustomHoliday;    // 일요일이거나 수동 휴일이면 빨간 날
                 const isBlueDay = isSaturday && !isCustomHoliday; // 파란 날 (토요일이면서 공휴일이 아닐 때)
 
+                const isToday = (cellDateStr === todayStr);
                 const cellClass = isOtherMonth ? 'calendar-day-cell other-month' : 'calendar-day-cell';
+                if (isToday) cellClass += ' today';
+                
                 const dayLogs = activeDataMap[cellDateStr] || [];
 
                 let dayNumberStyle = '';
