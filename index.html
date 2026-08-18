@@ -1807,21 +1807,22 @@
             resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        async function loadPackingLogs() {
-            try {
-                const snapshot = await db.collection('packing_logs').orderBy('dueDate', 'asc').get();
+        function loadPackingLogs() {
+            db.collection('packing_logs').orderBy('dueDate', 'asc').onSnapshot(snapshot => {
                 packingLogsList = [];
                 snapshot.forEach(doc => {
                     packingLogsList.push({ id: doc.id, ...doc.data() });
                 });
-                if (document.getElementById('logTab').classList.contains('active')) {
-                    renderPackingLogsHtml();
-                    updatePackingDashboard();
+
+                // 데이터 변경 시 화면 갱신
+                renderPackingLogsHtml();
+                updatePackingDashboard();
+                if (typeof renderCalendarBoard === 'function') {
                     renderCalendarBoard();
                 }
-            } catch (e) {
-                console.error("포장일지 불러오기 오류", e);
-            }
+            }, error => {
+                console.error("포장일지 실시간 동기화 오류:", error);
+            });
         }
 
         function renderPackingLogsHtml() {
