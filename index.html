@@ -3332,6 +3332,7 @@
     `;
 
                 dayLogs.forEach(log => {
+                    console.log(`[디버깅] 상품: ${log.productName} | 날짜: ${cellDateStr} | 오늘: ${todayStr} | 시간: ${currentHour} | 현재수량: ${log.currentQty} | 목표수량: ${log.targetQty}`);
                     let badgeClass = '';
                     let dotStyle = ''; // 인라인 파란색 제어를 위한 스타일 변수
                     let displayText = log.productName;
