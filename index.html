@@ -915,6 +915,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/@google/genai"></script>
 </head>
 
 <body>
@@ -1033,6 +1035,14 @@
 
         <div id="dietEditBox"
             style="background:#f8f9fa; border:1px solid #007aff; padding:12px; border-radius:8px; margin-bottom:15px; display:none;">
+
+            <!-- 📸 [추가] 이미지 업로드 및 자동 등록 영역 -->
+            <div style="background:#eef4ff; border:1px dashed #007aff; padding:10px; border-radius:6px; margin-bottom:12px; text-align:center;">
+                <label style="font-size:12px; font-weight:bold; color:#007aff; margin-bottom:6px; display:block;">🤖 AI 식단 이미지 자동 인식</label>
+                <input type="file" id="dietImageInput" accept="image/*" style="font-size:12px; margin-bottom:6px; width:100%;">
+                <button type="button" class="sub-btn" style="background:#007aff; color:white; width:100%; padding:8px; font-weight:bold; font-size:13px;" onclick="uploadAndParseDietImage()">이미지로 자동 등록하기</button>
+            </div>
+
             <p style="font-size:11.5px; color:#007aff; margin-top:0; font-weight:bold;">* 복사한 텍스트를 각 요일에 붙여넣으세요 (줄바꿈
                 포함)
             </p>
@@ -1579,6 +1589,82 @@
                     });
                 }
             } catch (e) { console.error(e); }
+        }
+
+        // 🤖 Gemini API를 이용한 식단 이미지 분석 및 자동 등록 함수
+        async function uploadAndParseDietImage() {
+            const fileInput = document.getElementById('dietImageInput');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('⚠️ 업로드할 식단표 이미지를 선택해주세요.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function (e) {
+                const base64Data = e.target.result.split(',')[1];
+                const mimeType = file.type || 'image/jpeg';
+
+                alert('🔄 AI가 식단표를 분석 중입니다. 잠시만 기다려주세요...');
+
+                try {
+                    const ai = new GoogleGenAI({ apiKey: "AIzaSyDYk-xY-AppgFlZyu08F0O3pNUG6FIu_E0" });
+                    
+                    const promptText = `
+                        첨부된 주간 식단표 이미지에서 월요일, 화요일, 수요일, 목요일, 금요일의 중식 메뉴를 추출해주세요.
+                        - 원산지 정보(예: 원산지: 쌀(국내산) 등)는 절대 포함하지 말고 생략해주세요.
+                        - 오직 음식 메뉴 이름들만 줄바꿈(\n) 형태로 깔끔하게 정리해주세요.
+                        - 반드시 아래 JSON 형식으로만 응답해주세요. 마크다운 백틱(```json ... ```) 없이 순수 JSON 문자열로만 응답하세요.
+                        {
+                            "mon": "월요일 메뉴 내용",
+                            "tue": "화요일 메뉴 내용",
+                            "wed": "수요일 메뉴 내용",
+                            "thu": "목요일 메뉴 내용",
+                            "fri": "금요일 메뉴 내용"
+                        }
+                    `;
+
+                    const response = await ai.models.generateContent({
+                        model: 'gemini-2.5-flash',
+                        contents: [
+                            {
+                                role: 'user',
+                                parts: [
+                                    { text: promptText },
+                                    {
+                                        inlineData: {
+                                            data: base64Data,
+                                            mimeType: mimeType
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    });
+
+                    let textResponse = response.text.trim();
+                    // 혹시 모를 마크다운 코드블록 제거
+                    textResponse = textResponse.replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/\s*```$/, '');
+
+                    const parsedData = JSON.parse(textResponse);
+
+                    // textarea에 각각 값 채워넣기
+                    if (parsedData.mon) document.getElementById('editDiet_mon').value = parsedData.mon;
+                    if (parsedData.tue) document.getElementById('editDiet_tue').value = parsedData.tue;
+                    if (parsedData.wed) document.getElementById('editDiet_wed').value = parsedData.wed;
+                    if (parsedData.thu) document.getElementById('editDiet_thu').value = parsedData.thu;
+                    if (parsedData.fri) document.getElementById('editDiet_fri').value = parsedData.fri;
+
+                    alert('✨ 식단 인식이 완료되었습니다! 내용 확인 후 [식단 저장하기] 버튼을 눌러주세요.');
+
+                } catch (error) {
+                    console.error("Gemini 식단 분석 오류:", error);
+                    alert('❌ 이미지 분석 중 오류가 발생했습니다. 다시 시도해 주세요.');
+                }
+            };
+
+            reader.readAsDataURL(file);
         }
 
         function switchTab(tabId, element) {
