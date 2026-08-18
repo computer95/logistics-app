@@ -3333,31 +3333,30 @@
 
                 dayLogs.forEach(log => {
                     let badgeClass = '';
-                    let dotStyle = ''; // 인라인 파란색 제어를 위한 스타일 변수
+                    let dotStyle = ''; // 📌 루프마다 무조건 초기화
                     let displayText = log.productName;
                     let displayTitle = '';
 
+                    // 1. 포장 내역 모드 로직
                     if (currentMode === 'history') {
-                        // 📌 [포장 내역 모드 전용 규칙] 오늘이면 파랑/초록, 오늘이 아니면 무조건 초록
                         let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
 
                         if (isToday) {
                             if (isDone || currentHour >= 18) {
-                                badgeClass = 'done'; // 완료되었거나 18시 이후면 초록색
-                                dotStyle = '';
+                                badgeClass = 'done';
                             } else {
-                                badgeClass = '';
-                                dotStyle = 'background-color: #007aff !important;'; // 18시 전 미완료는 강제 파란색
+                                // 📌 포장내역 전용 파란색 클래스 사용 (기존 progress와 분리)
+                                badgeClass = 'history-blue';
+                                dotStyle = 'background-color: #007aff !important;';
                             }
                         } else {
-                            badgeClass = 'done'; // 오늘이 아니면 무조건 초록색
-                            dotStyle = '';
+                            badgeClass = 'done';
                         }
-
                         displayText = `${log.productName} +${log.historyQty.toLocaleString()}`;
                         displayTitle = `${log.productName} (포장수량: +${log.historyQty.toLocaleString()})`;
-                    } else {
-                        // 📌 [출고 일정 모드] 기존 원본 로직 100% 그대로 유지 (절대 안 건드림!)
+                    }
+                    // 2. 출고 일정 모드 로직 (원본 그대로!)
+                    else {
                         let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
 
                         if (log.isHold) {
@@ -3383,6 +3382,7 @@
                         displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
                     }
 
+                    // 텍스트 색상 로직
                     let itemTextStyle = '';
                     if (isRedDay) {
                         itemTextStyle = 'color:#ff3b30; font-size:14px;';
@@ -3393,11 +3393,11 @@
                     }
 
                     html += `
-            <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${displayTitle}" style="${itemTextStyle}">
-                <span class="status-dot ${badgeClass}" style="${dotStyle}"></span>
-                <span style="${itemTextStyle}">${displayText}</span>
-            </div>
-        `;
+                        <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${displayTitle}" style="${itemTextStyle}">
+                            <span class="status-dot ${badgeClass}" style="${dotStyle}"></span>
+                            <span style="${itemTextStyle}">${displayText}</span>
+                        </div>
+                    `;
                 });
 
                 html += `</div></div>`;
