@@ -3356,14 +3356,16 @@
                         displayTitle = `${log.productName} (포장수량: +${log.historyQty.toLocaleString()})`;
                     }
 
-                    // 2. 출고 일정 모드 로직 (원본 그대로 + dotStyle 초기화 추가)
+                    // 2. 출고 일정 모드 로직
                     else {
                         let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
-                        dotStyle = ''; // 📌 출고 일정 모드에서는 인라인 스타일 무조건 제거!
+                        dotStyle = ''; // 인라인 스타일 초기화
 
                         if (log.isHold) {
                             badgeClass = 'hold';
-                        } else if (!isDone && log.currentQty === 0 && !log.isHold) {
+                        } else if (isDone) {
+                            badgeClass = 'done'; // 📌 완료된 항목은 무조건 초록색(done)!
+                        } else if (log.currentQty === 0 && !log.isHold) {
                             const todayObj = new Date();
                             todayObj.setHours(0, 0, 0, 0);
                             const dueObj = new Date(log.dueDate);
