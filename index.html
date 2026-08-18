@@ -3347,8 +3347,10 @@
                         // 📌 오늘 날짜이면 상태에 따라 분기, 아니면 무조건 완료(초록)
                         if (isToday) {
                             // 완료되었거나 18시 이후면 초록(done), 아니면 파랑(progress)
+                            console.log("✅ 오늘 날짜 인식됨 | isDone:", isDone, "| 현재시간:", currentHour);
                             badgeClass = (isDone || currentHour >= 18) ? 'done' : 'progress';
                         } else {
+                            console.log("❌ 오늘 날짜로 인식 안 됨! | cellDateStr:", cellDateStr, "| todayStr:", todayStr);
                             badgeClass = 'done';
                         }
                         displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
