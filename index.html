@@ -3333,6 +3333,7 @@
 
                 dayLogs.forEach(log => {
                     let badgeClass = '';
+                    let dotStyle = ''; // 인라인 파란색 제어를 위한 스타일 변수
                     let displayText = log.productName;
                     let displayTitle = '';
 
@@ -3346,26 +3347,34 @@
                         if (log.isHold) {
                             badgeClass = 'hold';
                         } else if (isDone) {
-                            badgeClass = 'done'; // 완료: 초록색
-                        } else if (isToday && currentHour < 18) {
-                            badgeClass = 'urgent'; // 당일 18시 이전: 파란색
-                        } else if (isToday && currentHour >= 18) {
-                            badgeClass = 'done'; // 당일 18시 이후: 초록색
-                        } else {
-                            // 그 외 날짜 기존 로직 유지
-                            const todayObj = new Date();
-                            todayObj.setHours(0, 0, 0, 0);
-                            const dueObj = new Date(log.dueDate);
-                            dueObj.setHours(0, 0, 0, 0);
-                            const sevenDaysLater = new Date(todayObj);
-                            sevenDaysLater.setDate(todayObj.getDate() + 7);
-
-                            if (dueObj >= todayObj && dueObj <= sevenDaysLater) {
-                                badgeClass = 'urgent';
-                            } else if (dueObj < todayObj) {
-                                badgeClass = 'overdue';
+                            badgeClass = 'done'; // 완료된 것은 무조건 초록색
+                        } else if (isToday) {
+                            // 📌 [오직 오늘(당일) 작업에만 적용되는 규칙]
+                            if (currentHour < 18) {
+                                badgeClass = '';
+                                dotStyle = 'background-color: #007aff;'; // 18시 이전 미완료: 파란색
                             } else {
-                                badgeClass = 'none';
+                                badgeClass = 'done'; // 18시 이후 미완료: 초록색
+                            }
+                        } else {
+                            // 📌 [오늘이 아닌 다른 날짜들의 기존 출고일정/스케줄 로직 100% 원본 유지]
+                            if (!isDone && log.currentQty === 0 && !log.isHold) {
+                                const todayObj = new Date();
+                                todayObj.setHours(0, 0, 0, 0);
+                                const dueObj = new Date(log.dueDate);
+                                dueObj.setHours(0, 0, 0, 0);
+                                const sevenDaysLater = new Date(todayObj);
+                                sevenDaysLater.setDate(todayObj.getDate() + 7);
+
+                                if (dueObj >= todayObj && dueObj <= sevenDaysLater) {
+                                    badgeClass = 'urgent';
+                                } else if (dueObj < todayObj) {
+                                    badgeClass = 'overdue';
+                                } else {
+                                    badgeClass = 'none';
+                                }
+                            } else {
+                                badgeClass = 'progress';
                             }
                         }
                         displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
@@ -3382,7 +3391,7 @@
 
                     html += `
             <div class="calendar-event-item" onclick="openDetailLogModal('${log.id}')" title="${displayTitle}" style="${itemTextStyle}">
-                <span class="status-dot ${badgeClass}"></span>
+                <span class="status-dot ${badgeClass}" style="${dotStyle}"></span>
                 <span style="${itemTextStyle}">${displayText}</span>
             </div>
         `;
