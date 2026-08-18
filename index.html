@@ -1482,6 +1482,7 @@
         let currentMondayKey = '';
         let isEditActive = false;
         let isCompletedOpen = false;
+        let currentDetailId = null;
 
         initDietSystem();
         initRealtimeProductListener();
@@ -1819,6 +1820,13 @@
                 updatePackingDashboard();
                 if (typeof renderCalendarBoard === 'function') {
                     renderCalendarBoard();
+                }
+
+                if (typeof currentDetailId !== 'undefined' && currentDetailId) {
+                    const updateData = packingLogsList.find(log => log.id === currentDetailId);
+                    if (updateData && typeof openDetailLogModal === 'function') {
+                        openDetailLogModal(updateData);
+                    }
                 }
             }, error => {
                 console.error("포장일지 실시간 동기화 오류:", error);
@@ -2229,6 +2237,8 @@
         }
 
         async function openDetailLogModal(logId) {
+            currentDetailLogId = logId;
+
             let log = packingLogsList.find(l => l.id === logId);
             if (!log) return;
 
@@ -2289,6 +2299,7 @@
 
         function closeDetailLogModal() {
             document.getElementById('detailLogModal').style.display = 'none';
+            currentDetailLogId = null;
             loadPackingLogs();
         }
 
