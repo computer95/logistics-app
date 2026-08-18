@@ -3332,7 +3332,6 @@
     `;
 
                 dayLogs.forEach(log => {
-                    console.log(`[디버깅] 상품: ${log.productName} | 날짜: ${cellDateStr} | 오늘: ${todayStr} | 시간: ${currentHour} | 현재수량: ${log.currentQty} | 목표수량: ${log.targetQty}`);
                     let badgeClass = '';
                     let dotStyle = ''; // 인라인 파란색 제어를 위한 스타일 변수
                     let displayText = log.productName;
@@ -3353,7 +3352,7 @@
                             // 📌 [오직 오늘(당일) 작업에만 적용되는 규칙]
                             if (currentHour < 18) {
                                 badgeClass = '';
-                                dotStyle = 'background-color: #007aff;'; // 18시 이전 미완료: 파란색
+                                dotStyle = 'background-color: #007aff !important;'; // 18시 이전 미완료: 파란색
                             } else {
                                 badgeClass = 'done'; // 18시 이후 미완료: 초록색
                             }
