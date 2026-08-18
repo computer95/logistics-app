@@ -3355,9 +3355,11 @@
                         displayText = `${log.productName} +${log.historyQty.toLocaleString()}`;
                         displayTitle = `${log.productName} (포장수량: +${log.historyQty.toLocaleString()})`;
                     }
-                    // 2. 출고 일정 모드 로직 (원본 그대로!)
+
+                    // 2. 출고 일정 모드 로직 (원본 그대로 + dotStyle 초기화 추가)
                     else {
                         let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
+                        dotStyle = ''; // 📌 출고 일정 모드에서는 인라인 스타일 무조건 제거!
 
                         if (log.isHold) {
                             badgeClass = 'hold';
