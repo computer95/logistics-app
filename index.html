@@ -3344,38 +3344,12 @@
                     } else {
                         let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
 
-                        if (log.isHold) {
-                            badgeClass = 'hold';
-                        } else if (isDone) {
-                            badgeClass = 'done'; // 완료된 것은 무조건 초록색
-                        } else if (isToday) {
-                            // 📌 [오직 오늘(당일) 작업에만 적용되는 규칙]
-                            if (currentHour < 18) {
-                                badgeClass = '';
-                                dotStyle = 'background-color: #007aff !important;'; // 18시 이전 미완료: 파란색
-                            } else {
-                                badgeClass = 'done'; // 18시 이후 미완료: 초록색
-                            }
+                        // 📌 오늘 날짜이면 상태에 따라 분기, 아니면 무조건 완료(초록)
+                        if (isToday) {
+                            // 완료되었거나 18시 이후면 초록(done), 아니면 파랑(progress)
+                            badgeClass = (isDone || currentHour >= 18) ? 'done' : 'progress';
                         } else {
-                            // 📌 [오늘이 아닌 다른 날짜들의 기존 출고일정/스케줄 로직 100% 원본 유지]
-                            if (!isDone && log.currentQty === 0 && !log.isHold) {
-                                const todayObj = new Date();
-                                todayObj.setHours(0, 0, 0, 0);
-                                const dueObj = new Date(log.dueDate);
-                                dueObj.setHours(0, 0, 0, 0);
-                                const sevenDaysLater = new Date(todayObj);
-                                sevenDaysLater.setDate(todayObj.getDate() + 7);
-
-                                if (dueObj >= todayObj && dueObj <= sevenDaysLater) {
-                                    badgeClass = 'urgent';
-                                } else if (dueObj < todayObj) {
-                                    badgeClass = 'overdue';
-                                } else {
-                                    badgeClass = 'none';
-                                }
-                            } else {
-                                badgeClass = 'progress';
-                            }
+                            badgeClass = 'done';
                         }
                         displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
                     }
