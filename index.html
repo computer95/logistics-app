@@ -3338,19 +3338,47 @@
                     let displayTitle = '';
 
                     if (currentMode === 'history') {
-                        badgeClass = 'done';
+                        // 📌 [포장 내역 모드 전용 규칙] 오늘이면 파랑/초록, 오늘이 아니면 무조건 초록
+                        let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
+
+                        if (isToday) {
+                            if (isDone || currentHour >= 18) {
+                                badgeClass = 'done'; // 완료되었거나 18시 이후면 초록색
+                                dotStyle = '';
+                            } else {
+                                badgeClass = '';
+                                dotStyle = 'background-color: #007aff !important;'; // 18시 전 미완료는 강제 파란색
+                            }
+                        } else {
+                            badgeClass = 'done'; // 오늘이 아니면 무조건 초록색
+                            dotStyle = '';
+                        }
+
                         displayText = `${log.productName} +${log.historyQty.toLocaleString()}`;
                         displayTitle = `${log.productName} (포장수량: +${log.historyQty.toLocaleString()})`;
                     } else {
+                        // 📌 [출고 일정 모드] 기존 원본 로직 100% 그대로 유지 (절대 안 건드림!)
                         let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
 
-                        // 📌 오늘 날짜이면 상태에 따라 분기, 아니면 무조건 완료(초록)
-                        if (isToday) {
-                            // 완료되었거나 18시 이후면 초록(done), 아니면 파랑(progress)
-                            badgeClass = (isDone || currentHour >= 18) ? 'done' : 'progress';
+                        if (log.isHold) {
+                            badgeClass = 'hold';
+                        } else if (!isDone && log.currentQty === 0 && !log.isHold) {
+                            const todayObj = new Date();
+                            todayObj.setHours(0, 0, 0, 0);
+                            const dueObj = new Date(log.dueDate);
+                            dueObj.setHours(0, 0, 0, 0);
+                            const sevenDaysLater = new Date(todayObj);
+                            sevenDaysLater.setDate(todayObj.getDate() + 7);
+
+                            if (dueObj >= todayObj && dueObj <= sevenDaysLater) {
+                                badgeClass = 'urgent';
+                            } else if (dueObj < todayObj) {
+                                badgeClass = 'overdue';
+                            } else {
+                                badgeClass = 'none';
+                            }
                         } else {
-                            console.log("❌ 오늘 날짜로 인식 안 됨! | cellDateStr:", cellDateStr, "| todayStr:", todayStr);
-                            badgeClass = 'done';
+                            badgeClass = 'progress';
                         }
                         displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
                     }
