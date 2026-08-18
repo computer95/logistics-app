@@ -3344,20 +3344,13 @@
                     } else {
                         let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
 
-                        // 📌 오늘 날짜인 경우
+                        // 📌 오늘 날짜이면 상태에 따라 분기, 아니면 무조건 완료(초록)
                         if (isToday) {
-                            if (isDone || currentHour >= 18) {
-                                badgeClass = 'done'; // 완료되었거나 18시 이후면 초록색 (기본 CSS)
-                                dotStyle = '';
-                            } else {
-                                badgeClass = '';
-                                dotStyle = 'background-color: #007aff !important;'; // 18시 전 미완료는 강제 파란색
-                            }
-                        }
-                        // 📌 오늘이 아닌 경우 (무조건 초록색)
-                        else {
+                            // 완료되었거나 18시 이후면 초록(done), 아니면 파랑(progress)
+                            badgeClass = (isDone || currentHour >= 18) ? 'done' : 'progress';
+                        } else {
+                            console.log("❌ 오늘 날짜로 인식 안 됨! | cellDateStr:", cellDateStr, "| todayStr:", todayStr);
                             badgeClass = 'done';
-                            dotStyle = '';
                         }
                         displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
                     }
