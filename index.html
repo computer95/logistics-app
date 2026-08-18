@@ -2218,7 +2218,7 @@
                 existingEntry.qty += unitsPerPalletSet;
             } else {
                 // [신규] 없으면 새로 기록 추가
-                log.history.push({ date: today, qty: unitsPerPalletSet, memo: '1파레트 추가' });
+                log.history.push({ date: today, qty: unitsPerPalletSet, memo: '' });
             }
 
             // 총 수량 재계산
@@ -3194,6 +3194,7 @@
 
             const now = new Date();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const currentHour = now.getHours();
 
             // 상단 연도/월 타이틀 갱신
             const titleEl = document.getElementById('calendarCurrentMonthTitle');
@@ -3341,25 +3342,31 @@
                         displayTitle = `${log.productName} (포장수량: +${log.historyQty.toLocaleString()})`;
                     } else {
                         let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
-                        if (log.isHold) badgeClass = 'hold';
-                        else if (isDone) badgeClass = 'done';
-                        else if (!isDone && log.currentQty === 0 && !log.isHold) {
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
+
+                        if (log.isHold) {
+                            badgeClass = 'hold';
+                        } else if (isDone) {
+                            badgeClass = 'done'; // 완료: 초록색
+                        } else if (isToday && currentHour < 18) {
+                            badgeClass = 'urgent'; // 당일 18시 이전: 파란색
+                        } else if (isToday && currentHour >= 18) {
+                            badgeClass = 'done'; // 당일 18시 이후: 초록색
+                        } else {
+                            // 그 외 날짜 기존 로직 유지
+                            const todayObj = new Date();
+                            todayObj.setHours(0, 0, 0, 0);
                             const dueObj = new Date(log.dueDate);
                             dueObj.setHours(0, 0, 0, 0);
-                            const sevenDaysLater = new Date(today);
-                            sevenDaysLater.setDate(today.getDate() + 7);
+                            const sevenDaysLater = new Date(todayObj);
+                            sevenDaysLater.setDate(todayObj.getDate() + 7);
 
-                            if (dueObj >= today && dueObj <= sevenDaysLater) {
+                            if (dueObj >= todayObj && dueObj <= sevenDaysLater) {
                                 badgeClass = 'urgent';
-                            } else if (dueObj < today) {
+                            } else if (dueObj < todayObj) {
                                 badgeClass = 'overdue';
                             } else {
                                 badgeClass = 'none';
                             }
-                        } else {
-                            badgeClass = 'progress';
                         }
                         displayTitle = `${log.productName} (${log.currentQty}/${log.targetQty})`;
                     }
