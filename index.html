@@ -1483,6 +1483,7 @@
         let isEditActive = false;
         let isCompletedOpen = false;
         let currentDetailId = null;
+        let completedOpenMonths = {};
 
         initDietSystem();
         initRealtimeProductListener();
@@ -1874,19 +1875,63 @@
 
             if (completedList.length > 0) {
                 html += `
-                    <div class="section-toggle-box" onclick="toggleCompletedSection()">
-                        <span>📁 완료된 출고 일정 (${completedList.length}건)</span>
-                        <span id="completedArrowIcon">${isCompletedOpen ? '▲ 닫기' : '▼ 열기'}</span>
-                    </div>
-                    <div id="completedSectionBox" style="display: ${isCompletedOpen ? 'block' : 'none'};">
-                `;
+            <div class="section-toggle-box" onclick="toggleCompletedSection()">
+                <span>📁 완료된 출고 일정 (${completedList.length}건)</span>
+                <span id="completedArrowIcon">${isCompletedOpen ? '▲ 닫기' : '▼ 열기'}</span>
+            </div>
+            <div id="completedSectionBox" style="display: ${isCompletedOpen ? 'block' : 'none'};">
+        `;
+
+                // 월별로 완료된 일정 그룹화
+                const groupedCompleted = {};
                 completedList.forEach(log => {
-                    html += createLogCardHtml(log, todayStr, sevenDaysLater);
+                    const monthKey = log.dueDate ? log.dueDate.substring(0, 7) : '미지정';
+                    if (!groupedCompleted[monthKey]) {
+                        groupedCompleted[monthKey] = [];
+                    }
+                    groupedCompleted[monthKey].push(log);
                 });
+
+                const sortedCompletedMonths = Object.keys(groupedCompleted).sort().reverse();
+                const currentMonthKey = `${year}-${month}`;
+
+                sortedCompletedMonths.forEach(monthKey => {
+                    const items = groupedCompleted[monthKey];
+                    let monthTitle = monthKey;
+                    if (monthKey !== '미지정') {
+                        const [y, m] = monthKey.split('-');
+                        monthTitle = `${y}년 ${parseInt(m, 10)}월`;
+                    }
+
+                    if (completedOpenMonths[monthKey] === undefined) {
+                        completedOpenMonths[monthKey] = (monthKey === currentMonthKey);
+                    }
+                    const isOpen = completedOpenMonths[monthKey];
+                    const displayStyle = isOpen ? 'block' : 'none';
+                    const arrowIcon = isOpen ? '▼' : '▶';
+
+                    html += `
+                <div style="font-weight:bold; font-size:12.5px; color:#111; margin: 10px 0 6px 4px; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #ddd; padding-bottom: 4px; cursor:pointer; user-select:none;" onclick="toggleCompletedMonthGroup('${monthKey}')">
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <span style="font-size:11px;">${arrowIcon}</span>
+                        <span>🗓️ ${monthTitle}</span>
+                        <span style="font-size:11px; color:#666; font-weight:normal;">(${items.length}건)</span>
+                    </div>
+                </div>
+                <div id="completed-month-content-${monthKey}" style="display: ${displayStyle}; padding-left: 8px;">
+            `;
+
+                    items.forEach(log => {
+                        html += createLogCardHtml(log, todayStr, sevenDaysLater);
+                    });
+
+                    html += `</div>`;
+                });
+
                 html += `</div>`;
             }
             container.innerHTML = html;
-            updatePackingDashboard();
+            // 무한 루프 방지를 위해 updatePackingDashboard() 호출은 여기서 제거함
         }
 
         // 📌 상태 저장을 위한 전역 객체들 (스크립트 상단에 위치)
@@ -2056,6 +2101,18 @@
 
         function toggleCompletedSection() {
             isCompletedOpen = !isCompletedOpen;
+            if (isCompletedOpen) {
+                const today = new Date();
+                const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                if (completedOpenMonths[currentMonthKey] === undefined) {
+                    completedOpenMonths[currentMonthKey] = true;
+                }
+            }
+            renderPackingLogsHtml();
+        }
+
+        function toggleCompletedMonthGroup(monthKey) {
+            completedOpenMonths[monthKey] = !completedOpenMonths[monthKey];
             renderPackingLogsHtml();
         }
 
