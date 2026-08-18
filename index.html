@@ -1822,10 +1822,10 @@
                     renderCalendarBoard();
                 }
 
-                if (typeof currentDetailId !== 'undefined' && currentDetailId) {
-                    const updateData = packingLogsList.find(log => log.id === currentDetailId);
+                if (typeof currentDetailLogId !== 'undefined' && currentDetailLogId) {
+                    const updateData = packingLogsList.find(log => log.id === currentDetailLogId);
                     if (updateData && typeof openDetailLogModal === 'function') {
-                        openDetailLogModal(updateData);
+                        openDetailLogModal(currentDetailLogId);
                     }
                 }
             }, error => {
