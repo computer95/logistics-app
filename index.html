@@ -1610,8 +1610,8 @@
                     document.getElementById(`menu_${d}`).innerHTML = dietData[d] || '<span style="color:#aaa;">식단 미등록</span>';
                 });
                 toggleDietEdit();
-                alert('✅ 식단이 저장되었습니다.');
-            } catch (e) { alert('❌ 식단 저장 오류'); }
+                showToast('✅ 식단이 저장되었습니다.', 'success');
+            } catch (e) { showToast('❌ 식단 저장 오류', 'error'); }
         }
 
         async function loadDietFromFirestore() {
@@ -1634,7 +1634,7 @@
         async function uploadAndParseDietImage() {
             const fileInput = document.getElementById('dietImageInput');
             if (!fileInput.files || fileInput.files.length === 0) {
-                alert('⚠️ 업로드할 식단표 이미지를 선택해주세요.');
+                showToast('⚠️ 업로드할 식단표 이미지를 선택해주세요.', 'error');
                 return;
             }
 
@@ -1645,7 +1645,7 @@
                 const base64Data = e.target.result.split(',')[1];
                 const mimeType = file.type || 'image/jpeg';
 
-                alert('🔄 AI가 식단표를 분석 중입니다. 잠시만 기다려주세요...');
+                showToast('🔄 AI가 식단표를 분석 중입니다. 잠시만 기다려주세요...', 'info');
 
                 try {
                     const apiKey = "AIzaSyDYk-xY-AppgFlZyu08F0O3pNUG6FIu_E0";
@@ -1714,11 +1714,11 @@
                     if (parsedData.thu) document.getElementById('editDiet_thu').value = parsedData.thu;
                     if (parsedData.fri) document.getElementById('editDiet_fri').value = parsedData.fri;
 
-                    alert('✨ 식단 인식이 완료되었습니다! 내용 확인 후 [식단 저장하기] 버튼을 눌러주세요.');
+                    showToast('✨ 식단 인식이 완료되었습니다! 내용 확인 후 [식단 저장하기] 버튼을 눌러주세요.', 'success');
 
                 } catch (error) {
                     console.error("Gemini 식단 분석 오류:", error);
-                    alert('❌ 이미지 분석 중 오류가 발생했습니다: ' + error.message);
+                    showToast('❌ 이미지 분석 중 오류가 발생했습니다: ' + error.message, 'error');
                 }
             };
 
@@ -2228,14 +2228,14 @@
             const targetQty = document.getElementById('logModalTargetQty').value;
 
             if (!productName || !productId || !dueDate || !targetQty) {
-                alert('모든 항목을 입력하고 정확한 제품을 선택해 주세요.');
+                showToast('모든 항목을 입력하고 정확한 제품을 선택해 주세요.', 'error');
                 return;
             }
 
             try {
                 const productRef = await db.collection('products').doc(productId).get();
                 if (!productRef.exists) {
-                    alert('등록되지 않은 제품입니다. [+ 제품 추가] 버튼을 눌러 먼저 등록해 주세요.');
+                    showToast('등록되지 않은 제품입니다. [+ 제품 추가] 버튼을 눌러 먼저 등록해 주세요.', 'error');
                     return;
                 }
 
@@ -2252,11 +2252,11 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert('✅ 출고 일정이 등록되었습니다.');
+                showToast('✅ 출고 일정이 등록되었습니다.', 'success');
                 closeAddLogModal();
                 loadPackingLogs();
             } catch (e) {
-                alert('일정 저장 중 오류가 발생했습니다.');
+                showToast('일정 저장 중 오류가 발생했습니다.', 'error');
             }
         }
 
@@ -2268,7 +2268,7 @@
 
             let p = productList.find(item => item.id === log.productId);
             if (!p) {
-                alert('⚠️ 제품 정보가 없습니다.');
+                showToast('⚠️ 제품 정보가 없습니다.', 'error');
                 return;
             }
 
@@ -2483,13 +2483,13 @@
 
             let remaining = log.targetQty - log.currentQty;
             if (remaining <= 0) {
-                box.innerHTML = '🎉 목표 수량을 모두 달성했습니다!';
+                showToast('🎉 목표 수량을 모두 달성했습니다!', 'success');
                 return;
             }
 
             const p = productList.find(item => item.id === log.productId);
             if (!p || (!p.palletToCarton && !p.cartonToInner && !p.setToInner)) {
-                box.innerHTML = '📦 해당 제품의 포장 정보가 등록되지 않았습니다.';
+                showToast('📦 해당 제품의 포장 정보가 등록되지 않았습니다.', 'error');
                 return;
             }
 
@@ -2516,7 +2516,7 @@
             let memo = rawMemo.replace(/^\(|\)$/g, '');
 
             if (!date || isNaN(qty) || qty <= 0) {
-                alert('작업일자와 수량을 올바르게 입력해 주세요.');
+                showToast('작업일자와 수량을 올바르게 입력해 주세요.', 'error');
                 return;
             }
 
@@ -2534,7 +2534,7 @@
                 });
                 openDetailLogModal(logId);
             } catch (e) {
-                alert('작업 기록 추가 오류');
+                showToast('작업 기록 추가 오류: ' + e.message, 'error');
             }
         }
 
@@ -2556,7 +2556,7 @@
                 renderWorkLogHistory(log);
                 updateRemainingCalcBox(log);
             } catch (e) {
-                alert('작업 기록 삭제 오류');
+                showToast('작업 기록 삭제 오류: ' + e.message, 'error');
             }
         }
 
@@ -2586,7 +2586,7 @@
 
             /*
             if (!productName || !dueDate || isNaN(targetQty)) {
-                alert('필수 입력 항목을 확인해 주세요.');
+                showToast('필수 입력 항목을 확인해 주세요.', 'error');
                 return;
             }
             */
@@ -2604,7 +2604,7 @@
                         });
                         productId = newRef.id;
                     } catch (e) {
-                        alert('신규 제품 자동 등록 실패');
+                        showToast('신규 제품 자동 등록 실패', 'error');
                         return;
                     }
                 }
@@ -2616,10 +2616,10 @@
                     history: log.history || [],
                     currentQty: log.currentQty || 0
                 });
-                alert('✅ 수정 내용이 저장되었습니다.');
+                showToast('✅ 수정 내용이 저장되었습니다.', 'success');
                 openDetailLogModal(logId);
             } catch (e) {
-                alert('저장 오류: ' + e.message);
+                showToast('저장 오류: ' + e.message, 'error');
             }
         }
 
@@ -2631,7 +2631,10 @@
             try {
                 await db.collection('packing_logs').doc(logId).update({ isHold: newHold });
                 closeDetailLogModal();
-            } catch (e) { alert('상태 변경 오류'); }
+                showToast('✅ 상태가 변경되었습니다.', 'success');
+            } catch (e) {
+                showToast('상태 변경 오류: ' + e.message, 'error');
+            }
         }
 
         async function toggleForceDoneStatus() {
@@ -2642,7 +2645,10 @@
             try {
                 await db.collection('packing_logs').doc(logId).update({ isForceDone: newForce });
                 closeDetailLogModal();
-            } catch (e) { alert('상태 변경 오류'); }
+                showToast('✅ 상태가 변경되었습니다.', 'success');
+            } catch (e) {
+                showToast('상태 변경 오류: ' + e.message, 'error');
+            }
         }
 
         async function deletePackingLog() {
@@ -2651,7 +2657,10 @@
             try {
                 await db.collection('packing_logs').doc(logId).delete();
                 closeDetailLogModal();
-            } catch (e) { alert('삭제 오류'); }
+                showToast('✅ 출고 일정이 삭제되었습니다.', 'success');
+            } catch (e) {
+                showToast('삭제 오류: ' + e.message, 'error');
+            }
         }
 
         function handlePasswordKey(e) { if (e.key === 'Enter') checkAdminPassword(); }
@@ -2722,7 +2731,7 @@
         function openProductDetailModal(id, isAdmin = false) {
             const p = productList.find(item => item.id === id);
             if (!p) {
-                alert('제품 스펙이 아직 등록되지 않은 임시 제품입니다.');
+                showToast('제품 스펙이 아직 등록되지 않은 임시 제품입니다.', 'error');
                 return;
             }
 
@@ -2908,7 +2917,7 @@
 
             /*
             if (!name || isNaN(palletToCarton) || isNaN(innerToUnit)) {
-                alert('필수 입력 항목을 정확히 입력해 주세요.');
+                showToast('필수 입력 항목을 정확히 입력해 주세요.', 'error');
                 return;
             }
             */
@@ -2920,9 +2929,9 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 closeAddModal();
-                alert('✅ 제품이 등록되었습니다.');
+                showToast('✅ 제품이 등록되었습니다.', 'success');
             } catch (e) {
-                alert('제품 등록 오류: ' + e.message);
+                showToast('제품 등록 오류: ' + e.message, 'error');
             }
         }
 
@@ -3035,7 +3044,7 @@
 
             /*
             if (isNaN(palletToCarton) || isNaN(innerToUnit)) {
-                alert('필수 입력 항목을 확인해 주세요.');
+                showToast('필수 입력 항목을 확인해 주세요.', 'error');
                 return;
             }
             */
@@ -3047,9 +3056,9 @@
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 document.getElementById('editProductModal').style.display = 'none';
-                alert('✅ 제품 정보가 수정되었습니다.');
+                showToast('✅ 제품 정보가 수정되었습니다.', 'success');
             } catch (e) {
-                alert('수정 오류: ' + e.message);
+                showToast('수정 오류: ' + e.message, 'error');
             }
         }
 
@@ -3058,9 +3067,9 @@
             try {
                 await db.collection('products').doc(id).delete();
                 closeProductDetailModal();
-                alert('✅ 제품이 삭제되었습니다.');
+                showToast('✅ 제품이 삭제되었습니다.', 'success');
             } catch (e) {
-                alert('삭제 오류: ' + e.message);
+                showToast('삭제 오류: ' + e.message, 'error');
             }
         }
 
@@ -3569,7 +3578,7 @@
             if (!toast) return;
 
             toast.textContent = message;
-            toast.style.background = type === 'error' ? 'rgba(220, 53, 69, 0.9)' : 'rgba(0, 0, 0, 0.8)';
+            toast.style.background = type === 'error' ? 'rgba(220, 53, 69, 0.9)' : type === 'info' ? 'rgba(13, 110, 253, 0.9)' : 'rgba(40, 167, 69, 0.9)';
             toast.style.opacity = '1';
 
             if (window.toastTimer) clearTimeout(window.toastTimer);
