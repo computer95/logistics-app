@@ -1458,7 +1458,26 @@
     </div>
 
     <div id="toastMessage"
-        style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 8px; font-size: 15px; z-index: 9999; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;">
+        style="
+        position: fixed; 
+        bottom: 30px;
+        left: 50%; 
+        transform: translateX(-50%); 
+        background: rgba(0,0,0,0.8); 
+        color: white; 
+        padding: 12px 24px; 
+        border-radius: 8px; 
+        font-size: 15px; 
+        z-index: 9999;
+        opacity: 0; 
+        transition: opacity 0.3s ease; 
+        pointer-events: none;
+        
+        max-width: 85%;          /* 폰 화면 너비를 넘어가지 않게 제한 */
+        text-align: center;      /* 글자가 두 줄 이상 되면 가운데 정렬 */
+        word-break: keep-all;    /* 단어가 이상하게 잘리지 않고 단어 단위로 줄바꿈 */
+        box-sizing: border-box;
+        ">
     </div>
 
     <nav class="bottom-nav">
