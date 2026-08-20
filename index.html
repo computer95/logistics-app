@@ -2286,10 +2286,10 @@
                     history: log.history,
                     currentQty: log.currentQty
                 });
-                alert(`✅ 1파레트 분량(${unitsPerPalletSet.toLocaleString()} SET)이 ${existingEntry ? '당일 기록에 합산되었습니다.' : '새로 추가되었습니다.'}`);
+                showToast(`✅ 1파레트 분량(${unitsPerPalletSet.toLocaleString()} SET)이 ${existingEntry ? '당일 기록에 합산되었습니다.' : '새로 추가되었습니다.'}`, 'success');
                 openDetailLogModal(logId); // 모달 새로고침
             } catch (e) {
-                alert('❌ 작업 기록 업데이트 오류: ' + e.message);
+                showToast('❌ 작업 기록 업데이트 오류: ' + e.message, 'error');
             }
         }
 
