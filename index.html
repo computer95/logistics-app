@@ -1486,7 +1486,7 @@
     </div>
 
     <div id="tvDashboardContainer"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:9999; color:#00ff00; display:flex; justify-content:center; align-items:center; flex-direction:column;">
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:9999; color:#00ff00; flex-direction:column; justify-content:center; align-items:center;">
         <div id="digitalClock" style="font-size: 20vw; font-family: monospace; font-weight: bold;">00:00:00</div>
         <button onclick="window.close()" style="margin-top:20px; padding:10px 20px;">닫기</button>
     </div>
@@ -3606,19 +3606,20 @@
         window.addEventListener('load', function () {
             const params = new URLSearchParams(window.location.search);
 
-            if (params.get('view') === 'dashboard') {
-                // 1. 기존 화면 숨기기 (기존 메인 컨테이너 ID가 있다면 여기 넣으세요)
+            // 조건: 주소창에 ?view=dashboard 가 '정확히' 있을 때만 동작!
+            if (params.has('view') && params.get('view') === 'dashboard') {
+
+                // 1. 기존 화면 숨기기
                 document.body.style.margin = "0";
                 document.body.style.overflow = "hidden";
-                // 예: document.getElementById('mainContent').style.display = 'none'; 
 
                 // 2. 전광판 보여주기
                 const dashboard = document.getElementById('tvDashboardContainer');
-                dashboard.style.display = 'flex'; // flex로 설정하여 중앙 정렬
+                dashboard.style.display = 'flex'; // Flex로 설정
 
                 // 3. 시계 업데이트 실행
                 setInterval(updateClock, 1000);
-                updateClock(); // 즉시 실행
+                updateClock();
             }
         });
 
@@ -3626,7 +3627,8 @@
         function updateClock() {
             const now = new Date();
             const timeString = now.toLocaleTimeString('ko-KR', { hour12: false });
-            document.getElementById('digitalClock').innerText = timeString;
+            const clockEl = document.getElementById('digitalClock');
+            if (clockEl) clockEl.innerText = timeString;
         }
     </script>
 </body>
