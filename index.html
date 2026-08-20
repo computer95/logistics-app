@@ -1486,9 +1486,12 @@
     </div>
 
     <div id="tvDashboardContainer"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:9999; color:#00ff00; flex-direction:column; justify-content:center; align-items:center;">
-        <div id="digitalClock" style="font-size: 20vw; font-family: monospace; font-weight: bold;">00:00:00</div>
-        <button onclick="window.close()" style="margin-top:20px; padding:10px 20px;">닫기</button>
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0a0a0a; z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <div id="digitalClock"
+            style="font-size: 25vw; font-family: 'Courier New', monospace; font-weight: bold; color: #39ff14; text-shadow: 0 0 20px #39ff14, 0 0 40px #39ff14; letter-spacing: 2vw;">
+            00 : 00</div>
+        <button onclick="window.close()"
+            style="margin-top:50px; padding:10px 20px; background:transparent; color:#555; border:1px solid #555; cursor:pointer;">닫기</button>
     </div>
 
     <nav class="bottom-nav">
@@ -3623,12 +3626,15 @@
             }
         });
 
-        // [시계 업데이트 함수]
         function updateClock() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('ko-KR', { hour12: false });
-            const clockEl = document.getElementById('digitalClock');
-            if (clockEl) clockEl.innerText = timeString;
+
+            // 시, 분, 초를 2자리(00)로 만듦
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            // 중간에 공백을 넣어서 디자인 요소 추가 (00 : 00 : 00)
+            document.getElementById('digitalClock').innerText = `${hours} : ${minutes}`;
         }
     </script>
 </body>
