@@ -949,12 +949,17 @@
     <div id="logTab" class="container tab-content">
 
         <!-- 🎛️ PC/모바일 수동 전환 토글 스위치 -->
-        <div class="mode-toggle-wrapper">
+        <div class="mode-toggle-wrapper" style="position: relative;">
             <span class="mode-label active" id="labelMobile" onclick="setMode('mobile')">모바일 버전</span>
             <div class="mode-switch" onclick="toggleViewMode()">
                 <div class="mode-slider" id="modeSlider"></div>
             </div>
             <span class="mode-label" id="labelPC" onclick="setMode('pc')">PC 버전</span>
+
+            <!-- 추가된 TV전광판 버튼 -->
+            <button onclick="openTVDashboard()"
+                style="position: absolute; right: -110px; top: 0; height: 100%; border: none; background: #34c759; color: white; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; padding: 0 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">📺
+                TV전광판</button>
         </div>
 
         <!-- ========================================== -->
@@ -3584,6 +3589,12 @@
             window.toastTimer = setTimeout(() => {
                 toast.style.opacity = '0';
             }, 2000);
+        }
+
+        function openTVDashboard() {
+            // 추후 TV화면(65인치용) URL이 생성되면 아래 주소를 교체하세요
+            const url = "about:blank";
+            window.open(url, "_blank", "width=1920,height=1080,menubar=no,toolbar=no,location=no");
         }
     </script>
 </body>
