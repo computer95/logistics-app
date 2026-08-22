@@ -3775,7 +3775,7 @@
         }
 
         // ==========================================
-        // 📺 TV 전광판 및 리모컨 연동 로직 (history 필드 정상 연동 버전)
+        // 📺 TV 전광판 및 리모컨 연동 로직 (C/T ⇄ SET 완벽 분리 버전)
         // ==========================================
         let tvClockInterval;
 
@@ -3834,14 +3834,23 @@
             }
         });
 
-        // 제품별 파레트 기준 수량을 안전하게 가져오는 헬퍼 함수
+        // 💡 1카톤당 몇 SET인지 계산해주는 헬퍼 함수
+        function getSetsPerCarton(log) {
+            if (!log || !log.productId) return 1;
+            const p = productList.find(item => item.id === log.productId);
+            if (!p) return 1;
+            // hasSet이 'O'일 때 cartonToSet, 아니면 cartonToInner 또는 기본값 1
+            return Number(p.cartonToSet || p.cartonToInner || 1);
+        }
+
+        // 제품별 파레트 기준 카톤 수량을 가져오는 헬퍼 함수
         function getBoxPerPallet(log) {
             if (!log || !log.productId) return 36;
             const p = productList.find(item => item.id === log.productId);
             return p ? Number(p.palletToCarton || p.boxPerPallet || 36) : 36;
         }
 
-        // 📦 packing_logs 데이터 저장 (history 필드에 누적 저장)
+        // 📦 packing_logs 데이터 저장 (SET 기준 currentQty 및 history 저장)
         function saveAndSyncData() {
             const currentSelectedId = localStorage.getItem('tvSelectedLogId');
             const currentLog = packingLogsList.find(l => l.id === currentSelectedId);
@@ -3849,8 +3858,8 @@
             if (!currentLog || !currentLog.id) return;
 
             db.collection('packing_logs').doc(currentLog.id).update({
-                currentQty: currentLog.currentQty,
-                history: currentLog.history // 💡 pallets 대신 기존의 history 필드 사용
+                currentQty: currentLog.currentQty, // SET 누적 수량
+                history: currentLog.history
             }).catch((error) => {
                 console.error('데이터 저장 실패:', error);
             });
@@ -3923,42 +3932,57 @@
             updateRemoteStatusSummary(currentSelectedId);
         }
 
-        // 카톤 직접 추가 (history에 기록)
+        // 💡 카톤 직접 추가 (입력한 C/T -> SET으로 환산하여 currentQty에 합산)
         function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
-            let addQty = parseInt(inputEl.value);
-            if (isNaN(addQty) || addQty <= 0) return showToast('올바른 수량을 입력해주세요.', 'error');
+            let cartonQty = parseInt(inputEl.value); // 입력한 카톤(C/T) 수
+            if (isNaN(cartonQty) || cartonQty <= 0) return showToast('올바른 수량을 입력해주세요.', 'error');
 
             let currentSelectedId = localStorage.getItem('tvSelectedLogId');
             let currentLog = packingLogsList.find(l => l.id === currentSelectedId);
             if (!currentLog) return;
 
-            currentLog.currentQty = (currentLog.currentQty || 0) + addQty;
+            let setsPerCarton = getSetsPerCarton(currentLog);
+            let setQty = cartonQty * setsPerCarton; // 환산된 SET 수량
+
+            // 일일작업현황(packing_logs)의 currentQty에는 SET 수량으로 누적 합산!
+            currentLog.currentQty = (currentLog.currentQty || 0) + setQty;
 
             if (!currentLog.history) currentLog.history = [];
-            currentLog.history.push({ qty: addQty, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+            currentLog.history.push({
+                cartons: cartonQty, // 기록용 C/T
+                sets: setQty,       // 기록용 SET
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
 
             saveAndSyncData();
-            showToast(`+${addQty} C/T 추가되었습니다.`, 'success');
+            showToast(`+${cartonQty} C/T (${setQty} SET) 추가되었습니다.`, 'success');
 
             inputEl.value = '';
         }
 
-        // 1파레트 추가 (history에 기록)
+        // 💡 1파레트 추가 (파레트 기준 C/T -> SET으로 환산하여 currentQty에 합산)
         function remoteAddFullPallet() {
             let currentSelectedId = localStorage.getItem('tvSelectedLogId');
             let currentLog = packingLogsList.find(l => l.id === currentSelectedId);
             if (!currentLog) return;
 
-            let boxPerPallet = getBoxPerPallet(currentLog);
-            currentLog.currentQty = (currentLog.currentQty || 0) + boxPerPallet;
+            let palletCartons = getBoxPerPallet(currentLog); // 파레트당 카톤 수
+            let setsPerCarton = getSetsPerCarton(currentLog);
+            let setQty = palletCartons * setsPerCarton; // 환산된 SET 수량
+
+            currentLog.currentQty = (currentLog.currentQty || 0) + setQty;
 
             if (!currentLog.history) currentLog.history = [];
-            currentLog.history.push({ qty: boxPerPallet, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+            currentLog.history.push({
+                cartons: palletCartons,
+                sets: setQty,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
 
             saveAndSyncData();
-            showToast(`1파레트 (+${boxPerPallet} C/T) 추가되었습니다.`, 'success');
+            showToast(`1파레트 (+${palletCartons} C/T / ${setQty} SET) 추가되었습니다.`, 'success');
             updateRemoteStatusSummary(currentSelectedId);
         }
 
@@ -3971,17 +3995,17 @@
             if (!log) return;
 
             const target = Number(log.targetQty) || 0;
-            const current = log.currentQty || 0;
+            const current = log.currentQty || 0; // SET 기준 현재 수량
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
 
             const boxPerPallet = getBoxPerPallet(log);
             const palletBoxSizeSpan = document.getElementById('remotePalletBoxSize');
             if (palletBoxSizeSpan) palletBoxSizeSpan.innerText = boxPerPallet;
 
-            statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName || '제품명 없음'}</span><br>진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} C/T (${percent}%)`;
+            statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName || '제품명 없음'}</span><br>진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} SET (${percent}%)`;
         }
 
-        // --- TV 전광판 화면 렌더링 (history를 읽어서 이미지 형태 디자인으로 출력) ---
+        // --- TV 전광판 화면 렌더링 (우측 패널에 C/T 및 누적 SET 표시) ---
         function renderTVDataBoard(logData) {
             if (!logData) return;
             const nameEl = document.getElementById('tvProductName');
@@ -4009,7 +4033,7 @@
             const remainingEl = document.getElementById('tvRemainingText');
             if (remainingEl) remainingEl.innerHTML = `<div>⏳ 남은 수량: ${remaining.toLocaleString()} SET</div><div style="font-size: 15px; color: #aaa; margin-top: 6px;">🅿️ 파레트: <strong>${totalPallets} 개</strong> | 📦 카톤: <strong>${totalCartons} 개</strong></div>`;
 
-            const historyList = logData.history || []; // 💡 history 필드 사용
+            const historyList = logData.history || [];
             const summaryEl = document.getElementById('tvPaletteSummary');
             if (summaryEl) summaryEl.innerText = `현재까지 총 ${historyList.length}회 기록`;
 
@@ -4017,12 +4041,15 @@
             if (listContainer) {
                 listContainer.innerHTML = historyList.length > 0 ? '' : '<div style="color: #666; text-align: center; margin-top: 20px;">아직 기록된 내역이 없습니다.</div>';
 
-                let cumulativeQty = 0;
+                let cumulativeSets = 0; // 누적 SET 수량 계산용
                 const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
 
                 historyList.forEach((item, index) => {
-                    const qty = Number(item.qty) || 0;
-                    cumulativeQty += qty; // 누적 수량 계산
+                    // 기존 데이터 호환성 처리 (cartons/sets가 없으면 구버전 qty를 C/T로 간주)
+                    const cartons = Number(item.cartons !== undefined ? item.cartons : item.qty) || 0;
+                    const sets = Number(item.sets !== undefined ? item.sets : (cartons * getSetsPerCarton(logData))) || 0;
+
+                    cumulativeSets += sets; // 누적 SET 수량 합산
                     const circle = circleNums[index] || `(${index + 1})`;
 
                     const div = document.createElement('div');
@@ -4030,8 +4057,8 @@
                     div.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <span style="font-size: 18px; font-weight: bold; color: #fff;">${circle}</span>
-                    <span style="font-size: 18px; font-weight: bold; color: #ff3b30;">${qty} C/T</span>
-                    <span style="font-size: 15px; color: #aaa;">(${cumulativeQty.toLocaleString()})</span>
+                    <span style="font-size: 18px; font-weight: bold; color: #ff3b30;">${cartons} C/T</span>
+                    <span style="font-size: 15px; color: #aaa;">(${cumulativeSets.toLocaleString()})</span>
                 </div>
                 <div style="font-size: 14px; color: #aaa;">${item.time || ''}</div>
             `;
