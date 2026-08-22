@@ -4151,7 +4151,7 @@
             window.tvClockInterval = setInterval(updateTVClock, 1000);
 
             const currentSelectedId = localStorage.getItem('tvSelectedLogId');
-            const activeLog = packingLogsList.find(l => l.id === currentSelectedId) || packingLogsList.[0];
+            const activeLog = packingLogsList.find(l => l.id === currentSelectedId) || packingLogsList[0];
             renderTVDataBoard(activeLog);
         }
 
