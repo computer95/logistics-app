@@ -3946,22 +3946,51 @@
             if (modal) modal.style.display = 'none';
         }
 
+        // 리모컨 드롭다운 초기화 (인덱스 매칭 오류 수정 버전)
         function initRemoteProductSelect() {
             const selectEl = document.getElementById('remoteProductSelect');
             if (!selectEl) return;
+
             let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
             let optionsHtml = '';
             let validCount = 0;
+
             if (packingLogsList && packingLogsList.length > 0) {
-                let validItems = packingLogsList.filter(log => !(log.targetQty > 0 && log.currentQty >= log.targetQty) && !log.isForceDone)
-                    .map((log, index) => ({ log, index }));
-                validItems.sort((a, b) => (a.log.dueDate || a.log.dueTime || '').localeCompare(b.log.dueDate || b.log.dueTime || ''));
+                let validItems = [];
+
+                // 💡 1. 필터링하면서 '원래 전체 리스트에서의 진짜 번호(index)'를 함께 저장
+                packingLogsList.forEach((log, index) => {
+                    const current = log.currentQty || 0;
+                    const target = Number(log.targetQty) || 0;
+                    const isFinished = (target > 0 && current >= target);
+
+                    if (!isFinished && !log.isForceDone) {
+                        validItems.push({ log, originalIndex: index });
+                    }
+                });
+
+                // 2. 출고일(마감일) 기준 빠른 순서로 정렬
+                validItems.sort((a, b) => {
+                    const dateA = a.log.dueDate || a.log.dueTime || '';
+                    const dateB = b.log.dueDate || b.log.dueTime || '';
+                    return dateA.localeCompare(dateB);
+                });
+
+                // 3. HTML 옵션 생성 (value에는 무조건 '진짜 원래 번호(originalIndex)'를 매칭!)
                 validItems.forEach(item => {
                     validCount++;
-                    optionsHtml += `<option value="${item.index}" ${item.index === currentIndex ? 'selected' : ''}>${item.log.productName || '제품명 없음'} (${item.log.dueDate || item.log.dueTime || '마감일 없음'})</option>`;
+                    const log = item.log;
+                    const idx = item.originalIndex;
+                    const dateStr = log.dueDate || log.dueTime || '마감일 없음';
+
+                    optionsHtml += `<option value="${idx}" ${idx === currentIndex ? 'selected' : ''}>${log.productName || '제품명 없음'} (${dateStr})</option>`;
                 });
             }
-            if (validCount === 0) optionsHtml = '<option value="0">진행 중인 제품이 없습니다</option>';
+
+            if (validCount === 0) {
+                optionsHtml = '<option value="0">진행 중인 제품이 없습니다</option>';
+            }
+
             selectEl.innerHTML = optionsHtml;
             updateRemoteStatusSummary(currentIndex);
         }
