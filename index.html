@@ -1551,12 +1551,13 @@
         </div>
     </div>
 
-    <!-- 모바일/PC 겸용 TV 전광판 실행 플로팅 버튼 -->
+    <!-- 모바일/PC 겸용 TV 전광판 실행 플로팅 버튼 (반투명 원형 + 하단 탭 위로 배치) -->
     <div onclick="openTVDashboard()"
-        style="position: fixed; bottom: 25px; right: 25px; background: #ff3b30; color: #fff; width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); cursor: pointer; z-index: 998; transition: transform 0.2s;"
+        style="position: fixed; bottom: 90px; right: 25px; background: rgba(255, 59, 48, 0.85); color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); cursor: pointer; z-index: 998; opacity: 0.75; backdrop-filter: blur(4px); transition: transform 0.2s, opacity 0.2s;"
+        onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.75'"
         onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'"
-        ontouchstart="this.style.transform='scale(0.92)'" ontouchend="this.style.transform='scale(1)'"
-        title="TV 전광판 켜기">
+        ontouchstart="this.style.opacity='1'; this.style.transform='scale(0.92)';"
+        ontouchend="this.style.opacity='0.75'; this.style.transform='scale(1)';" title="TV 전광판 켜기">
         📺
     </div>
 
