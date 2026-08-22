@@ -4197,6 +4197,24 @@
                 if (container && container.style.display === 'flex') closeTVDashboard();
             }
         });
+
+        // [추가] 누락된 UI 제어 및 기능 함수들 뼈대
+        function openAddModal() {
+            // TODO: 생산/포장 등록 모달 여는 로직 작성
+        }
+
+        function closeProductDetailModal() {
+            // TODO: 상세 로그 모달 닫는 로직 작성
+            currentDetailId = null; // 모달을 닫을 때 선택된 ID도 초기화해 주는 게 좋아!
+        }
+
+        function exportLogAsImage() {
+            // TODO: 로그를 이미지로 내보내는 로직 작성 (예: html2canvas 라이브러리 등 활용)
+        }
+
+        function closeTVDashboard() {
+            // TODO: TV 전광판 화면 닫는 로직 작성
+        }
     </script>
 </body>
 
