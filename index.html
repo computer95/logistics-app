@@ -3847,141 +3847,110 @@
             return Number(p.palletToCarton || 24);
         }
 
-        // 💡 카톤 직접 추가 (원본 history와 새 history_day 모두 반영)
+        // 💡 카톤 추가 (기존 history 형식 유지 + TV용 history_day 추가)
         async function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
             let cartonQty = parseInt(inputEl.value);
-            if (isNaN(cartonQty) || cartonQty <= 0) {
-                showToast('올바른 수량을 입력해주세요.', 'error');
-                return;
-            }
+            if (isNaN(cartonQty) || cartonQty <= 0) return;
 
             let logId = localStorage.getItem('tvSelectedLogId');
             let log = packingLogsList.find(l => l.id === logId);
-            if (!log) {
-                showToast('선택된 작업이 없습니다.', 'error');
-                return;
-            }
+            if (!log) return;
 
             let p = productList.find(item => item.id === log.productId);
-            if (!p) {
-                showToast('⚠️ 제품 정보가 없습니다.', 'error');
-                return;
-            }
+            if (!p) return;
 
-            let setsPerCarton = getSetsPerCarton(p);
+            let setsPerCarton = (p.hasSet === 'O') ? Number(p.cartonToSet || 0) : Number(p.cartonToInner || 0);
             let addedSets = cartonQty * setsPerCarton;
 
+            // 1. 공통 시간 데이터
             const d = new Date();
-            const today = getTodayDateStr();
+            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-            const uniqueId = '_' + Math.random().toString(36).substr(2, 9);
 
-            // 1. TV 패널용 상세 기록 (날짜 포함)
-            const newDayRecord = {
-                id: uniqueId,
+            // 2. [history 업데이트] 기존 앱 방식(일일 합산)
+            if (!log.history) log.history = [];
+            let existingEntry = log.history.find(h => h.date === today);
+            if (existingEntry) {
+                existingEntry.qty += addedSets;
+            } else {
+                log.history.push({ date: today, qty: addedSets, memo: '' });
+            }
+
+            // 3. [history_day 업데이트] TV 상세 기록용
+            if (!log.history_day) log.history_day = [];
+            log.history_day.push({
+                id: '_' + Math.random().toString(36).substr(2, 9),
                 date: today,
                 time: timeStr,
                 cartons: cartonQty,
                 sets: addedSets
-            };
+            });
 
-            // 2. 기존 앱이 쓰던 원본 history 기록 형식
-            const newOriginalRecord = {
-                time: timeStr,
-                cartons: cartonQty,
-                sets: addedSets,
-                box: cartonQty,
-                qty: addedSets
-            };
-
-            let currentHistory = log.history || [];
-            let updatedHistory = [...currentHistory, newOriginalRecord];
-
-            let currentHistoryDay = log.history_day || [];
-            let updatedHistoryDay = [...currentHistoryDay, newDayRecord];
-
-            let newCurrentQty = (Number(log.currentQty) || 0) + addedSets;
+            // 4. 총 수량 재계산
+            log.currentQty = log.history.reduce((sum, h) => sum + h.qty, 0);
 
             try {
-                // 💡 원본 history와 history_day를 동시에 업데이트!
                 await db.collection('packing_logs').doc(logId).update({
-                    currentQty: newCurrentQty,
-                    history: updatedHistory,
-                    history_day: updatedHistoryDay
+                    history: log.history,
+                    history_day: log.history_day,
+                    currentQty: log.currentQty
                 });
-
-                showToast(`+${cartonQty} C/T (${addedSets.toLocaleString()} SET) 추가되었습니다.`, 'success');
+                showToast(`+${cartonQty} C/T 추가 완료`, 'success');
                 inputEl.value = '';
             } catch (e) {
-                showToast('❌ 작업 기록 업데이트 오류: ' + e.message, 'error');
+                showToast('❌ 업데이트 오류: ' + e.message, 'error');
             }
         }
 
-        // 💡 1파레트 추가 (원본 history와 새 history_day 모두 반영)
+        // 💡 파레트 추가 (기존 history 형식 유지 + TV용 history_day 추가)
         async function remoteAddFullPallet() {
             let logId = localStorage.getItem('tvSelectedLogId');
             let log = packingLogsList.find(l => l.id === logId);
-            if (!log) {
-                showToast('선택된 작업이 없습니다.', 'error');
-                return;
-            }
+            if (!log) return;
 
             let p = productList.find(item => item.id === log.productId);
-            if (!p) {
-                showToast('⚠️ 제품 정보가 없습니다.', 'error');
-                return;
-            }
+            if (!p) return;
 
-            let cartonPerPallet = getBoxPerPallet(p);
-            let setsPerCarton = getSetsPerCarton(p);
+            let cartonPerPallet = Number(p.palletToCarton || 24);
+            let setsPerCarton = (p.hasSet === 'O') ? Number(p.cartonToSet || 0) : Number(p.cartonToInner || 0);
             let unitsPerPalletSet = cartonPerPallet * setsPerCarton;
 
-            if (unitsPerPalletSet <= 0) {
-                alert('⚠️ 파레트 사양 값이 올바르지 않습니다.');
-                return;
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+            // 1. [history 업데이트] 기존 앱 방식
+            if (!log.history) log.history = [];
+            let existingEntry = log.history.find(h => h.date === today);
+            if (existingEntry) {
+                existingEntry.qty += unitsPerPalletSet;
+            } else {
+                log.history.push({ date: today, qty: unitsPerPalletSet, memo: '' });
             }
 
-            const d = new Date();
-            const today = getTodayDateStr();
-            const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-            const uniqueId = '_' + Math.random().toString(36).substr(2, 9);
-
-            const newDayRecord = {
-                id: uniqueId,
+            // 2. [history_day 업데이트] TV 상세 기록용
+            if (!log.history_day) log.history_day = [];
+            log.history_day.push({
+                id: '_' + Math.random().toString(36).substr(2, 9),
                 date: today,
                 time: timeStr,
                 cartons: cartonPerPallet,
                 sets: unitsPerPalletSet
-            };
+            });
 
-            const newOriginalRecord = {
-                time: timeStr,
-                cartons: cartonPerPallet,
-                sets: unitsPerPalletSet,
-                box: cartonPerPallet,
-                qty: unitsPerPalletSet
-            };
-
-            let currentHistory = log.history || [];
-            let updatedHistory = [...currentHistory, newOriginalRecord];
-
-            let currentHistoryDay = log.history_day || [];
-            let updatedHistoryDay = [...currentHistoryDay, newDayRecord];
-
-            let newCurrentQty = (Number(log.currentQty) || 0) + unitsPerPalletSet;
+            log.currentQty = log.history.reduce((sum, h) => sum + h.qty, 0);
 
             try {
                 await db.collection('packing_logs').doc(logId).update({
-                    currentQty: newCurrentQty,
-                    history: updatedHistory,
-                    history_day: updatedHistoryDay
+                    history: log.history,
+                    history_day: log.history_day,
+                    currentQty: log.currentQty
                 });
-
-                showToast(`1파레트 (+${cartonPerPallet} C/T / ${unitsPerPalletSet.toLocaleString()} SET) 추가되었습니다.`, 'success');
+                showToast(`1파레트 (${unitsPerPalletSet} SET) 추가 완료`, 'success');
             } catch (e) {
-                showToast('❌ 작업 기록 업데이트 오류: ' + e.message, 'error');
+                showToast('❌ 업데이트 오류: ' + e.message, 'error');
             }
         }
 
