@@ -1555,37 +1555,48 @@
 
             <!-- 리모컨 헤더 -->
             <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 15px;">
-                <span style="font-size: 20px; font-weight: bold; color: #fff;">📱 TV 전광판 리모컨</span>
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px;">
+                <span style="font-size: 20px; font-weight: bold; color: #fff;">📱 파레트 작업 현황 제어</span>
                 <span
                     style="color: #888; font-size: 16px; cursor: pointer; padding: 5px 10px; background: #222; border-radius: 6px;"
                     onclick="closeTvRemoteModal()">✕ 닫기</span>
             </div>
 
             <!-- 제품 선택 영역 -->
-            <div style="margin-bottom: 25px;">
-                <label style="display: block; font-size: 14px; color: #aaa; margin-bottom: 8px;">송출할 제품 선택</label>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 14px; color: #aaa; margin-bottom: 8px;">제어할 제품 선택</label>
                 <select id="remoteProductSelect" onchange="remoteChangeProduct(this.value)"
                     style="width: 100%; background: #222; color: #ff3b30; font-size: 18px; font-weight: bold; padding: 14px; border: 1px solid #444; border-radius: 10px; outline: none;">
                     <!-- 동적 생성 -->
                 </select>
             </div>
 
-            <!-- 빠른 이전/다음 전환 버튼 -->
-            <div style="display: flex; gap: 12px; margin-bottom: 25px;">
-                <button onclick="remoteMoveIndex(-1)"
-                    style="flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;">◀
-                    이전 제품</button>
-                <button onclick="remoteMoveIndex(1)"
-                    style="flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;">다음
-                    제품 ▶</button>
+            <!-- 파레트 및 카톤 추가 입력 섹션 -->
+            <div
+                style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div style="font-size: 15px; font-weight: bold; color: #ddd; margin-bottom: 12px;">📦 수량 / 파레트 추가 입력
+                </div>
+
+                <!-- 카톤 직접 입력 후 추가 -->
+                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                    <input type="number" id="remoteCartonInput" placeholder="추가할 카톤(C/T) 수 입력"
+                        style="flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; font-size: 16px; outline: none;">
+                    <button onclick="remoteAddCartons()"
+                        style="background: #ff3b30; color: #fff; border: none; padding: 0 18px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer;">카톤
+                        추가</button>
+                </div>
+
+                <!-- 1파레트 추가 버튼 (기준 박스 수량 자동 반영) -->
+                <button onclick="remoteAddFullPallet()"
+                    style="width: 100%; background: #222; color: #fff; border: 1px solid #444; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span>📦</span> <span>1 파레트 추가 (+<span id="remotePalletBoxSize">36</span> C/T)</span>
+                </button>
             </div>
 
-            <!-- 현재 송출중인 제품 간단 요약 -->
+            <!-- 현재 상태 요약 -->
             <div
-                style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 18px; text-align: center;">
-                <div style="font-size: 13px; color: #777; margin-bottom: 5px;">현재 TV 송출 상태</div>
-                <div id="remoteStatusText" style="font-size: 15px; font-weight: bold; color: #ddd;">연결 대기중...</div>
+                style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 15px; text-align: center;">
+                <div id="remoteStatusText" style="font-size: 15px; font-weight: bold; color: #ddd;">진행 상황 로딩중...</div>
             </div>
 
         </div>
@@ -3873,23 +3884,60 @@
             let idx = parseInt(index);
             localStorage.setItem('tvSelectedProductIndex', idx);
             updateRemoteStatusSummary(idx);
+
+            // TV 대시보드가 열려있다면 즉시 동기화
+            if (typeof syncAndRenderTV === 'function') {
+                syncAndRenderTV();
+            }
         }
 
-        // 이전/다음 버튼으로 제품 변경
-        function remoteMoveIndex(direction) {
-            if (!packingLogsList || packingLogsList.length === 0) return;
+        // [신규] 리모컨에서 카톤 수량 직접 추가 (부분 파레트 잔량 처리용)
+        function remoteAddCartons() {
+            const inputEl = document.getElementById('remoteCartonInput');
+            if (!inputEl) return;
+            let addQty = parseInt(inputEl.value);
+
+            if (isNaN(addQty) || addQty <= 0) {
+                alert('추가할 올바른 카톤 수량을 입력해주세요.');
+                return;
+            }
+
             let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
-            let newIndex = (currentIndex + direction + packingLogsList.length) % packingLogsList.length;
+            if (!packingLogsList || !packingLogsList[currentIndex]) return;
 
-            localStorage.setItem('tvSelectedProductIndex', newIndex);
+            // 현재 수량에 더하기
+            packingLogsList[currentIndex].currentQty = (packingLogsList[currentIndex].currentQty || 0) + addQty;
 
-            const selectEl = document.getElementById('remoteProductSelect');
-            if (selectEl) selectEl.value = newIndex;
-
-            updateRemoteStatusSummary(newIndex);
+            // 데이터 저장 및 양쪽 화면 실시간 동기화
+            saveAndSyncData();
+            inputEl.value = ''; // 입력창 초기화
+            updateRemoteStatusSummary(currentIndex);
         }
 
-        // 리모컨 하단 요약 텍스트 갱신
+        // [신규] 리모컨에서 1파레트(기준 박스 수량) 통째로 추가
+        function remoteAddFullPallet() {
+            let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
+            if (!packingLogsList || !packingLogsList[currentIndex]) return;
+
+            let boxPerPallet = packingLogsList[currentIndex].boxPerPallet || 36;
+            packingLogsList[currentIndex].currentQty = (packingLogsList[currentIndex].currentQty || 0) + boxPerPallet;
+
+            // 데이터 저장 및 양쪽 화면 실시간 동기화
+            saveAndSyncData();
+            updateRemoteStatusSummary(currentIndex);
+        }
+
+        // [핵심] 데이터 저장 후 PC/TV 대시보드와 로컬스토리지 동기화
+        function saveAndSyncData() {
+            localStorage.setItem('packingLogsList', JSON.stringify(packingLogsList));
+
+            // 만약 동일 브라우저/PC에 TV 대시보드가 켜져 있다면 즉시 렌더링 갱신
+            if (typeof syncAndRenderTV === 'function') {
+                syncAndRenderTV();
+            }
+        }
+
+        // 리모컨 하단 요약 텍스트 갱신 (파레트 당 수량도 표시)
         function updateRemoteStatusSummary(index) {
             const statusEl = document.getElementById('remoteStatusText');
             if (!statusEl || !packingLogsList || !packingLogsList[index]) return;
@@ -3898,9 +3946,23 @@
             const target = log.targetQty || 0;
             const current = log.currentQty || 0;
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+            const boxPerPallet = log.boxPerPallet || 36;
 
-            statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName}</span><br>진행 상황: ${current.toLocaleString()} / ${target.toLocaleString()} (${percent}%)`;
+            // 1파레트 추가 버튼 안의 C/T 수치도 제품별 설정에 맞게 동적 변경
+            const palletBoxSizeSpan = document.getElementById('remotePalletBoxSize');
+            if (palletBoxSizeSpan) palletBoxSizeSpan.innerText = boxPerPallet;
+
+            statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName}</span><br>진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} C/T (${percent}%)`;
         }
+
+        // 크로스 브라우저/탭 실시간 동기화 리스너 보강
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'packingLogsList' || e.key === 'tvSelectedProductIndex') {
+                if (typeof syncAndRenderTV === 'function') {
+                    syncAndRenderTV();
+                }
+            }
+        });
     </script>
 </body>
 
