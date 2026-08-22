@@ -1546,8 +1546,53 @@
         </div>
     </div>
 
+    <!-- 모바일 전용 TV 리모컨 팝업 -->
+    <div id="tvRemoteModal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; box-sizing: border-box; padding: 25px; color: #fff; font-family: sans-serif; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+
+        <div
+            style="background: #161616; border: 1px solid #333; border-radius: 20px; width: 100%; max-width: 400px; padding: 30px; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+
+            <!-- 리모컨 헤더 -->
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 15px;">
+                <span style="font-size: 20px; font-weight: bold; color: #fff;">📱 TV 전광판 리모컨</span>
+                <span
+                    style="color: #888; font-size: 16px; cursor: pointer; padding: 5px 10px; background: #222; border-radius: 6px;"
+                    onclick="closeTvRemoteModal()">✕ 닫기</span>
+            </div>
+
+            <!-- 제품 선택 영역 -->
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; font-size: 14px; color: #aaa; margin-bottom: 8px;">송출할 제품 선택</label>
+                <select id="remoteProductSelect" onchange="remoteChangeProduct(this.value)"
+                    style="width: 100%; background: #222; color: #ff3b30; font-size: 18px; font-weight: bold; padding: 14px; border: 1px solid #444; border-radius: 10px; outline: none;">
+                    <!-- 동적 생성 -->
+                </select>
+            </div>
+
+            <!-- 빠른 이전/다음 전환 버튼 -->
+            <div style="display: flex; gap: 12px; margin-bottom: 25px;">
+                <button onclick="remoteMoveIndex(-1)"
+                    style="flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;">◀
+                    이전 제품</button>
+                <button onclick="remoteMoveIndex(1)"
+                    style="flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;">다음
+                    제품 ▶</button>
+            </div>
+
+            <!-- 현재 송출중인 제품 간단 요약 -->
+            <div
+                style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 18px; text-align: center;">
+                <div style="font-size: 13px; color: #777; margin-bottom: 5px;">현재 TV 송출 상태</div>
+                <div id="remoteStatusText" style="font-size: 15px; font-weight: bold; color: #ddd;">연결 대기중...</div>
+            </div>
+
+        </div>
+    </div>
+
     <!-- TV 전광판 실행 플로팅 버튼 (회색 반투명 원형 / 하단 탭 위 배치) -->
-    <div onclick="openTVDashboard()"
+    <div onclick="handleFloatingButtonClick()"
         style="position: fixed; bottom: 90px; right: 25px; background: rgba(50, 50, 50, 0.85); color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); cursor: pointer; z-index: 998; opacity: 0.75; backdrop-filter: blur(4px); border: 1px solid rgba(255, 255, 255, 0.15); transition: transform 0.2s, opacity 0.2s;"
         onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.75'"
         onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'"
@@ -3772,6 +3817,90 @@
                 closeTVDashboard();
             }
         });
+
+        // 플로팅 버튼 클릭 시 해상도에 따라 모바일 리모컨 vs TV 대시보드 자동 분기
+        function handleFloatingButtonClick() {
+            // 화면 폭이 768px 미만(스마트폰 기기 등)이면 리모컨을 염
+            if (window.innerWidth < 768) {
+                openTvRemoteModal();
+            } else {
+                // PC나 대화면이면 대시보드를 염
+                openTVDashboard();
+            }
+        }
+
+        // 모바일 리모컨 열기
+        function openTvRemoteModal() {
+            const modal = document.getElementById('tvRemoteModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                initRemoteProductSelect();
+            }
+        }
+
+        // 모바일 리모컨 닫기
+        function closeTvRemoteModal() {
+            const modal = document.getElementById('tvRemoteModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // 리모컨 드롭다운 초기화
+        function initRemoteProductSelect() {
+            const savedLogs = localStorage.getItem('packingLogsList');
+            if (savedLogs) {
+                try { packingLogsList = JSON.parse(savedLogs); } catch (e) { }
+            }
+
+            const selectEl = document.getElementById('remoteProductSelect');
+            if (!selectEl) return;
+
+            let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
+            let optionsHtml = '';
+
+            if (packingLogsList && packingLogsList.length > 0) {
+                packingLogsList.forEach((log, index) => {
+                    optionsHtml += `<option value="${index}" ${index === currentIndex ? 'selected' : ''}>${log.productName}</option>`;
+                });
+            } else {
+                optionsHtml = '<option value="0">등록된 제품 없음</option>';
+            }
+            selectEl.innerHTML = optionsHtml;
+            updateRemoteStatusSummary(currentIndex);
+        }
+
+        // 리모컨에서 제품 선택 변경 시
+        function remoteChangeProduct(index) {
+            let idx = parseInt(index);
+            localStorage.setItem('tvSelectedProductIndex', idx);
+            updateRemoteStatusSummary(idx);
+        }
+
+        // 이전/다음 버튼으로 제품 변경
+        function remoteMoveIndex(direction) {
+            if (!packingLogsList || packingLogsList.length === 0) return;
+            let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
+            let newIndex = (currentIndex + direction + packingLogsList.length) % packingLogsList.length;
+
+            localStorage.setItem('tvSelectedProductIndex', newIndex);
+
+            const selectEl = document.getElementById('remoteProductSelect');
+            if (selectEl) selectEl.value = newIndex;
+
+            updateRemoteStatusSummary(newIndex);
+        }
+
+        // 리모컨 하단 요약 텍스트 갱신
+        function updateRemoteStatusSummary(index) {
+            const statusEl = document.getElementById('remoteStatusText');
+            if (!statusEl || !packingLogsList || !packingLogsList[index]) return;
+
+            const log = packingLogsList[index];
+            const target = log.targetQty || 0;
+            const current = log.currentQty || 0;
+            const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+
+            statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName}</span><br>진행 상황: ${current.toLocaleString()} / ${target.toLocaleString()} (${percent}%)`;
+        }
     </script>
 </body>
 
