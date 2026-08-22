@@ -1496,10 +1496,9 @@
             <!-- 왼쪽 영역: 대형 시계 + 진행률 박스 -->
             <div style="flex: 1.1; display: flex; flex-direction: column; justify-content: center;">
                 <!-- 시:분 대형 시계 -->
-                <div id="digitalClock"
-                    style="font-family: 'DS-Digital', sans-serif; font-size: 15vw; font-weight: bold; color: #ff3b30; text-shadow: 0 0 20px rgba(255, 0, 0, 0.4); user-select: none; line-height: 1; margin-bottom: 30px;">
-                    10:54
-                </div>
+
+                <!-- 기존에 디지털 시계 스타일이 지정된 곳에서 font-size를 키워줍니다 -->
+                <div id="digitalClock" style="font-size: 58px; font-weight: bold; color: #fff;">00:00</div>
 
                 <!-- 진행률 박스 -->
                 <div
@@ -3809,7 +3808,7 @@
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
             const remaining = Math.max(0, target - current);
 
-            // 좌측 진행률 업데이트 (65인치용 폰트 확대)
+            // 좌측 진행률 업데이트
             document.getElementById('tvProgressTitle').innerText = `진행률 (${current.toLocaleString()} / ${target.toLocaleString()})`;
             document.getElementById('tvProgressPercent').innerText = `${percent}%`;
             document.getElementById('tvProgressBar').style.width = `${percent}%`;
@@ -3818,34 +3817,36 @@
             // 우측 제품명 및 파레트 요약 업데이트
             document.getElementById('tvProductName').innerText = activeLog.productName;
 
-            let boxPerPallet = activeLog.boxPerPallet || 36; // 파레트당 박스 수량 기준 (기본 36)
+            let boxPerPallet = activeLog.boxPerPallet || 36; // 파레트당 박스 수량 기준
             let completedPalettes = Math.floor(current / boxPerPallet);
             document.getElementById('tvPaletteSummary').innerText = `현재까지 총 ${completedPalettes}개 파레트 완료`;
 
-            // 우측 세부 리스트 (CSS 원형 번호 사용으로 무제한 지원 & 65인치에 맞게 큼직하게 구성)
+            // 우측 세부 리스트 (C/T 글자 제거 및 마감시간 '00시 00분' 적용)
             let listHtml = '';
-            let displayCount = Math.max(5, completedPalettes + (current > 0 ? 1 : 0)); // 최소 5개 이상 꽉 차게 표시
+            let displayCount = Math.max(5, completedPalettes + (current > 0 ? 1 : 0));
 
             for (let i = 0; i < displayCount; i++) {
                 let isLatest = (i === completedPalettes);
                 let paletteSeq = i + 1;
 
-                // CSS로 만든 깔끔한 원형 숫자 (100개 넘어도 깨지지 않음)
                 let circleNumberHtml = `
                     <div style="width: 45px; height: 45px; background: ${isLatest ? '#ff3b30' : '#222'}; color: ${isLatest ? '#fff' : '#aaa'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; flex-shrink: 0;">
                         ${paletteSeq}
                     </div>
                 `;
 
+                // 마감 시간 표기 (없으면 '00시 00분'으로 표시)
+                let timeText = activeLog.dueTime || activeLog.dueDate || '00시 00분';
+
                 listHtml += `
                     <div style="background: #121212; border: 1px solid ${isLatest ? '#ff3b30' : '#222'}; padding: 22px 25px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: ${isLatest ? '0 0 15px rgba(255,59,48,0.2)' : 'none'};">
                         <div style="display: flex; align-items: center; gap: 20px;">
                             ${circleNumberHtml}
-                            <span style="font-size: 26px; font-weight: bold; color: #fff;">${boxPerPallet} C/T</span>
+                            <span style="font-size: 26px; font-weight: bold; color: #fff;">${boxPerPallet.toLocaleString()}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 30px;">
-                            <span style="font-size: 22px; color: #aaa;">(${(paletteSeq * boxPerPallet).toLocaleString()} C/T)</span>
-                            <span style="font-size: 20px; color: ${isLatest ? '#ff8888' : '#777'}; font-weight: bold; background: #1a1a1a; padding: 6px 14px; border-radius: 6px;">${activeLog.dueDate || '마감'}</span>
+                            <span style="font-size: 22px; color: #aaa;">(${(paletteSeq * boxPerPallet).toLocaleString()})</span>
+                            <span style="font-size: 20px; color: ${isLatest ? '#ff8888' : '#777'}; font-weight: bold; background: #1a1a1a; padding: 6px 14px; border-radius: 6px;">${timeText}</span>
                         </div>
                     </div>
                 `;
@@ -3911,49 +3912,47 @@
             updateRemoteStatusSummary(currentIndex);
         }
 
-        // [수정] 리모컨에서 선택 버튼을 눌렀을 때만 PC에 적용
+        // 제품 선택 적용
         function applyRemoteSelection() {
             const selectEl = document.getElementById('remoteProductSelect');
             const idx = parseInt(selectEl.value);
 
-            // 파이어베이스에 선택된 인덱스 업데이트 (모든 기기에 실시간 반영됨)
             db.collection('config').doc('tvDashboard').set({
                 selectedIndex: idx,
                 packingLogsList: packingLogsList
             }, { merge: true }).then(() => {
                 localStorage.setItem('tvSelectedProductIndex', idx);
                 updateRemoteStatusSummary(idx);
-                alert('대시보드가 선택한 제품으로 변경되었습니다.');
+                showToast('대시보드가 선택한 제품으로 변경되었습니다.', 'info');
             }).catch((error) => {
                 console.error('동기화 실패:', error);
-                alert('변경 중 오류가 발생했습니다.');
+                showToast('변경 중 오류가 발생했습니다.', 'error');
             });
         }
 
-        // [신규] 리모컨에서 카톤 수량 직접 추가 (부분 파레트 잔량 처리용)
+        // 카톤 수량 직접 추가
         function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
             let addQty = parseInt(inputEl.value);
 
             if (isNaN(addQty) || addQty <= 0) {
-                alert('추가할 올바른 카톤 수량을 입력해주세요.');
+                showToast('추가할 올바른 카톤 수량을 입력해주세요.', 'error');
                 return;
             }
 
             let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
             if (!packingLogsList || !packingLogsList[currentIndex]) return;
 
-            // 현재 수량에 더하기
             packingLogsList[currentIndex].currentQty = (packingLogsList[currentIndex].currentQty || 0) + addQty;
 
-            // 데이터 저장 및 양쪽 화면 실시간 동기화
             saveAndSyncData();
-            inputEl.value = ''; // 입력창 초기화
+            showToast(`+${addQty} C/T 추가되었습니다.`, 'success');
+            inputEl.value = packingLogsList[currentIndex].boxPerPallet || 36; // 기본값 복원
             updateRemoteStatusSummary(currentIndex);
         }
 
-        // [신규] 리모컨에서 1파레트(기준 박스 수량) 통째로 추가
+        // 1파레트 통째로 추가
         function remoteAddFullPallet() {
             let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
             if (!packingLogsList || !packingLogsList[currentIndex]) return;
@@ -3961,8 +3960,8 @@
             let boxPerPallet = packingLogsList[currentIndex].boxPerPallet || 36;
             packingLogsList[currentIndex].currentQty = (packingLogsList[currentIndex].currentQty || 0) + boxPerPallet;
 
-            // 데이터 저장 및 양쪽 화면 실시간 동기화
             saveAndSyncData();
+            showToast(`1파레트 (+${boxPerPallet} C/T) 추가되었습니다.`, 'success');
             updateRemoteStatusSummary(currentIndex);
         }
 
@@ -3983,7 +3982,7 @@
             });
         }
 
-        // 리모컨 하단 요약 텍스트 갱신 (파레트 당 수량도 표시)
+        // 리모컨 하단 요약 텍스트 갱신 (입력창 기본값 자동 세팅 포함)
         function updateRemoteStatusSummary(index) {
             const statusEl = document.getElementById('remoteStatusText');
             if (!statusEl || !packingLogsList || !packingLogsList[index]) return;
@@ -3994,9 +3993,14 @@
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
             const boxPerPallet = log.boxPerPallet || 36;
 
-            // 1파레트 추가 버튼 안의 C/T 수치도 제품별 설정에 맞게 동적 변경
             const palletBoxSizeSpan = document.getElementById('remotePalletBoxSize');
             if (palletBoxSizeSpan) palletBoxSizeSpan.innerText = boxPerPallet;
+
+            // 카톤 추가 입력창에 제품별 파레트당 기준 수량을 기본값으로 자동 세팅
+            const inputEl = document.getElementById('remoteCartonInput');
+            if (inputEl && !inputEl.value) {
+                inputEl.value = boxPerPallet;
+            }
 
             statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName}</span><br>진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} C/T (${percent}%)`;
         }
