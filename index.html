@@ -1498,51 +1498,54 @@
                 <!-- 시:분 대형 시계 -->
 
                 <!-- 기존에 디지털 시계 스타일이 지정된 곳에서 font-size를 키워줍니다 -->
-                <div id="digitalClock" style="font-size: 58px; font-weight: bold; color: #fff;">00:00</div>
-
-                <!-- 진행률 박스 -->
-                <div
-                    style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 30px; box-sizing: border-box;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 26px; font-weight: bold;">
-                        <span id="tvProgressTitle">진행률 (0 / 0)</span>
-                        <span id="tvProgressPercent" style="color: #ff3b30;">0%</span>
-                    </div>
-                    <div
-                        style="width: 100%; background: #222; height: 16px; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                        <div id="tvProgressBar"
-                            style="width: 0%; height: 100%; background: #ff3b30; transition: width 0.5s ease;"></div>
-                    </div>
-                    <div id="tvRemainingText" style="color: #888; font-size: 20px;">
-                        ⏳ 남은 수량: 계산 중...
-                    </div>
-                </div>
+                <div id="digitalClock"
+                    style="font-family: 'DS-Digital', sans-serif; font-size: 50vw; font-weight: bold; color: #b30000; text-shadow: 0 0 10px rgba(255, 0, 0, 0.3); user-select: none;">
+                    00:00</div>
             </div>
 
-            <!-- 오른쪽 영역: 제품 정보 및 파레트 세부 현황 -->
-            <div style="flex: 0.9; display: flex; flex-direction: column; justify-content: center;">
+            <!-- 진행률 박스 -->
+            <div
+                style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 30px; box-sizing: border-box;">
                 <div
-                    style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 35px; box-sizing: border-box; height: 85%; display: flex; flex-direction: column;">
-
-                    <!-- 제품 타이틀 및 요약 -->
-                    <div style="margin-bottom: 25px; border-bottom: 2px solid #222; padding-bottom: 20px;">
-                        <div
-                            style="font-size: 30px; font-weight: bold; color: #ff3b30; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
-                            <span>📌</span> <span id="tvProductName">제품을 선택해주세요</span>
-                        </div>
-                        <div id="tvPaletteSummary" style="color: #888; font-size: 20px;">현재까지 총 0개 파레트 완료</div>
-                    </div>
-
-                    <!-- 파레트 세부 리스트 영역 -->
-                    <div id="tvPaletteList"
-                        style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
-                        <!-- 실시간 데이터가 렌더링되는 영역 -->
-                    </div>
-
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 26px; font-weight: bold;">
+                    <span id="tvProgressTitle">진행률 (0 / 0)</span>
+                    <span id="tvProgressPercent" style="color: #ff3b30;">0%</span>
+                </div>
+                <div
+                    style="width: 100%; background: #222; height: 16px; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                    <div id="tvProgressBar"
+                        style="width: 0%; height: 100%; background: #ff3b30; transition: width 0.5s ease;"></div>
+                </div>
+                <div id="tvRemainingText" style="color: #888; font-size: 20px;">
+                    ⏳ 남은 수량: 계산 중...
                 </div>
             </div>
-
         </div>
+
+        <!-- 오른쪽 영역: 제품 정보 및 파레트 세부 현황 -->
+        <div style="flex: 0.9; display: flex; flex-direction: column; justify-content: center;">
+            <div
+                style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 35px; box-sizing: border-box; height: 85%; display: flex; flex-direction: column;">
+
+                <!-- 제품 타이틀 및 요약 -->
+                <div style="margin-bottom: 25px; border-bottom: 2px solid #222; padding-bottom: 20px;">
+                    <div
+                        style="font-size: 30px; font-weight: bold; color: #ff3b30; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+                        <span>📌</span> <span id="tvProductName">제품을 선택해주세요</span>
+                    </div>
+                    <div id="tvPaletteSummary" style="color: #888; font-size: 20px;">현재까지 총 0개 파레트 완료</div>
+                </div>
+
+                <!-- 파레트 세부 리스트 영역 -->
+                <div id="tvPaletteList"
+                    style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
+                    <!-- 실시간 데이터가 렌더링되는 영역 -->
+                </div>
+
+            </div>
+        </div>
+
+    </div>
     </div>
 
     <!-- 모바일 전용 TV 리모컨 팝업 -->
@@ -3803,6 +3806,29 @@
                 return;
             }
 
+            // 오늘 날짜 구하기 (YYYY-MM-DD 포맷 또는 날짜 비교용)
+            const now = new Date();
+            const tYear = now.getFullYear();
+            const tMonth = String(now.getMonth() + 1).padStart(2, '0');
+            const tDay = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${tYear}-${tMonth}-${tDay}`;
+            const todayStrShort = `${tMonth}-${tDay}`;
+
+            // 오늘 작업이 아니면 우측 패널에 표시 안 함
+            const logDate = activeLog.dueDate || '';
+            const isTodayWork = (logDate === todayStr || logDate === todayStrShort || logDate.includes(todayStrShort));
+
+            if (!isTodayWork) {
+                document.getElementById('tvProductName').innerText = activeLog.productName;
+                document.getElementById('tvProgressTitle').innerText = `진행률 (0 / ${activeLog.targetQty || 0})`;
+                document.getElementById('tvProgressPercent').innerText = '0%';
+                document.getElementById('tvProgressBar').style.width = '0%';
+                document.getElementById('tvRemainingText').innerText = '⏳ 오늘 당일 작업분이 아닙니다.';
+                document.getElementById('tvPaletteSummary').innerText = '현재까지 총 0개 파레트 완료';
+                document.getElementById('tvPaletteList').innerHTML = '<div style="color: #888; font-size: 24px; text-align: center; margin-top: 80px;">오늘 날짜의 작업 내역이 없습니다.</div>';
+                return;
+            }
+
             const target = activeLog.targetQty || 0;
             const current = activeLog.currentQty || 0;
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
@@ -3817,11 +3843,11 @@
             // 우측 제품명 및 파레트 요약 업데이트
             document.getElementById('tvProductName').innerText = activeLog.productName;
 
-            let boxPerPallet = activeLog.boxPerPallet || 36; // 파레트당 박스 수량 기준
+            let boxPerPallet = activeLog.boxPerPallet || 36;
             let completedPalettes = Math.floor(current / boxPerPallet);
             document.getElementById('tvPaletteSummary').innerText = `현재까지 총 ${completedPalettes}개 파레트 완료`;
 
-            // 우측 세부 리스트 (C/T 글자 제거 및 마감시간 '00시 00분' 적용)
+            // 우측 세부 리스트 (숫자 바로 옆 C/T 표기 복원)
             let listHtml = '';
             let displayCount = Math.max(5, completedPalettes + (current > 0 ? 1 : 0));
 
@@ -3835,24 +3861,27 @@
                     </div>
                 `;
 
-                // 마감 시간 표기 (없으면 '00시 00분'으로 표시)
                 let timeText = activeLog.dueTime || activeLog.dueDate || '00시 00분';
 
                 listHtml += `
                     <div style="background: #121212; border: 1px solid ${isLatest ? '#ff3b30' : '#222'}; padding: 22px 25px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: ${isLatest ? '0 0 15px rgba(255,59,48,0.2)' : 'none'};">
                         <div style="display: flex; align-items: center; gap: 20px;">
                             ${circleNumberHtml}
-                            <span style="font-size: 26px; font-weight: bold; color: #fff;">${boxPerPallet.toLocaleString()}</span>
+                            <span style="font-size: 26px; font-weight: bold; color: #fff;">${boxPerPallet.toLocaleString()} C/T</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 30px;">
-                            <span style="font-size: 22px; color: #aaa;">(${(paletteSeq * boxPerPallet).toLocaleString()})</span>
+                            <span style="font-size: 22px; color: #aaa;">(${(paletteSeq * boxPerPallet).toLocaleString()} C/T)</span>
                             <span style="font-size: 20px; color: ${isLatest ? '#ff8888' : '#777'}; font-weight: bold; background: #1a1a1a; padding: 6px 14px; border-radius: 6px;">${timeText}</span>
                         </div>
                     </div>
                 `;
             }
 
-            document.getElementById('tvPaletteList').innerHTML = listHtml;
+            const paletteListEl = document.getElementById('tvPaletteList');
+            paletteListEl.innerHTML = listHtml;
+
+            // 최하단 번호(가장 최근 항목)로 화면 스크롤 이동
+            paletteListEl.scrollTop = paletteListEl.scrollHeight;
         }
 
         // ESC 키로 전광판 닫기 기능
@@ -3930,7 +3959,7 @@
             });
         }
 
-        // 카톤 수량 직접 추가
+        // 카톤 수량 직접 추가 (포장일지 일일작업내역 누적 반영)
         function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
@@ -3944,21 +3973,38 @@
             let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
             if (!packingLogsList || !packingLogsList[currentIndex]) return;
 
-            packingLogsList[currentIndex].currentQty = (packingLogsList[currentIndex].currentQty || 0) + addQty;
+            let currentLog = packingLogsList[currentIndex];
+            currentLog.currentQty = (currentLog.currentQty || 0) + addQty;
+
+            // 포장일지 일일작업내역 누적 세트 기록 배열이 있다면 반영
+            if (!currentLog.dailyHistory) currentLog.dailyHistory = [];
+            currentLog.dailyHistory.push({
+                addedQty: addQty,
+                totalQty: currentLog.currentQty,
+                timestamp: new Date().toLocaleTimeString()
+            });
 
             saveAndSyncData();
             showToast(`+${addQty} C/T 추가되었습니다.`, 'success');
-            inputEl.value = packingLogsList[currentIndex].boxPerPallet || 36; // 기본값 복원
+            inputEl.value = currentLog.boxPerPallet || 36;
             updateRemoteStatusSummary(currentIndex);
         }
 
-        // 1파레트 통째로 추가
+        // 1파레트 통째로 추가 (포장일지 일일작업내역 누적 반영)
         function remoteAddFullPallet() {
             let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
             if (!packingLogsList || !packingLogsList[currentIndex]) return;
 
-            let boxPerPallet = packingLogsList[currentIndex].boxPerPallet || 36;
-            packingLogsList[currentIndex].currentQty = (packingLogsList[currentIndex].currentQty || 0) + boxPerPallet;
+            let currentLog = packingLogsList[currentIndex];
+            let boxPerPallet = currentLog.boxPerPallet || 36;
+            currentLog.currentQty = (currentLog.currentQty || 0) + boxPerPallet;
+
+            if (!currentLog.dailyHistory) currentLog.dailyHistory = [];
+            currentLog.dailyHistory.push({
+                addedQty: boxPerPallet,
+                totalQty: currentLog.currentQty,
+                timestamp: new Date().toLocaleTimeString()
+            });
 
             saveAndSyncData();
             showToast(`1파레트 (+${boxPerPallet} C/T) 추가되었습니다.`, 'success');
