@@ -1565,10 +1565,15 @@
             <!-- 제품 선택 영역 -->
             <div style="margin-bottom: 20px;">
                 <label style="display: block; font-size: 14px; color: #aaa; margin-bottom: 8px;">제어할 제품 선택</label>
-                <select id="remoteProductSelect" onchange="remoteChangeProduct(this.value)"
-                    style="width: 100%; background: #222; color: #ff3b30; font-size: 18px; font-weight: bold; padding: 14px; border: 1px solid #444; border-radius: 10px; outline: none;">
-                    <!-- 동적 생성 -->
-                </select>
+                <div style="display: flex; gap: 10px;">
+                    <select id="remoteProductSelect"
+                        style="flex: 1; background: #222; color: #ff3b30; font-size: 18px; font-weight: bold; padding: 14px; border: 1px solid #444; border-radius: 10px; outline: none;">
+                        <!-- 동적 생성 -->
+                    </select>
+                    <!-- [수정] 적용 버튼 추가 -->
+                    <button onclick="applyRemoteSelection()"
+                        style="background: #007aff; color: #fff; border: none; padding: 0 20px; border-radius: 10px; font-weight: bold; cursor: pointer;">적용</button>
+                </div>
             </div>
 
             <!-- 파레트 및 카톤 추가 입력 섹션 -->
@@ -3887,21 +3892,22 @@
             updateRemoteStatusSummary(currentIndex);
         }
 
-        // 리모컨에서 제품 선택 변경 시
-        function remoteChangeProduct(index) {
-            let idx = parseInt(index);
-            localStorage.setItem('tvSelectedProductIndex', idx);
-            updateRemoteStatusSummary(idx);
+        // [수정] 리모컨에서 선택 버튼을 눌렀을 때만 PC에 적용
+        function applyRemoteSelection() {
+            const selectEl = document.getElementById('remoteProductSelect');
+            const idx = parseInt(selectEl.value);
 
-            // [추가] 다른 화면(대시보드)으로 제품 변경 신호 전송
+            // 1. 값 저장
+            localStorage.setItem('tvSelectedProductIndex', idx);
+
+            // 2. PC 대시보드로 변경 신호 발송
             tvChannel.postMessage({ type: 'CHANGE_PRODUCT', index: idx });
 
-            // TV 대시보드가 열려있다면 즉시 동기화
-            if (typeof syncAndRenderTV === 'function') {
-                syncAndRenderTV();
-            } else {
-                renderTVDataBoard();
-            }
+            // 3. 리모컨 내부 상태도 갱신
+            updateRemoteStatusSummary(idx);
+
+            // 4. (선택사항) 적용되었다는 피드백을 사용자에게 보여줌
+            alert('대시보드가 선택한 제품으로 변경되었습니다.');
         }
 
         // [추가] 실시간 통신 수신 리스너
