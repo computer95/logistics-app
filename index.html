@@ -3762,15 +3762,34 @@
             document.getElementById('digitalClock').innerText = `${hours}:${minutes}`;
         }
 
-        const tyChannel = new BroadcastChannel('tv_dashboard_realtime_channel');
+        // 파이어베이스 실시간 리스너 (스마트폰 <-> PC 실시간 동기화)
+        // 'config' 컬렉션의 'tvDashboard' 문서를 실시간으로 감시합니다.
+        db.collection('config').doc('tvDashboard').onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.packingLogsList) {
+                    packingLogsList = data.packingLogsList;
+                }
+
+                // 선택된 제품 인덱스 동기화
+                if (typeof data.selectedIndex !== 'undefined') {
+                    localStorage.setItem('tvSelectedProductIndex', data.selectedIndex);
+
+                    // 모바일 리모컨 드롭다운이나 요약 텍스트가 열려있다면 갱신
+                    const selectEl = document.getElementById('remoteProductSelect');
+                    if (selectEl) selectEl.value = data.selectedIndex;
+                    updateRemoteStatusSummary(data.selectedIndex);
+                }
+
+                // TV 대시보드가 켜져있다면 화면 갱신
+                if (typeof renderTVDataBoard === 'function') {
+                    renderTVDataBoard();
+                }
+            }
+        });
 
         // 65인치 대화면 비율 및 CSS 원형 번호가 적용된 렌더링 함수
         function renderTVDataBoard() {
-            const savedLogs = localStorage.getItem('packingLogsList');
-            if (savedLogs) {
-                try { packingLogsList = JSON.parse(savedLogs); } catch (e) { }
-            }
-
             const activeIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
             const activeLog = packingLogsList[activeIndex] || packingLogsList[0];
 
@@ -3897,30 +3916,19 @@
             const selectEl = document.getElementById('remoteProductSelect');
             const idx = parseInt(selectEl.value);
 
-            // 1. 값 저장
-            localStorage.setItem('tvSelectedProductIndex', idx);
-
-            // 2. PC 대시보드로 변경 신호 발송
-            tvChannel.postMessage({ type: 'CHANGE_PRODUCT', index: idx });
-
-            // 3. 리모컨 내부 상태도 갱신
-            updateRemoteStatusSummary(idx);
-
-            // 4. (선택사항) 적용되었다는 피드백을 사용자에게 보여줌
-            alert('대시보드가 선택한 제품으로 변경되었습니다.');
+            // 파이어베이스에 선택된 인덱스 업데이트 (모든 기기에 실시간 반영됨)
+            db.collection('config').doc('tvDashboard').set({
+                selectedIndex: idx,
+                packingLogsList: packingLogsList
+            }, { merge: true }).then(() => {
+                localStorage.setItem('tvSelectedProductIndex', idx);
+                updateRemoteStatusSummary(idx);
+                alert('대시보드가 선택한 제품으로 변경되었습니다.');
+            }).catch((error) => {
+                console.error('동기화 실패:', error);
+                alert('변경 중 오류가 발생했습니다.');
+            });
         }
-
-        // [추가] 실시간 통신 수신 리스너
-        tvChannel.onmessage = function (event) {
-            if (!event.data) return;
-            if (event.data.type === 'CHANGE_PRODUCT') {
-                localStorage.setItem('tvSelectedProductIndex', event.data.index);
-                renderTVDataBoard();
-            } else if (event.data.type === 'UPDATE_LOGS') {
-                packingLogsList = event.data.list;
-                renderTVDataBoard();
-            }
-        };
 
         // [신규] 리모컨에서 카톤 수량 직접 추가 (부분 파레트 잔량 처리용)
         function remoteAddCartons() {
@@ -3960,12 +3968,19 @@
 
         // [핵심] 데이터 저장 후 PC/TV 대시보드와 로컬스토리지 동기화
         function saveAndSyncData() {
-            localStorage.setItem('packingLogsList', JSON.stringify(packingLogsList));
+            const currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
 
-            // 만약 동일 브라우저/PC에 TV 대시보드가 켜져 있다면 즉시 렌더링 갱신
-            if (typeof syncAndRenderTV === 'function') {
-                syncAndRenderTV();
-            }
+            // 파이어베이스에 전체 리스트와 현재 인덱스를 통째로 동기화하여 저장
+            db.collection('config').doc('tvDashboard').set({
+                packingLogsList: packingLogsList,
+                selectedIndex: currentIndex
+            }, { merge: true }).then(() => {
+                if (typeof renderTVDataBoard === 'function') {
+                    renderTVDataBoard();
+                }
+            }).catch((error) => {
+                console.error('데이터 저장 실패:', error);
+            });
         }
 
         // 리모컨 하단 요약 텍스트 갱신 (파레트 당 수량도 표시)
@@ -3985,15 +4000,6 @@
 
             statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName}</span><br>진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} C/T (${percent}%)`;
         }
-
-        // 크로스 브라우저/탭 실시간 동기화 리스너 보강
-        window.addEventListener('storage', function (e) {
-            if (e.key === 'packingLogsList' || e.key === 'tvSelectedProductIndex') {
-                if (typeof syncAndRenderTV === 'function') {
-                    syncAndRenderTV();
-                }
-            }
-        });
     </script>
 </body>
 
