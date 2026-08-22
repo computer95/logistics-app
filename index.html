@@ -1652,6 +1652,9 @@
 
         initDietSystem();
         initRealtimeProductListener();
+
+        localStorage.removeItem('packingLogsList');
+
         loadPackingLogs();
 
         // 🔄 새로고침 시 마지막 탭 위치 복원
