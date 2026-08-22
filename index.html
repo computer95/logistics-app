@@ -2733,9 +2733,6 @@
                     currentQty: log.currentQty
                 });
 
-                // 💡 이 코드를 추가해서 로컬스토리지도 즉시 갱신해 주기!
-                localStorage.setItem('packingLogsList', JSON.stringify(packingLogsList));
-
                 renderWorkLogHistory(log);
                 updateRemainingCalcBox(log);
                 showToast('✅ 삭제되었습니다.', 'success');
@@ -3818,7 +3815,6 @@
                 const data = doc.data();
                 if (data.packingLogsList) {
                     packingLogsList = data.packingLogsList;
-                    localStorage.setItem('packingLogsList', JSON.stringify(packingLogsList));
                 }
 
                 // 선택된 제품 인덱스 동기화
@@ -4082,7 +4078,6 @@
         // 데이터 저장 및 실시간 동기화 함수
         function saveAndSyncData() {
             const currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
-            localStorage.setItem('packingLogsList', JSON.stringify(packingLogsList));
 
             db.collection('config').doc('tvDashboard').set({
                 packingLogsList: packingLogsList,
