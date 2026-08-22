@@ -2700,8 +2700,13 @@
                     history: log.history,
                     currentQty: log.currentQty
                 });
+
+                // 💡 이 코드를 추가해서 로컬스토리지도 즉시 갱신해 주기!
+                localStorage.setItem('packingLogsList', JSON.stringify(packingLogsList));
+
                 renderWorkLogHistory(log);
                 updateRemainingCalcBox(log);
+                showToast('✅ 삭제되었습니다.', 'success');
             } catch (e) {
                 showToast('작업 기록 삭제 오류: ' + e.message, 'error');
             }
