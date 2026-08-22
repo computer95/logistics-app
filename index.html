@@ -4085,68 +4085,80 @@
         }
 
         // --- TV 전광판 우측 패널 렌더링 (제품명 흰색 및 우측 패널 폰트 확대 적용) ---
-        function renderTVDataBoard(logData, fullHistoryList = []) {
+        function renderTVDataBoard(logData, historyList = []) {
             if (!logData) {
                 const nameEl = document.getElementById('tvProductName');
                 if (nameEl) {
                     nameEl.innerText = '선택된 제품 없음';
-                    nameEl.style.color = '#fff';
+                    nameEl.style.color = '#fff'; // 💡 제품명 흰색 적용
                 }
                 const listContainer = document.getElementById('tvPaletteList');
                 if (listContainer) listContainer.innerHTML = '<div style="color: #666; text-align: center; margin-top: 20px; font-size: 18px;">표시할 작업이 없습니다.</div>';
                 return;
             }
 
-            // 1. 현재 제품 ID와 일치하는 기록만 필터링 (핵심!)
-            const currentProductId = logData.productId;
-            const myHistory = fullHistoryList.filter(item => item.productId === currentProductId);
-
-            // 제품명 및 기본 정보 업데이트
             const nameEl = document.getElementById('tvProductName');
             if (nameEl) {
                 nameEl.innerText = logData.productName || '제품명 없음';
-                nameEl.style.color = '#fff';
+                nameEl.style.color = '#fff'; // 💡 제품명 흰색 적용
             }
 
-            // 목표/현재 수량 계산 (기록 필터링된 myHistory를 사용하여 현재 수량 재산출)
-            const total = Number(logData.targetQty || 0);
-            const current = myHistory.reduce((sum, h) => sum + (Number(h.qty || h.sets) || 0), 0);
+            const total = logData.targetQty || 0;
+            const current = logData.currentQty || 0;
             const percent = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
 
-            // 진행률 텍스트 업데이트
             const titleEl = document.getElementById('tvProgressTitle');
             if (titleEl) {
                 titleEl.innerText = `진행률 (${current.toLocaleString()} / ${total.toLocaleString()})`;
-                titleEl.style.fontSize = '22px';
+                titleEl.style.fontSize = '22px'; // 💡 진행률 타이틀 폰트 확대
             }
 
-            // 우측 퍼센트 업데이트 (흰색)
             const percentEl = document.getElementById('tvProgressPercent');
             if (percentEl) {
                 percentEl.innerText = `${percent}%`;
-                percentEl.style.color = '#fff';
+                percentEl.style.fontSize = '22px'; // 💡 진행률 퍼센트 폰트 확대
             }
 
-            // 진행바 업데이트
             const barEl = document.getElementById('tvProgressBar');
             if (barEl) barEl.style.width = `${percent}%`;
 
-            // 2. 리스트 렌더링 (필터링된 myHistory 사용)
+            const remaining = Math.max(0, total - current);
+            let totalPallets = '0.0', totalCartons = '0.0';
+            const p = productList.find(item => item.id === logData.productId);
+            if (p && remaining > 0) {
+                let cToI = (p.hasSet === 'O') ? ((p.cartonToSet || 0) * (p.setToInner || 0)) : (p.cartonToInner || 0);
+                let unitPerSet = (p.hasSet === 'O') ? ((p.setToInner || 0) * (p.innerToUnit || 1)) : (p.innerToUnit || 1);
+                let totalEa = remaining * unitPerSet;
+                let unitsPerPallet = (p.palletToCarton || 24) * cToI * (p.innerToUnit || 1);
+                let pf = typeof formatVal === 'function' ? formatVal : (val, d) => val.toFixed(d);
+                totalPallets = pf(unitsPerPallet > 0 ? (totalEa / unitsPerPallet) : 0, 1);
+                totalCartons = pf((cToI * (p.innerToUnit || 1)) > 0 ? (totalEa / (cToI * (p.innerToUnit || 1))) : 0, 1);
+            }
+
+            const remainingEl = document.getElementById('tvRemainingText');
+            if (remainingEl) {
+                // 💡 남은 수량 및 파레트/카톤 안내 폰트 크기 대폭 확대
+                remainingEl.innerHTML = `
+            <div style="font-size: 22px; font-weight: bold; color: #fff;">⏳ 남은 수량: ${remaining.toLocaleString()} SET</div>
+            <div style="font-size: 20px; color: #fff; margin-top: 8px;">🅿️ 파레트: <strong>${totalPallets} 개</strong> | 📦 카톤: <strong>${totalCartons} 개</strong></div>
+        `;
+            }
+
             const summaryEl = document.getElementById('tvPaletteSummary');
             if (summaryEl) {
-                summaryEl.innerText = `현재 제품 기록: ${myHistory.length}회`;
-                summaryEl.style.fontSize = '18px';
+                summaryEl.innerText = `현재까지 총 ${historyList.length}회 기록`;
+                summaryEl.style.fontSize = '18px'; // 💡 기록 요약 폰트 확대
             }
 
             const listContainer = document.getElementById('tvPaletteList');
             if (listContainer) {
-                listContainer.innerHTML = myHistory.length > 0 ? '' : '<div style="color: #666; text-align: center; margin-top: 20px; font-size: 18px;">기록된 내역이 없습니다.</div>';
+                listContainer.innerHTML = historyList.length > 0 ? '' : '<div style="color: #666; text-align: center; margin-top: 20px; font-size: 18px;">아직 기록된 내역이 없습니다.</div>';
 
-                const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
+                const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑈', '⑲', '⑳'];
 
                 let runningSets = 0;
 
-                myHistory.forEach((item, index) => {
+                historyList.forEach((item, index) => {
                     const cartons = Number(item.cartons || item.box) || 0;
                     const sets = Number(item.qty || item.sets) || 0;
                     runningSets += sets;
@@ -4154,6 +4166,7 @@
                     const circle = circleNums[index] || `(${index + 1})`;
 
                     const div = document.createElement('div');
+                    // 💡 리스트 행 내부 폰트 크기 전체적으로 큼직하게 상향 조정
                     div.style.cssText = "background: #1a1a1a; padding: 14px 18px; border-radius: 8px; color: #fff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-left: 4px solid #ff3b30;";
                     div.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 16px;">
@@ -4161,10 +4174,11 @@
                     <span style="font-size: 22px; font-weight: bold; color: #fff;">${cartons} C/T</span>
                     <span style="font-size: 20px; font-weight: bold; color: #fff;">(${runningSets.toLocaleString()})</span>
                 </div>
-                <div style="font-size: 18px; font-weight: bold; color: #fff;">${timeStr} 마감</div>
+                <div style="font-size: 20px; font-weight: bold; color: #fff;">${timeStr} </div>
             `;
                     listContainer.appendChild(div);
                 });
+
                 listContainer.scrollTop = listContainer.scrollHeight;
             }
         }
