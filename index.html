@@ -3775,7 +3775,7 @@
         }
 
         // ==========================================
-        // 📺 TV 전광판 및 리모컨 연동 로직 (완전 통합 버전)
+        // 📺 TV 전광판 및 리모컨 연동 로직 (history 필드 정상 연동 버전)
         // ==========================================
         let tvClockInterval;
 
@@ -3810,7 +3810,7 @@
             }
         });
 
-        // 2. [데이터 감시] packing_logs(일일작업현황) 데이터 실시간 동기화
+        // 2. [데이터 감시] packing_logs 데이터 실시간 동기화
         db.collection('packing_logs').onSnapshot((snapshot) => {
             packingLogsList = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -3841,7 +3841,7 @@
             return p ? Number(p.palletToCarton || p.boxPerPallet || 36) : 36;
         }
 
-        // 📦 packing_logs 데이터 저장 및 실시간 동기화 (수량 누적 합산 반영)
+        // 📦 packing_logs 데이터 저장 (history 필드에 누적 저장)
         function saveAndSyncData() {
             const currentSelectedId = localStorage.getItem('tvSelectedLogId');
             const currentLog = packingLogsList.find(l => l.id === currentSelectedId);
@@ -3850,7 +3850,7 @@
 
             db.collection('packing_logs').doc(currentLog.id).update({
                 currentQty: currentLog.currentQty,
-                pallets: currentLog.pallets
+                history: currentLog.history // 💡 pallets 대신 기존의 history 필드 사용
             }).catch((error) => {
                 console.error('데이터 저장 실패:', error);
             });
@@ -3923,7 +3923,7 @@
             updateRemoteStatusSummary(currentSelectedId);
         }
 
-        // 카톤 직접 추가 (입력창 공란 유지)
+        // 카톤 직접 추가 (history에 기록)
         function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
@@ -3936,17 +3936,16 @@
 
             currentLog.currentQty = (currentLog.currentQty || 0) + addQty;
 
-            if (!currentLog.pallets) currentLog.pallets = [];
-            currentLog.pallets.push({ qty: addQty, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+            if (!currentLog.history) currentLog.history = [];
+            currentLog.history.push({ qty: addQty, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
 
             saveAndSyncData();
             showToast(`+${addQty} C/T 추가되었습니다.`, 'success');
 
-            // 입력창 비우기 유지
             inputEl.value = '';
         }
 
-        // 1파레트 추가
+        // 1파레트 추가 (history에 기록)
         function remoteAddFullPallet() {
             let currentSelectedId = localStorage.getItem('tvSelectedLogId');
             let currentLog = packingLogsList.find(l => l.id === currentSelectedId);
@@ -3955,15 +3954,15 @@
             let boxPerPallet = getBoxPerPallet(currentLog);
             currentLog.currentQty = (currentLog.currentQty || 0) + boxPerPallet;
 
-            if (!currentLog.pallets) currentLog.pallets = [];
-            currentLog.pallets.push({ qty: boxPerPallet, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+            if (!currentLog.history) currentLog.history = [];
+            currentLog.history.push({ qty: boxPerPallet, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
 
             saveAndSyncData();
             showToast(`1파레트 (+${boxPerPallet} C/T) 추가되었습니다.`, 'success');
             updateRemoteStatusSummary(currentSelectedId);
         }
 
-        // 리모컨 하단 상태 요약 갱신 (입력창 자동 채우기 제거)
+        // 리모컨 하단 상태 요약 갱신
         function updateRemoteStatusSummary(logId) {
             const statusEl = document.getElementById('remoteStatusText');
             if (!statusEl || !packingLogsList) return;
@@ -3982,7 +3981,7 @@
             statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName || '제품명 없음'}</span><br>진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} C/T (${percent}%)`;
         }
 
-        // --- TV 전광판 화면 렌더링 (요청하신 오른쪽 패널 디자인 적용) ---
+        // --- TV 전광판 화면 렌더링 (history를 읽어서 이미지 형태 디자인으로 출력) ---
         function renderTVDataBoard(logData) {
             if (!logData) return;
             const nameEl = document.getElementById('tvProductName');
@@ -4010,19 +4009,19 @@
             const remainingEl = document.getElementById('tvRemainingText');
             if (remainingEl) remainingEl.innerHTML = `<div>⏳ 남은 수량: ${remaining.toLocaleString()} SET</div><div style="font-size: 15px; color: #aaa; margin-top: 6px;">🅿️ 파레트: <strong>${totalPallets} 개</strong> | 📦 카톤: <strong>${totalCartons} 개</strong></div>`;
 
-            const palletsList = logData.pallets || [];
+            const historyList = logData.history || []; // 💡 history 필드 사용
             const summaryEl = document.getElementById('tvPaletteSummary');
-            if (summaryEl) summaryEl.innerText = `현재까지 총 ${palletsList.length}개 파레트 완료`;
+            if (summaryEl) summaryEl.innerText = `현재까지 총 ${historyList.length}회 기록`;
 
             const listContainer = document.getElementById('tvPaletteList');
             if (listContainer) {
-                listContainer.innerHTML = palletsList.length > 0 ? '' : '<div style="color: #666; text-align: center; margin-top: 20px;">아직 기록된 파레트가 없습니다.</div>';
+                listContainer.innerHTML = historyList.length > 0 ? '' : '<div style="color: #666; text-align: center; margin-top: 20px;">아직 기록된 내역이 없습니다.</div>';
 
                 let cumulativeQty = 0;
-                const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑲', '⑳'];
+                const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
 
-                palletsList.forEach((pallet, index) => {
-                    const qty = Number(pallet.qty) || 0;
+                historyList.forEach((item, index) => {
+                    const qty = Number(item.qty) || 0;
                     cumulativeQty += qty; // 누적 수량 계산
                     const circle = circleNums[index] || `(${index + 1})`;
 
@@ -4034,7 +4033,7 @@
                     <span style="font-size: 18px; font-weight: bold; color: #ff3b30;">${qty} C/T</span>
                     <span style="font-size: 15px; color: #aaa;">(${cumulativeQty.toLocaleString()})</span>
                 </div>
-                <div style="font-size: 14px; color: #aaa;">${pallet.time || ''}</div>
+                <div style="font-size: 14px; color: #aaa;">${item.time || ''}</div>
             `;
                     listContainer.appendChild(div);
                 });
