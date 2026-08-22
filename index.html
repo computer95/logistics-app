@@ -3773,7 +3773,7 @@
         }
 
         // ==========================================
-        // 📺 TV 전광판 및 리모컨 연동 로직 (packing_logs.history + 날짜별 필터링 구조)
+        // 📺 TV 전광판 및 리모컨 연동 로직 (원본 history 보존 + history_day 분리 구조)
         // ==========================================
         let tvClockInterval;
 
@@ -3803,7 +3803,7 @@
             }
         });
 
-        // 2. [데이터 감시] packing_logs (일일작업현황) 동기화
+        // 2. [데이터 감시] packing_logs 동기화
         db.collection('packing_logs').onSnapshot((snapshot) => {
             packingLogsList = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -3837,7 +3837,6 @@
             }
         });
 
-        // 헬퍼 함수들
         function getSetsPerCarton(p) {
             if (!p) return 1;
             return p.hasSet === 'O' ? Number(p.cartonToSet || 0) : Number(p.cartonToInner || 0);
@@ -3848,7 +3847,7 @@
             return Number(p.palletToCarton || 24);
         }
 
-        // 💡 카톤 직접 추가 (현재 선택된 packing_logs 문서의 history 배열에 날짜와 함께 누적)
+        // 💡 카톤 직접 추가 (원본 history는 내버두고, history_day에만 당일 상세 기록 누적)
         async function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
@@ -3879,7 +3878,7 @@
             const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             const uniqueId = '_' + Math.random().toString(36).substr(2, 9);
 
-            const newRecord = {
+            const newDayRecord = {
                 id: uniqueId,
                 date: today,
                 time: timeStr,
@@ -3887,14 +3886,17 @@
                 sets: addedSets
             };
 
-            let currentHistory = log.history || [];
-            let updatedHistory = [...currentHistory, newRecord];
-            let newCurrentQty = updatedHistory.reduce((sum, h) => sum + (Number(h.sets || h.qty) || 0), 0);
+            // history_day 배열에만 추가 (원본 history는 절대 건드리지 않음)
+            let currentHistoryDay = log.history_day || [];
+            let updatedHistoryDay = [...currentHistoryDay, newDayRecord];
+
+            // 전체 수량(currentQty)은 기존 방식대로 세트수 누적
+            let newCurrentQty = (Number(log.currentQty) || 0) + addedSets;
 
             try {
                 await db.collection('packing_logs').doc(logId).update({
                     currentQty: newCurrentQty,
-                    history: updatedHistory
+                    history_day: updatedHistoryDay
                 });
 
                 showToast(`+${cartonQty} C/T (${addedSets.toLocaleString()} SET) 추가되었습니다.`, 'success');
@@ -3933,7 +3935,7 @@
             const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             const uniqueId = '_' + Math.random().toString(36).substr(2, 9);
 
-            const newRecord = {
+            const newDayRecord = {
                 id: uniqueId,
                 date: today,
                 time: timeStr,
@@ -3941,14 +3943,14 @@
                 sets: unitsPerPalletSet
             };
 
-            let currentHistory = log.history || [];
-            let updatedHistory = [...currentHistory, newRecord];
-            let newCurrentQty = updatedHistory.reduce((sum, h) => sum + (Number(h.sets || h.qty) || 0), 0);
+            let currentHistoryDay = log.history_day || [];
+            let updatedHistoryDay = [...currentHistoryDay, newDayRecord];
+            let newCurrentQty = (Number(log.currentQty) || 0) + unitsPerPalletSet;
 
             try {
                 await db.collection('packing_logs').doc(logId).update({
                     currentQty: newCurrentQty,
-                    history: updatedHistory
+                    history_day: updatedHistoryDay
                 });
 
                 showToast(`1파레트 (+${cartonPerPallet} C/T / ${unitsPerPalletSet.toLocaleString()} SET) 추가되었습니다.`, 'success');
@@ -3957,7 +3959,6 @@
             }
         }
 
-        // 제품 선택 적용 (드롭다운 -> config의 selectedLogId 변경)
         function applyRemoteSelection() {
             const selectEl = document.getElementById('remoteProductSelect');
             if (!selectEl) return;
@@ -4029,8 +4030,7 @@
             }
 
             const target = Number(log.targetQty) || 0;
-            const historyList = log.history || [];
-            const current = historyList.reduce((sum, h) => sum + (Number(h.sets || h.qty) || 0), 0) || Number(log.currentQty || 0);
+            const current = Number(log.currentQty) || 0;
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
 
             const boxPerPallet = getBoxPerPallet(log);
@@ -4040,7 +4040,7 @@
             statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName || '제품명 없음'}</span><br>진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} SET (${percent}%)`;
         }
 
-        // --- 📺 TV 전광판 우측 패널 렌더링 (오늘 날짜 기록만 필터링) ---
+        // --- 📺 TV 전광판 우측 패널 렌더링 (history_day에서 오늘 날짜만 필터링) ---
         function renderTVDataBoard(logData) {
             if (!logData) {
                 const nameEl = document.getElementById('tvProductName');
@@ -4060,13 +4060,13 @@
             }
 
             const total = Number(logData.targetQty || 0);
-            const allHistory = logData.history || [];
+            const current = Number(logData.currentQty || 0);
 
-            // 💡 핵심: 오늘 날짜 기록만 필터링해서 우측 패널 리스트에 띄움! (다음 날이 되면 자동 리셋 효과)
+            // 💡 핵심: history_day에서 오늘 날짜 기록만 필터링해서 우측 패널에 띄움! (원본 history는 전혀 안 건듦)
             const todayStr = getTodayDateStr();
-            const todayHistory = allHistory.filter(h => h.date === todayStr);
+            const allHistoryDay = logData.history_day || [];
+            const todayHistory = allHistoryDay.filter(h => h.date === todayStr);
 
-            const current = allHistory.reduce((sum, h) => sum + (Number(h.sets || h.qty) || 0), 0);
             const percent = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
 
             const titleEl = document.getElementById('tvProgressTitle');
@@ -4151,7 +4151,7 @@
             window.tvClockInterval = setInterval(updateTVClock, 1000);
 
             const currentSelectedId = localStorage.getItem('tvSelectedLogId');
-            const activeLog = packingLogsList.find(l => l.id === currentSelectedId) || packingLogsList[0];
+            const activeLog = packingLogsList.find(l => l.id === currentSelectedId) || packingLogsList.[0];
             renderTVDataBoard(activeLog);
         }
 
