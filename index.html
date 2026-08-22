@@ -1469,7 +1469,7 @@
         padding: 12px 24px; 
         border-radius: 8px; 
         font-size: 15px; 
-        z-index: 9999;
+        z-index: 999999;
         opacity: 0; 
         transition: opacity 0.3s ease; 
         pointer-events: none;
@@ -3774,27 +3774,30 @@
         }
 
         // 파이어베이스 실시간 리스너 (스마트폰 <-> PC 실시간 동기화)
-        // 'config' 컬렉션의 'tvDashboard' 문서를 실시간으로 감시합니다.
         db.collection('config').doc('tvDashboard').onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
                 if (data.packingLogsList) {
                     packingLogsList = data.packingLogsList;
+                    localStorage.setItem('packingLogsList', JSON.stringify(packingLogsList));
                 }
 
                 // 선택된 제품 인덱스 동기화
                 if (typeof data.selectedIndex !== 'undefined') {
                     localStorage.setItem('tvSelectedProductIndex', data.selectedIndex);
 
-                    // 모바일 리모컨 드롭다운이나 요약 텍스트가 열려있다면 갱신
                     const selectEl = document.getElementById('remoteProductSelect');
                     if (selectEl) selectEl.value = data.selectedIndex;
                     updateRemoteStatusSummary(data.selectedIndex);
                 }
 
-                // TV 대시보드가 켜져있다면 화면 갱신
-                if (typeof renderTVDataBoard === 'function') {
-                    renderTVDataBoard();
+                // ★ PC 대시보드가 열려있다면 실시간으로 화면 갱신
+                const tvContainer = document.getElementById('tvDashboardContainer');
+                if (tvContainer && tvContainer.style.display === 'flex') {
+                    if (typeof renderTVDataBoard === 'function') {
+                        const activeIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
+                        renderTVDataBoard(packingLogsList[activeIndex]);
+                    }
                 }
             }
         });
@@ -3873,8 +3876,9 @@
             if (modal) modal.style.display = 'none';
         }
 
-        // 리모컨 드롭다운 초기화
+        // 리모컨 드롭다운을 포장일지 리스트 기준으로 초기화
         function initRemoteProductSelect() {
+            // 로컬스토리지나 전역 변수에서 포장일지 데이터 가져오기
             const savedLogs = localStorage.getItem('packingLogsList');
             if (savedLogs) {
                 try { packingLogsList = JSON.parse(savedLogs); } catch (e) { }
@@ -3888,10 +3892,10 @@
 
             if (packingLogsList && packingLogsList.length > 0) {
                 packingLogsList.forEach((log, index) => {
-                    optionsHtml += `<option value="${index}" ${index === currentIndex ? 'selected' : ''}>${log.productName}</option>`;
+                    optionsHtml += `<option value="${index}" ${index === currentIndex ? 'selected' : ''}>${log.productName || '제품명 없음'} (목표: ${log.targetQty || 0} C/T)</option>`;
                 });
             } else {
-                optionsHtml = '<option value="0">등록된 제품 없음</option>';
+                optionsHtml = '<option value="0">포장일지에 등록된 제품이 없습니다</option>';
             }
             selectEl.innerHTML = optionsHtml;
             updateRemoteStatusSummary(currentIndex);
@@ -3967,17 +3971,21 @@
             updateRemoteStatusSummary(currentIndex);
         }
 
-        // [핵심] 데이터 저장 후 PC/TV 대시보드와 로컬스토리지 동기화
+        // 데이터 저장 및 실시간 동기화 함수
         function saveAndSyncData() {
             const currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
+            localStorage.setItem('packingLogsList', JSON.stringify(packingLogsList));
 
-            // 파이어베이스에 전체 리스트와 현재 인덱스를 통째로 동기화하여 저장
             db.collection('config').doc('tvDashboard').set({
                 packingLogsList: packingLogsList,
                 selectedIndex: currentIndex
             }, { merge: true }).then(() => {
-                if (typeof renderTVDataBoard === 'function') {
-                    renderTVDataBoard();
+                // 저장 직후 현재 화면이 TV 대시보드라면 즉시 반영
+                const tvContainer = document.getElementById('tvDashboardContainer');
+                if (tvContainer && tvContainer.style.display === 'flex') {
+                    if (typeof renderTVDataBoard === 'function') {
+                        renderTVDataBoard(packingLogsList[currentIndex]);
+                    }
                 }
             }).catch((error) => {
                 console.error('데이터 저장 실패:', error);
