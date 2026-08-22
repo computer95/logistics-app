@@ -3847,7 +3847,7 @@
             return Number(p.palletToCarton || 24);
         }
 
-        // 💡 카톤 직접 추가 (원본 history는 내버두고, history_day에만 당일 상세 기록 누적)
+        // 💡 카톤 직접 추가 (원본 history와 새 history_day 모두 반영)
         async function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
@@ -3878,6 +3878,7 @@
             const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             const uniqueId = '_' + Math.random().toString(36).substr(2, 9);
 
+            // 1. TV 패널용 상세 기록 (날짜 포함)
             const newDayRecord = {
                 id: uniqueId,
                 date: today,
@@ -3886,16 +3887,28 @@
                 sets: addedSets
             };
 
-            // history_day 배열에만 추가 (원본 history는 절대 건드리지 않음)
+            // 2. 기존 앱이 쓰던 원본 history 기록 형식
+            const newOriginalRecord = {
+                time: timeStr,
+                cartons: cartonQty,
+                sets: addedSets,
+                box: cartonQty,
+                qty: addedSets
+            };
+
+            let currentHistory = log.history || [];
+            let updatedHistory = [...currentHistory, newOriginalRecord];
+
             let currentHistoryDay = log.history_day || [];
             let updatedHistoryDay = [...currentHistoryDay, newDayRecord];
 
-            // 전체 수량(currentQty)은 기존 방식대로 세트수 누적
             let newCurrentQty = (Number(log.currentQty) || 0) + addedSets;
 
             try {
+                // 💡 원본 history와 history_day를 동시에 업데이트!
                 await db.collection('packing_logs').doc(logId).update({
                     currentQty: newCurrentQty,
+                    history: updatedHistory,
                     history_day: updatedHistoryDay
                 });
 
@@ -3906,7 +3919,7 @@
             }
         }
 
-        // 💡 1파레트 추가
+        // 💡 1파레트 추가 (원본 history와 새 history_day 모두 반영)
         async function remoteAddFullPallet() {
             let logId = localStorage.getItem('tvSelectedLogId');
             let log = packingLogsList.find(l => l.id === logId);
@@ -3943,13 +3956,26 @@
                 sets: unitsPerPalletSet
             };
 
+            const newOriginalRecord = {
+                time: timeStr,
+                cartons: cartonPerPallet,
+                sets: unitsPerPalletSet,
+                box: cartonPerPallet,
+                qty: unitsPerPalletSet
+            };
+
+            let currentHistory = log.history || [];
+            let updatedHistory = [...currentHistory, newOriginalRecord];
+
             let currentHistoryDay = log.history_day || [];
             let updatedHistoryDay = [...currentHistoryDay, newDayRecord];
+
             let newCurrentQty = (Number(log.currentQty) || 0) + unitsPerPalletSet;
 
             try {
                 await db.collection('packing_logs').doc(logId).update({
                     currentQty: newCurrentQty,
+                    history: updatedHistory,
                     history_day: updatedHistoryDay
                 });
 
