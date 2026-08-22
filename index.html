@@ -3740,15 +3740,22 @@
         // ==========================================
         let tvClockInterval;
 
-        // 전광판 열기 (네이티브 전체화면 호출 제거 -> ESC 한 번에 닫기 가능)
+        // TV 대시보드를 여는 함수
         function openTVDashboard() {
             const container = document.getElementById('tvDashboardContainer');
             container.style.display = 'flex';
+
+            // 시계 작동 시작
             updateTVClock();
             if (window.tvClockInterval) clearInterval(window.tvClockInterval);
             window.tvClockInterval = setInterval(updateTVClock, 1000);
 
-            renderTVDataBoard();
+            // ★ 핵심: 리모컨이나 저장소에서 선택된 포장일지 데이터를 가져와서 전광판에 꽂아줌!
+            const activeIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
+            const activeLog = packingLogsList[activeIndex]; // 포장일지 리스트에서 해당 데이터 가져오기
+
+            // 방금 만든 2번 함수에 그 데이터를 넘겨줌
+            renderTVDataBoard(activeLog);
         }
 
         // 전광판 닫기
@@ -3793,97 +3800,44 @@
         });
 
         // 65인치 대화면 비율 및 CSS 원형 번호가 적용된 렌더링 함수
-        function renderTVDataBoard() {
-            const activeIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
-            const activeLog = packingLogsList[activeIndex] || packingLogsList[0];
+        function renderTVDataBoard(logData) {
+            // 1. 제품명 업데이트
+            document.getElementById('tvProductName').innerText = logData.productName;
 
-            if (!activeLog) {
-                document.getElementById('tvProductName').innerText = '등록된 제품이 없습니다';
-                document.getElementById('tvProgressTitle').innerText = '진행률 (0 / 0)';
-                document.getElementById('tvProgressPercent').innerText = '0%';
-                document.getElementById('tvProgressBar').style.width = '0%';
-                document.getElementById('tvRemainingText').innerText = '⏳ 남은 수량: 0 세트 남음';
-                document.getElementById('tvPaletteSummary').innerText = '현재까지 총 0개 파레트 완료';
-                document.getElementById('tvPaletteList').innerHTML = '<div style="color: #666; font-size: 26px; text-align: center; margin-top: 80px;">표시할 데이터가 없습니다.</div>';
-                return;
-            }
+            // 2. 진행률 계산 및 업데이트
+            const total = logData.targetQty || 0;
+            const current = logData.currentQty || 0;
+            const percent = total > 0 ? Math.round((current / total) * 100) : 0;
 
-            // 오늘 날짜 구하기 (YYYY-MM-DD 포맷 또는 날짜 비교용)
-            const now = new Date();
-            const tYear = now.getFullYear();
-            const tMonth = String(now.getMonth() + 1).padStart(2, '0');
-            const tDay = String(now.getDate()).padStart(2, '0');
-            const todayStr = `${tYear}-${tMonth}-${tDay}`;
-            const todayStrShort = `${tMonth}-${tDay}`;
-
-            // 오늘 작업이 아니면 우측 패널에 표시 안 함
-            const logDate = activeLog.dueDate || '';
-            const isTodayWork = (logDate === todayStr || logDate === todayStrShort || logDate.includes(todayStrShort));
-
-            if (!isTodayWork) {
-                document.getElementById('tvProductName').innerText = activeLog.productName;
-                document.getElementById('tvProgressTitle').innerText = `진행률 (0 / ${activeLog.targetQty || 0})`;
-                document.getElementById('tvProgressPercent').innerText = '0%';
-                document.getElementById('tvProgressBar').style.width = '0%';
-                document.getElementById('tvRemainingText').innerText = '⏳ 오늘 당일 작업분이 아닙니다.';
-                document.getElementById('tvPaletteSummary').innerText = '현재까지 총 0개 파레트 완료';
-                document.getElementById('tvPaletteList').innerHTML = '<div style="color: #888; font-size: 24px; text-align: center; margin-top: 80px;">오늘 날짜의 작업 내역이 없습니다.</div>';
-                return;
-            }
-
-            const target = activeLog.targetQty || 0;
-            const current = activeLog.currentQty || 0;
-            const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
-            const remaining = Math.max(0, target - current);
-
-            // 좌측 진행률 업데이트
-            document.getElementById('tvProgressTitle').innerText = `진행률 (${current.toLocaleString()} / ${target.toLocaleString()})`;
+            document.getElementById('tvProgressTitle').innerText = `진행률 (${current.toLocaleString()} / ${total.toLocaleString()})`;
             document.getElementById('tvProgressPercent').innerText = `${percent}%`;
             document.getElementById('tvProgressBar').style.width = `${percent}%`;
-            document.getElementById('tvRemainingText').innerText = `⏳ 남은 수량: ${remaining.toLocaleString()} 세트 남음`;
 
-            // 우측 제품명 및 파레트 요약 업데이트
-            document.getElementById('tvProductName').innerText = activeLog.productName;
+            // 남은 수량 계산
+            const remaining = total - current;
+            document.getElementById('tvRemainingText').innerText = `⏳ 남은 수량: ${remaining.toLocaleString()}개`;
 
-            let boxPerPallet = activeLog.boxPerPallet || 36;
-            let completedPalettes = Math.floor(current / boxPerPallet);
-            document.getElementById('tvPaletteSummary').innerText = `현재까지 총 ${completedPalettes}개 파레트 완료`;
+            // 3. 파레트 요약
+            const palletCount = logData.pallets ? logData.pallets.length : 0;
+            document.getElementById('tvPaletteSummary').innerText = `현재까지 총 ${palletCount}개 파레트 완료`;
 
-            // 우측 세부 리스트 (숫자 바로 옆 C/T 표기 복원)
-            let listHtml = '';
-            let displayCount = Math.max(5, completedPalettes + (current > 0 ? 1 : 0));
+            // 4. 파레트 리스트 렌더링
+            const listContainer = document.getElementById('tvPaletteList');
+            listContainer.innerHTML = ''; // 기존 내용 지우기
 
-            for (let i = 0; i < displayCount; i++) {
-                let isLatest = (i === completedPalettes);
-                let paletteSeq = i + 1;
-
-                let circleNumberHtml = `
-                    <div style="width: 45px; height: 45px; background: ${isLatest ? '#ff3b30' : '#222'}; color: ${isLatest ? '#fff' : '#aaa'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; flex-shrink: 0;">
-                        ${paletteSeq}
-                    </div>
-                `;
-
-                let timeText = activeLog.dueTime || activeLog.dueDate || '00시 00분';
-
-                listHtml += `
-                    <div style="background: #121212; border: 1px solid ${isLatest ? '#ff3b30' : '#222'}; padding: 22px 25px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: ${isLatest ? '0 0 15px rgba(255,59,48,0.2)' : 'none'};">
-                        <div style="display: flex; align-items: center; gap: 20px;">
-                            ${circleNumberHtml}
-                            <span style="font-size: 26px; font-weight: bold; color: #fff;">${boxPerPallet.toLocaleString()} C/T</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 30px;">
-                            <span style="font-size: 22px; color: #aaa;">(${(paletteSeq * boxPerPallet).toLocaleString()} C/T)</span>
-                            <span style="font-size: 20px; color: ${isLatest ? '#ff8888' : '#777'}; font-weight: bold; background: #1a1a1a; padding: 6px 14px; border-radius: 6px;">${timeText}</span>
-                        </div>
-                    </div>
-                `;
+            if (logData.pallets && logData.pallets.length > 0) {
+                logData.pallets.forEach((pallet, index) => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "background: #1a1a1a; padding: 15px; border-radius: 8px; color: #fff;";
+                    div.innerHTML = `
+                <div style="font-size: 18px; font-weight: bold;">📦 파레트 #${index + 1}</div>
+                <div style="color: #aaa; margin-top: 5px;">수량: ${pallet.qty}개 | 시간: ${pallet.time}</div>
+            `;
+                    listContainer.appendChild(div);
+                });
+            } else {
+                listContainer.innerHTML = '<div style="color: #666; text-align: center; margin-top: 20px;">아직 기록된 파레트가 없습니다.</div>';
             }
-
-            const paletteListEl = document.getElementById('tvPaletteList');
-            paletteListEl.innerHTML = listHtml;
-
-            // 최하단 번호(가장 최근 항목)로 화면 스크롤 이동
-            paletteListEl.scrollTop = paletteListEl.scrollHeight;
         }
 
         // ESC 키로 전광판 닫기 기능
