@@ -3675,28 +3675,21 @@
         // ==========================================
         let tvClockInterval;
 
-        // 전광판 열기
+        // 전광판 열기 (네이티브 전체화면 호출 제거 -> ESC 한 번에 닫기 가능)
         function openTVDashboard() {
-            document.getElementById('tvDashboardContainer').style.display = 'flex';
+            const container = document.getElementById('tvDashboardContainer');
+            container.style.display = 'flex';
             updateTVClock();
-            tvClockInterval = setInterval(updateTVClock, 1000);
-            renderTVDataBoard();
+            if (window.tvClockInterval) clearInterval(window.tvClockInterval);
+            window.tvClockInterval = setInterval(updateTVClock, 1000);
 
-            // 전체화면 모드 실행
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(err => console.log(err));
-            }
+            syncAndRenderTV();
         }
 
         // 전광판 닫기
         function closeTVDashboard() {
             document.getElementById('tvDashboardContainer').style.display = 'none';
-            clearInterval(tvClockInterval);
-
-            // 전체화면 해제
-            if (document.fullscreenElement) {
-                document.exitFullscreen().catch(err => console.log(err));
-            }
+            if (window.tvClockInterval) clearInterval(window.tvClockInterval);
         }
 
         // 디지털 시계 업데이트 (시:분만 표시)
