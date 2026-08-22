@@ -3952,11 +3952,17 @@
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
             let cartonQty = parseInt(inputEl.value);
-            if (isNaN(cartonQty) || cartonQty <= 0) return showToast('올바른 수량을 입력해주세요.', 'error');
+            if (isNaN(cartonQty) || cartonQty <= 0) {
+                showToast('올바른 수량을 입력해주세요.', 'error');
+                return;
+            }
 
             let currentSelectedId = localStorage.getItem('tvSelectedLogId');
             let currentLog = packingLogsList.find(l => l.id === currentSelectedId);
-            if (!currentLog) return;
+            if (!currentLog) {
+                showToast('선택된 작업이 없습니다.', 'error');
+                return;
+            }
 
             let p = productList.find(item => item.id === currentLog.productId);
             if (!p) {
@@ -3964,24 +3970,25 @@
                 return;
             }
 
-            let setsPerCarton = getSetsPerCarton(p);
-            let addedSets = cartonQty * setsPerCarton; // 환산된 세트 수량
+            // 사양에 따른 세트 환산
+            let setsPerCarton = (p.hasSet === 'O') ? Number(p.cartonToSet || 0) : Number(p.cartonToInner || 0);
+            let addedSets = cartonQty * setsPerCarton;
 
             // 총 완료 SET 수량 누적 합산
             currentLog.currentQty = (currentLog.currentQty || 0) + addedSets;
 
-            // 💡 기존 작업일지 형식과 동일하게 history에 기록
+            // 기존 작업일지 형식 { date, memo, qty }로 history 기록 추가
             if (!currentLog.history) currentLog.history = [];
             currentLog.history.push({
-                date: new Date().toISOString().split('T')[0], // 오늘 날짜
-                memo: `C/T 입력 (${cartonQty} C/T)`,          // 메모 (필요시 수정 가능)
-                qty: addedSets                                // 입력된 세트 수량
+                date: new Date().toISOString().split('T')[0],
+                memo: "",
+                qty: addedSets
             });
 
             saveAndSyncData();
             showToast(`+${cartonQty} C/T (${addedSets} SET) 추가되었습니다.`, 'success');
 
-            inputEl.value = ''; // 입력창 공란 유지
+            inputEl.value = ''; // 입력창 초기화
             updateRemoteStatusSummary(currentSelectedId);
         }
 
@@ -3989,21 +3996,24 @@
         function remoteAddFullPallet() {
             let currentSelectedId = localStorage.getItem('tvSelectedLogId');
             let currentLog = packingLogsList.find(l => l.id === currentSelectedId);
-            if (!currentLog) return;
+            if (!currentLog) {
+                showToast('선택된 작업이 없습니다.', 'error');
+                return;
+            }
 
-            let p = productList.find(item => item.id === log.productId || item.id === currentLog.productId);
+            let p = productList.find(item => item.id === currentLog.productId); // 💡 log -> currentLog로 수정 완료
             if (!p) {
                 showToast('⚠️ 제품 정보가 없습니다.', 'error');
                 return;
             }
 
-            let cartonPerPallet = getBoxPerPallet(p);
+            let cartonPerPallet = Number(p.palletToCarton || 24);
             let unitsPerPalletSet = 0;
 
             if (p.hasSet === 'O') {
-                unitsPerPalletSet = cartonPerPallet * (p.cartonToSet || 0);
+                unitsPerPalletSet = cartonPerPallet * Number(p.cartonToSet || 0);
             } else {
-                unitsPerPalletSet = cartonPerPallet * (p.cartonToInner || 0);
+                unitsPerPalletSet = cartonPerPallet * Number(p.cartonToInner || 0);
             }
 
             if (unitsPerPalletSet <= 0) {
@@ -4014,12 +4024,12 @@
             // 총 완료 SET 수량 누적 합산
             currentLog.currentQty = (currentLog.currentQty || 0) + unitsPerPalletSet;
 
-            // 💡 기존 작업일지 형식과 동일하게 history에 기록
+            // 기존 작업일지 형식 { date, memo, qty }로 history 기록 추가
             if (!currentLog.history) currentLog.history = [];
             currentLog.history.push({
-                date: new Date().toISOString().split('T')[0], // 오늘 날짜
-                memo: `1파레트 추가 (${cartonPerPallet} C/T)`,    // 메모
-                qty: unitsPerPalletSet                        // 파레트 환산 세트 수량
+                date: new Date().toISOString().split('T')[0],
+                memo: "",
+                qty: unitsPerPalletSet
             });
 
             saveAndSyncData();
