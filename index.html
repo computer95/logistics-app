@@ -3736,7 +3736,7 @@
         }
 
         // ==========================================
-        // 📺 TV 전광판 및 리모컨 연동 로직 (통합본)
+        // 📺 TV 전광판 및 리모컨 연동 로직 (파레트 우측 패널 버전)
         // ==========================================
         let tvClockInterval;
 
@@ -3806,7 +3806,7 @@
             }
         });
 
-        // 대시보드 렌더링 함수 (history 기반 수량 합계 및 우측 리스트 출력)
+        // 대시보드 렌더링 함수 (우측 패널에 파레트 리스트 출력)
         function renderTVDataBoard(logData) {
             if (!logData) return;
 
@@ -3814,10 +3814,9 @@
             const nameEl = document.getElementById('tvProductName');
             if (nameEl) nameEl.innerText = logData.productName || '제품명 없음';
 
-            // 2. history 배열을 통한 수량 계산
-            const historyList = logData.history || [];
-            const current = historyList.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+            // 2. 진행률 계산 및 업데이트
             const total = logData.targetQty || 0;
+            const current = logData.currentQty || 0;
             const percent = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
 
             const titleEl = document.getElementById('tvProgressTitle');
@@ -3834,32 +3833,29 @@
             const remainingEl = document.getElementById('tvRemainingText');
             if (remainingEl) remainingEl.innerText = `⏳ 남은 수량: ${Math.max(0, remaining).toLocaleString()}개`;
 
-            // 3. 작업 요약
+            // 3. 파레트 요약
+            const palletsList = logData.pallets || [];
+            const palletCount = palletsList.length;
             const summaryEl = document.getElementById('tvPaletteSummary');
-            if (summaryEl) summaryEl.innerText = `현재까지 총 ${historyList.length}건 작업 완료`;
+            if (summaryEl) summaryEl.innerText = `현재까지 총 ${palletCount}개 파레트 완료`;
 
-            // 4. 우측 리스트 영역 (history 내역 렌더링)
+            // 4. 우측 패널 파레트 리스트 렌더링
             const listContainer = document.getElementById('tvPaletteList');
             if (listContainer) {
                 listContainer.innerHTML = ''; // 기존 내용 지우기
 
-                if (historyList.length > 0) {
-                    historyList.forEach((item, index) => {
+                if (palletsList.length > 0) {
+                    palletsList.forEach((pallet, index) => {
                         const div = document.createElement('div');
                         div.style.cssText = "background: #1a1a1a; padding: 15px; border-radius: 8px; color: #fff; border-left: 4px solid #ff3b30;";
                         div.innerHTML = `
-                            <div style="display: flex; justify-content: space-between; font-size: 16px; color: #aaa; margin-bottom: 5px;">
-                                <span>#${index + 1} (${item.date || '날짜 없음'})</span>
-                                <span>${item.memo || '작업'}</span>
-                            </div>
-                            <div style="font-size: 20px; font-weight: bold; color: #ff3b30;">
-                                작업량: +${Number(item.qty || 0).toLocaleString()} 세트
-                            </div>
+                            <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">📦 파레트 #${index + 1}</div>
+                            <div style="color: #aaa; font-size: 16px;">수량: ${pallet.qty}개 | 시간: ${pallet.time}</div>
                         `;
                         listContainer.appendChild(div);
                     });
                 } else {
-                    listContainer.innerHTML = '<div style="color: #666; text-align: center; margin-top: 20px;">아직 기록된 작업 내역이 없습니다.</div>';
+                    listContainer.innerHTML = '<div style="color: #666; text-align: center; margin-top: 20px;">아직 기록된 파레트가 없습니다.</div>';
                 }
             }
         }
@@ -3914,8 +3910,7 @@
 
             if (packingLogsList && packingLogsList.length > 0) {
                 packingLogsList.forEach((log, index) => {
-                    const historyList = log.history || [];
-                    const current = historyList.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+                    const current = log.currentQty || 0;
                     const target = Number(log.targetQty) || 0;
 
                     // 완료된 제품(현재수량 >= 목표수량)은 드롭다운에서 제외
@@ -3956,7 +3951,7 @@
             });
         }
 
-        // 카톤 수량 직접 추가 (history 배열에 기록 추가)
+        // 카톤 수량 직접 추가 (pallets 배열에 기록 추가)
         function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
@@ -3971,43 +3966,39 @@
             if (!packingLogsList || !packingLogsList[currentIndex]) return;
 
             let currentLog = packingLogsList[currentIndex];
+            currentLog.currentQty = (currentLog.currentQty || 0) + addQty;
 
-            // history 배열에 일일작업현황 기록 추가
-            if (!currentLog.history) currentLog.history = [];
-            currentLog.history.push({
-                date: new Date().toISOString().split('T')[0],
-                memo: '리모컨 카톤 추가',
-                qty: addQty
+            // pallets 배열에 추가
+            if (!currentLog.pallets) currentLog.pallets = [];
+            currentLog.pallets.push({
+                qty: addQty,
+                time: new Date().toLocaleTimeString()
             });
 
-            // 총 수량 재계산
-            currentLog.currentQty = currentLog.history.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
-
             saveAndSyncData();
-            showToast(`+${addQty} 세트 추가되었습니다.`, 'success');
+            showToast(`+${addQty} C/T 추가되었습니다.`, 'success');
             inputEl.value = currentLog.boxPerPallet || 36;
             updateRemoteStatusSummary(currentIndex);
         }
 
-        // 1파레트 통째로 추가 (history 배열에 기록 추가)
+        // 1파레트 통째로 추가 (pallets 배열에 기록 추가)
         function remoteAddFullPallet() {
             let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
             if (!packingLogsList || !packingLogsList[currentIndex]) return;
 
             let currentLog = packingLogsList[currentIndex];
             let boxPerPallet = currentLog.boxPerPallet || 36;
+            currentLog.currentQty = (currentLog.currentQty || 0) + boxPerPallet;
 
-            if (!currentLog.history) currentLog.history = [];
-            currentLog.history.push({
-                date: new Date().toISOString().split('T')[0],
-                memo: '리모컨 파레트 추가',
-                qty: boxPerPallet
+            // pallets 배열에 추가
+            if (!currentLog.pallets) currentLog.pallets = [];
+            currentLog.pallets.push({
+                qty: boxPerPallet,
+                time: new Date().toLocaleTimeString()
             });
 
-            currentLog.currentQty = currentLog.history.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
-
             saveAndSyncData();
-            showToast(`1파레트 (+${boxPerPallet} 세트) 추가되었습니다.`, 'success');
+            showToast(`1파레트 (+${boxPerPallet} C/T) 추가되었습니다.`, 'success');
             updateRemoteStatusSummary(currentIndex);
         }
 
@@ -4031,15 +4022,14 @@
             });
         }
 
-        // 리모컨 하단 요약 텍스트 갱신 (입력창 기본값 자동 세팅 포함)
+        // 리모컨 하단 요약 텍스트 갱신
         function updateRemoteStatusSummary(index) {
             const statusEl = document.getElementById('remoteStatusText');
             if (!statusEl || !packingLogsList || !packingLogsList[index]) return;
 
             const log = packingLogsList[index];
             const target = Number(log.targetQty) || 0;
-            const historyList = log.history || [];
-            const current = historyList.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+            const current = log.currentQty || 0;
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
             const boxPerPallet = log.boxPerPallet || 36;
 
