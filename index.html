@@ -1489,33 +1489,66 @@
 
     <!-- TV 전광판 컨테이너 -->
     <div id="tvDashboardContainer"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#050000; z-index:9999; flex-direction:column; padding: 25px 40px; box-sizing: border-box;">
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#050000; z-index:9999; box-sizing: border-box; padding: 40px; color: #fff; font-family: sans-serif;">
 
-        <!-- 상단 헤더 (타이틀 및 시계 배치) -->
-        <div
-            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #222; padding-bottom: 15px; margin-bottom: 25px;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <span style="font-size: 28px; font-weight: bold; color: #fff;">📦 실시간 포장 및 물류 현황</span>
-                <span
-                    style="font-size: 16px; color: #888; background: #1a1a1a; padding: 5px 12px; border-radius: 6px;">LIVE
-                    DASHBOARD</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 30px;">
-                <!-- 시:분 디지털 시계 -->
+        <!-- 닫기 버튼 -->
+        <div style="position: absolute; top: 30px; right: 40px; color: #666; font-size: 16px; cursor: pointer; font-weight: bold; background: #1a1a1a; padding: 8px 15px; border-radius: 6px;"
+            onclick="closeTVDashboard()">✖ 닫기 (ESC)</div>
+
+        <!-- 전체 좌우 2분할 레이아웃 -->
+        <div style="display: flex; width: 100%; height: 100%; gap: 50px; align-items: stretch;">
+
+            <!-- 왼쪽 영역: 대형 시계 + 진행률 박스 -->
+            <div style="flex: 1.1; display: flex; flex-direction: column; justify-content: center;">
+                <!-- 시:분 대형 시계 -->
                 <div id="digitalClock"
-                    style="font-family: 'DS-Digital', sans-serif; font-size: 42px; font-weight: bold; color: #ff3b30; text-shadow: 0 0 10px rgba(255, 0, 0, 0.3); user-select: none;">
-                    00:00
+                    style="font-family: 'DS-Digital', sans-serif; font-size: 15vw; font-weight: bold; color: #ff3b30; text-shadow: 0 0 20px rgba(255, 0, 0, 0.4); user-select: none; line-height: 1; margin-bottom: 30px;">
+                    10:54
                 </div>
-                <div style="color: #666; font-size: 16px; cursor: pointer; font-weight: bold; padding: 8px 15px; background: #1a1a1a; border-radius: 6px;"
-                    onclick="closeTVDashboard()">✖ 닫기 (ESC)</div>
-            </div>
-        </div>
 
-        <!-- 연동된 물류 현황 전광판 (포장일지 데이터 표시) -->
-        <div id="tvDataBoard" style="width: 100%; flex: 1; display: flex; gap: 30px; overflow: hidden;">
-            <!-- 실시간 데이터가 렌더링되는 영역 -->
+                <!-- 진행률 박스 -->
+                <div
+                    style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 30px; box-sizing: border-box;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 26px; font-weight: bold;">
+                        <span id="tvProgressTitle">진행률 (0 / 0)</span>
+                        <span id="tvProgressPercent" style="color: #ff3b30;">0%</span>
+                    </div>
+                    <div
+                        style="width: 100%; background: #222; height: 16px; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                        <div id="tvProgressBar"
+                            style="width: 0%; height: 100%; background: #ff3b30; transition: width 0.5s ease;"></div>
+                    </div>
+                    <div id="tvRemainingText" style="color: #888; font-size: 20px;">
+                        ⏳ 남은 수량: 계산 중...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽 영역: 제품 정보 및 파레트 세부 현황 -->
+            <div style="flex: 0.9; display: flex; flex-direction: column; justify-content: center;">
+                <div
+                    style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 35px; box-sizing: border-box; height: 85%; display: flex; flex-direction: column;">
+
+                    <!-- 제품 타이틀 및 요약 -->
+                    <div style="margin-bottom: 25px; border-bottom: 2px solid #222; padding-bottom: 20px;">
+                        <div
+                            style="font-size: 30px; font-weight: bold; color: #ff3b30; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+                            <span>📌</span> <span id="tvProductName">제품을 선택해주세요</span>
+                        </div>
+                        <div id="tvPaletteSummary" style="color: #888; font-size: 20px;">현재까지 총 0개 파레트 완료</div>
+                    </div>
+
+                    <!-- 파레트 세부 리스트 영역 -->
+                    <div id="tvPaletteList"
+                        style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
+                        <!-- 실시간 데이터가 렌더링되는 영역 -->
+                    </div>
+
+                </div>
+            </div>
+
         </div>
-    </div>
     </div>
 
     <nav class="bottom-nav">
@@ -3670,58 +3703,68 @@
             document.getElementById('digitalClock').innerText = `${hours}:${minutes}`;
         }
 
-        // 기존 포장일지 데이터를 기반으로 전광판 현황 렌더링
+        // 이미지 구상도에 맞춘 전광판 데이터 렌더링 함수
         function renderTVDataBoard() {
-            const board = document.getElementById('tvDataBoard');
+            // 현재 작업 중인 첫 번째 항목을 기준 제품으로 표시
+            const activeLog = packingLogsList.find(log => !log.isHold && ((log.currentQty < log.targetQty) || !log.isForceDone)) || packingLogsList[0];
+            
+            if (!activeLog) {
+                document.getElementById('tvProductName').innerText = '등록된 제품이 없습니다';
+                document.getElementById('tvProgressTitle').innerText = '진행률 (0 / 0)';
+                document.getElementById('tvProgressPercent').innerText = '0%';
+                document.getElementById('tvProgressBar').style.width = '0%';
+                document.getElementById('tvRemainingText').innerText = '⏳ 남은 수량: 0 세트 남음';
+                document.getElementById('tvPaletteSummary').innerText = '현재까지 총 0개 파레트 완료';
+                document.getElementById('tvPaletteList').innerHTML = '<div style="color: #666; font-size: 22px; text-align: center; margin-top: 50px;">표시할 데이터가 없습니다.</div>';
+                return;
+            }
 
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const target = activeLog.targetQty || 0;
+            const current = activeLog.currentQty || 0;
+            const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+            const remaining = Math.max(0, target - current);
 
-            let urgentHtml = '<div style="flex: 1; background: #111; border: 1px solid #333; border-radius: 12px; padding: 25px;"><h3 style="color: #ff3b30; margin-top: 0; font-size: 28px; border-bottom: 2px solid #333; padding-bottom: 15px;">🚨 금일 및 긴급 출고</h3>';
-            let progressHtml = '<div style="flex: 1; background: #111; border: 1px solid #333; border-radius: 12px; padding: 25px;"><h3 style="color: #007aff; margin-top: 0; font-size: 28px; border-bottom: 2px solid #333; padding-bottom: 15px;">🔄 진행중인 작업</h3>';
+            // 좌측 진행률 업데이트
+            document.getElementById('tvProgressTitle').innerText = `진행률 (${current.toLocaleString()} / ${target.toLocaleString()})`;
+            document.getElementById('tvProgressPercent').innerText = `${percent}%`;
+            document.getElementById('tvProgressBar').style.width = `${percent}%`;
+            document.getElementById('tvRemainingText').innerText = `⏳ 남은 수량: ${remaining.toLocaleString()} 세트 남음`;
 
-            let urgentCount = 0;
-            let progressCount = 0;
+            // 우측 제품명 및 파레트 요약 업데이트
+            document.getElementById('tvProductName').innerText = activeLog.productName;
+            
+            let paletteSize = 360; // 파레트당 기준 수량 예시 (상황에 맞게 조절 가능)
+            let completedPalettes = Math.floor(current / paletteSize);
+            document.getElementById('tvPaletteSummary').innerText = `현재까지 총 ${completedPalettes}개 파레트 완료`;
 
-            // 전역 변수 packingLogsList 사용
-            packingLogsList.forEach(log => {
-                let isDone = (log.currentQty >= log.targetQty && log.targetQty > 0) || log.isForceDone;
-                if (isDone || log.isHold) return; // 완료되거나 보류된 작업은 전광판에서 제외
+            // 우측 세부 리스트 (①, ②, ③...) 생성
+            let listHtml = '';
+            const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
+            let displayCount = Math.max(4, completedPalettes + (current > 0 ? 1 : 0));
 
-                let percent = log.targetQty > 0 ? Math.min(100, Math.round((log.currentQty / log.targetQty) * 100)) : 0;
-                let isUrgent = log.dueDate <= todayStr;
-
-                // 전광판용 아이템 디자인
-                const itemHtml = `
-                    <div style="background: #222; border-left: 8px solid ${isUrgent ? '#ff3b30' : '#007aff'}; margin-bottom: 20px; padding: 20px; border-radius: 10px;">
-                        <div style="color: #fff; font-size: 24px; font-weight: bold; margin-bottom: 12px; display: flex; justify-content: space-between;">
-                            <span>${log.productName}</span>
-                            <span style="font-size: 18px; color: ${isUrgent ? '#ff8888' : '#88ccff'};">마감: ${log.dueDate}</span>
+            for (let i = 0; i < displayCount; i++) {
+                let cNum = circleNums[i] || `(${i+1})`;
+                let isLatest = (i === completedPalettes);
+                
+                listHtml += `
+                    <div style="background: #1a1a1a; border-left: 6px solid ${isLatest ? '#ff3b30' : '#333'}; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 24px; font-weight: bold; color: ${isLatest ? '#ff3b30' : '#aaa'};">${cNum}</span>
+                            <span style="font-size: 22px; font-weight: bold; color: #fff;">36 C/T</span>
                         </div>
-                        <div style="color: #ccc; font-size: 20px; margin-bottom: 15px;">목표수량: ${log.targetQty.toLocaleString()} / 현재수량: ${log.currentQty.toLocaleString()}</div>
-                        <div style="width: 100%; background: #444; height: 16px; border-radius: 8px; overflow: hidden;">
-                            <div style="width: ${percent}%; height: 100%; background: ${isUrgent ? '#ff3b30' : '#007aff'}; transition: width 0.5s ease;"></div>
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <span style="font-size: 20px; color: #aaa;">(${((i+1) * 36).toLocaleString()} C/T)</span>
+                            <span style="font-size: 18px; color: #888;">${activeLog.dueDate || '마감'}</span>
                         </div>
                     </div>
                 `;
+            }
 
-                if (isUrgent) {
-                    urgentHtml += itemHtml;
-                    urgentCount++;
-                } else if (log.currentQty > 0) {
-                    progressHtml += itemHtml;
-                    progressCount++;
-                }
-            });
-
-            if (urgentCount === 0) urgentHtml += '<div style="color: #666; font-size: 22px; text-align: center; margin-top: 40px;">대기 중인 긴급 일정이 없습니다.</div>';
-            if (progressCount === 0) progressHtml += '<div style="color: #666; font-size: 22px; text-align: center; margin-top: 40px;">진행 중인 작업이 없습니다.</div>';
-
-            urgentHtml += '</div>';
-            progressHtml += '</div>';
-
-            board.innerHTML = urgentHtml + progressHtml;
+            if (displayCount === 0) {
+                listHtml = '<div style="color: #666; font-size: 20px; text-align: center; margin-top: 40px;">진행된 파레트 기록이 없습니다.</div>';
+            }
+            
+            document.getElementById('tvPaletteList').innerHTML = listHtml;
         }
 
         // ESC 키로 전광판 닫기 기능
