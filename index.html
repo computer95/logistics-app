@@ -3909,14 +3909,29 @@
             let validCount = 0;
 
             if (packingLogsList && packingLogsList.length > 0) {
+                // 1. 완료되지 않은 항목과 원본 인덱스를 객체로 묶기
+                let validItems = [];
                 packingLogsList.forEach((log, index) => {
                     const current = log.currentQty || 0;
                     const target = Number(log.targetQty) || 0;
 
-                    // 완료된 제품(현재수량 >= 목표수량)은 드롭다운에서 제외
-                    if (target > 0 && current >= target) {
-                        return;
+                    // 완료된 제품(현재수량 >= 목표수량)은 제외
+                    if (!(target > 0 && current >= target)) {
+                        validItems.push({ log, index });
                     }
+                });
+
+                // 2. 출고일(dueDate 또는 dueTime) 기준 오름차순(빠른 날짜순) 정렬
+                validItems.sort((a, b) => {
+                    const dateA = a.log.dueDate || a.log.dueTime || '';
+                    const dateB = b.log.dueDate || b.log.dueTime || '';
+                    return dateA.localeCompare(dateB);
+                });
+
+                // 3. 정렬된 리스트로 HTML 생성 (value에는 원본 index 유지)
+                validItems.forEach(item => {
+                    const log = item.log;
+                    const index = item.index;
 
                     validCount++;
                     const dateStr = log.dueDate || log.dueTime || '마감일 없음';
