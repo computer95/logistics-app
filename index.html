@@ -3775,7 +3775,7 @@
         }
 
         // ==========================================
-        // 📺 TV 전광판 및 리모컨 연동 로직 (ID 기반 완벽 안정화 버전)
+        // 📺 TV 전광판 및 리모컨 연동 로직 (완전 통합 버전)
         // ==========================================
         let tvClockInterval;
 
@@ -3786,7 +3786,6 @@
             const data = doc.data();
             const today = new Date().toISOString().split('T')[0];
 
-            // 날짜가 바뀌었으면 초기화
             if (data.date !== today) {
                 db.collection('config').doc('tvDashboard').set({
                     selectedLogId: '',
@@ -3795,7 +3794,6 @@
                 return;
             }
 
-            // 선택된 제품 ID 동기화
             if (typeof data.selectedLogId !== 'undefined') {
                 localStorage.setItem('tvSelectedLogId', data.selectedLogId);
 
@@ -3804,7 +3802,6 @@
 
                 updateRemoteStatusSummary(data.selectedLogId);
 
-                // TV 화면이 켜져있다면 해당 ID의 데이터로 갱신
                 const tvContainer = document.getElementById('tvDashboardContainer');
                 if (tvContainer && tvContainer.style.display === 'flex' && packingLogsList) {
                     const activeLog = packingLogsList.find(l => l.id === data.selectedLogId);
@@ -3813,7 +3810,7 @@
             }
         });
 
-        // 2. [데이터 감시] 실제 데이터(포장 현황)가 바뀌면 여기만 반응함 (packing_logs)
+        // 2. [데이터 감시] packing_logs(일일작업현황) 데이터 실시간 동기화
         db.collection('packing_logs').onSnapshot((snapshot) => {
             packingLogsList = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -3844,7 +3841,7 @@
             return p ? Number(p.palletToCarton || p.boxPerPallet || 36) : 36;
         }
 
-        // 데이터 저장 및 실시간 동기화 함수
+        // 📦 packing_logs 데이터 저장 및 실시간 동기화 (수량 누적 합산 반영)
         function saveAndSyncData() {
             const currentSelectedId = localStorage.getItem('tvSelectedLogId');
             const currentLog = packingLogsList.find(l => l.id === currentSelectedId);
@@ -3859,14 +3856,13 @@
             });
         }
 
-        // 제품 선택 적용 (드롭다운에서 선택했을 때)
+        // 제품 선택 적용 (드롭다운)
         function applyRemoteSelection() {
             const selectEl = document.getElementById('remoteProductSelect');
             if (!selectEl) return;
             const selectedId = selectEl.value;
             const today = new Date().toISOString().split('T')[0];
 
-            // config에 인덱스가 아니라 고유 문서 ID(selectedLogId)를 저장!
             db.collection('config').doc('tvDashboard').set({
                 selectedLogId: selectedId,
                 date: today
@@ -3899,7 +3895,6 @@
                     }
                 });
 
-                // 출고일 기준 정렬
                 validItems.sort((a, b) => {
                     const dateA = a.dueDate || a.dueTime || '';
                     const dateB = b.dueDate || b.dueTime || '';
@@ -3908,7 +3903,7 @@
 
                 validItems.forEach(log => {
                     validCount++;
-                    const id = log.id; // 문서 고유 ID 사용
+                    const id = log.id;
                     const dateStr = log.dueDate || log.dueTime || '마감일 없음';
 
                     optionsHtml += `<option value="${id}" ${id === currentSelectedId ? 'selected' : ''}>${log.productName || '제품명 없음'} (${dateStr})</option>`;
@@ -3928,7 +3923,7 @@
             updateRemoteStatusSummary(currentSelectedId);
         }
 
-        // 카톤 직접 추가
+        // 카톤 직접 추가 (입력창 공란 유지)
         function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
@@ -3942,12 +3937,12 @@
             currentLog.currentQty = (currentLog.currentQty || 0) + addQty;
 
             if (!currentLog.pallets) currentLog.pallets = [];
-            currentLog.pallets.push({ qty: addQty, time: new Date().toLocaleTimeString() });
+            currentLog.pallets.push({ qty: addQty, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
 
             saveAndSyncData();
             showToast(`+${addQty} C/T 추가되었습니다.`, 'success');
 
-            // 💡 추가 완료 후 입력창 비우기
+            // 입력창 비우기 유지
             inputEl.value = '';
         }
 
@@ -3961,14 +3956,14 @@
             currentLog.currentQty = (currentLog.currentQty || 0) + boxPerPallet;
 
             if (!currentLog.pallets) currentLog.pallets = [];
-            currentLog.pallets.push({ qty: boxPerPallet, time: new Date().toLocaleTimeString() });
+            currentLog.pallets.push({ qty: boxPerPallet, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
 
             saveAndSyncData();
             showToast(`1파레트 (+${boxPerPallet} C/T) 추가되었습니다.`, 'success');
             updateRemoteStatusSummary(currentSelectedId);
         }
 
-        // 리모컨 하단 상태 요약 갱신
+        // 리모컨 하단 상태 요약 갱신 (입력창 자동 채우기 제거)
         function updateRemoteStatusSummary(logId) {
             const statusEl = document.getElementById('remoteStatusText');
             if (!statusEl || !packingLogsList) return;
@@ -3980,40 +3975,14 @@
             const current = log.currentQty || 0;
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
 
-            // 파레트 당 박스 수는 버튼용(#remotePalletBoxSize)에만 반영
             const boxPerPallet = getBoxPerPallet(log);
             const palletBoxSizeSpan = document.getElementById('remotePalletBoxSize');
             if (palletBoxSizeSpan) palletBoxSizeSpan.innerText = boxPerPallet;
 
-            // 💡 입력창(remoteCartonInput)에 값을 넣던 코드는 삭제했으므로 항상 공란으로 유지됨!
-
             statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName || '제품명 없음'}</span><br>진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} C/T (${percent}%)`;
         }
 
-        // --- 나머지 기존 UI 함수들 유지 ---
-        function openTVDashboard() {
-            const container = document.getElementById('tvDashboardContainer');
-            container.style.display = 'flex';
-            updateTVClock();
-            if (window.tvClockInterval) clearInterval(window.tvClockInterval);
-            window.tvClockInterval = setInterval(updateTVClock, 1000);
-            const currentSelectedId = localStorage.getItem('tvSelectedLogId');
-            const activeLog = packingLogsList.find(l => l.id === currentSelectedId) || packingLogsList[0];
-            if (activeLog) renderTVDataBoard(activeLog);
-        }
-
-        function closeTVDashboard() {
-            const container = document.getElementById('tvDashboardContainer');
-            if (container) container.style.display = 'none';
-            if (window.tvClockInterval) clearInterval(window.tvClockInterval);
-        }
-
-        function updateTVClock() {
-            const now = new Date();
-            const clockEl = document.getElementById('digitalClock');
-            if (clockEl) clockEl.innerText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        }
-
+        // --- TV 전광판 화면 렌더링 (요청하신 오른쪽 패널 디자인 적용) ---
         function renderTVDataBoard(logData) {
             if (!logData) return;
             const nameEl = document.getElementById('tvProductName');
@@ -4044,16 +4013,56 @@
             const palletsList = logData.pallets || [];
             const summaryEl = document.getElementById('tvPaletteSummary');
             if (summaryEl) summaryEl.innerText = `현재까지 총 ${palletsList.length}개 파레트 완료`;
+
             const listContainer = document.getElementById('tvPaletteList');
             if (listContainer) {
                 listContainer.innerHTML = palletsList.length > 0 ? '' : '<div style="color: #666; text-align: center; margin-top: 20px;">아직 기록된 파레트가 없습니다.</div>';
+
+                let cumulativeQty = 0;
+                const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑲', '⑳'];
+
                 palletsList.forEach((pallet, index) => {
+                    const qty = Number(pallet.qty) || 0;
+                    cumulativeQty += qty; // 누적 수량 계산
+                    const circle = circleNums[index] || `(${index + 1})`;
+
                     const div = document.createElement('div');
-                    div.style.cssText = "background: #1a1a1a; padding: 15px; border-radius: 8px; color: #fff; border-left: 4px solid #ff3b30;";
-                    div.innerHTML = `<div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">📦 파레트 #${index + 1}</div><div style="color: #aaa; font-size: 16px;">수량: ${pallet.qty}개 | 시간: ${pallet.time}</div>`;
+                    div.style.cssText = "background: #1a1a1a; padding: 12px 16px; border-radius: 8px; color: #fff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; border-left: 4px solid #ff3b30;";
+                    div.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 18px; font-weight: bold; color: #fff;">${circle}</span>
+                    <span style="font-size: 18px; font-weight: bold; color: #ff3b30;">${qty} C/T</span>
+                    <span style="font-size: 15px; color: #aaa;">(${cumulativeQty.toLocaleString()})</span>
+                </div>
+                <div style="font-size: 14px; color: #aaa;">${pallet.time || ''}</div>
+            `;
                     listContainer.appendChild(div);
                 });
             }
+        }
+
+        // --- 유틸리티 및 모달 제어 함수들 ---
+        function openTVDashboard() {
+            const container = document.getElementById('tvDashboardContainer');
+            container.style.display = 'flex';
+            updateTVClock();
+            if (window.tvClockInterval) clearInterval(window.tvClockInterval);
+            window.tvClockInterval = setInterval(updateTVClock, 1000);
+            const currentSelectedId = localStorage.getItem('tvSelectedLogId');
+            const activeLog = packingLogsList.find(l => l.id === currentSelectedId) || packingLogsList[0];
+            if (activeLog) renderTVDataBoard(activeLog);
+        }
+
+        function closeTVDashboard() {
+            const container = document.getElementById('tvDashboardContainer');
+            if (container) container.style.display = 'none';
+            if (window.tvClockInterval) clearInterval(window.tvClockInterval);
+        }
+
+        function updateTVClock() {
+            const now = new Date();
+            const clockEl = document.getElementById('digitalClock');
+            if (clockEl) clockEl.innerText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         }
 
         function handleFloatingButtonClick() {
@@ -4076,8 +4085,6 @@
                 if (container && container.style.display === 'flex') closeTVDashboard();
             }
         });
-
-
     </script>
 </body>
 
