@@ -4085,6 +4085,7 @@
         }
 
         // --- TV 전광판 우측 패널 렌더링 (요청하신 이미지 디자인 반영 및 config displayHistory 연동) ---
+        // --- TV 전광판 우측 패널 렌더링 (누적 세트 수 및 흰색 굵은 폰트 적용) ---
         function renderTVDataBoard(logData, displayHistory = []) {
             if (!logData) return;
             const nameEl = document.getElementById('tvProductName');
@@ -4122,9 +4123,12 @@
 
                 const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑈', '⑲', '⑳'];
 
+                let runningSets = 0; // 💡 아래로 내려갈수록 세트 수가 누적되도록 합산하는 변수
+
                 historyList.forEach((item, index) => {
                     const cartons = Number(item.cartons) || 0;
                     const sets = Number(item.sets) || 0;
+                    runningSets += sets; // 이전 누적값에 현재 추가된 세트 수 합산
                     const timeStr = item.time || '';
                     const circle = circleNums[index] || `(${index + 1})`;
 
@@ -4133,15 +4137,15 @@
                     div.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 16px;">
                     <span style="font-size: 20px; font-weight: bold; color: #fff;">${circle}</span>
-                    <span style="font-size: 20px; font-weight: bold; color: #ff3b30;">${cartons} C/T</span>
-                    <span style="font-size: 16px; color: #aaa;">(${sets.toLocaleString()})</span>
+                    <span style="font-size: 20px; font-weight: bold; color: #fff;">${cartons} C/T</span>
+                    <span style="font-size: 18px; font-weight: bold; color: #fff;">(${runningSets.toLocaleString()})</span>
                 </div>
-                <div style="font-size: 16px; font-weight: bold; color: #ff3b30;">${timeStr} 마감</div>
+                <div style="font-size: 16px; font-weight: bold; color: #fff;">${timeStr} 마감</div>
             `;
                     listContainer.appendChild(div);
                 });
 
-                // 💡 화면 아래로 쌓일 때 자동으로 하단 포커스(스크롤) 이동
+                // 화면 아래로 쌓일 때 자동으로 하단 포커스(스크롤) 이동
                 listContainer.scrollTop = listContainer.scrollHeight;
             }
         }
