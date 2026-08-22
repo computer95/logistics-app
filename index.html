@@ -3757,9 +3757,17 @@
             document.getElementById('digitalClock').innerText = `${hours}:${minutes}`;
         }
 
+        const tyChannel = new BroadcastChannel('tv_dashboard_realtime_channel');
+
         // 65인치 대화면 비율 및 CSS 원형 번호가 적용된 렌더링 함수
         function renderTVDataBoard() {
-            const activeLog = packingLogsList.find(log => !log.isHold && ((log.currentQty < log.targetQty) || !log.isForceDone)) || packingLogsList[0];
+            const savedLogs = localStorage.getItem('packingLogsList');
+            if (savedLogs) {
+                try { packingLogsList = JSON.parse(savedLogs); } catch (e) { }
+            }
+
+            const activeIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
+            const activeLog = packingLogsList[activeIndex] || packingLogsList[0];
 
             if (!activeLog) {
                 document.getElementById('tvProductName').innerText = '등록된 제품이 없습니다';
@@ -3885,11 +3893,28 @@
             localStorage.setItem('tvSelectedProductIndex', idx);
             updateRemoteStatusSummary(idx);
 
+            // [추가] 다른 화면(대시보드)으로 제품 변경 신호 전송
+            tvChannel.postMessage({ type: 'CHANGE_PRODUCT', index: idx });
+
             // TV 대시보드가 열려있다면 즉시 동기화
             if (typeof syncAndRenderTV === 'function') {
                 syncAndRenderTV();
+            } else {
+                renderTVDataBoard();
             }
         }
+
+        // [추가] 실시간 통신 수신 리스너
+        tvChannel.onmessage = function (event) {
+            if (!event.data) return;
+            if (event.data.type === 'CHANGE_PRODUCT') {
+                localStorage.setItem('tvSelectedProductIndex', event.data.index);
+                renderTVDataBoard();
+            } else if (event.data.type === 'UPDATE_LOGS') {
+                packingLogsList = event.data.list;
+                renderTVDataBoard();
+            }
+        };
 
         // [신규] 리모컨에서 카톤 수량 직접 추가 (부분 파레트 잔량 처리용)
         function remoteAddCartons() {
