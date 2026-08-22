@@ -3931,6 +3931,22 @@
             updateRemoteStatusSummary(currentSelectedId);
         }
 
+        // 💡 제품 사양에 따른 1카톤당 SET 수량을 정확히 계산하는 함수
+        function getSetsPerCarton(p) {
+            if (!p) return 1;
+            if (p.hasSet === 'O') {
+                return Number(p.cartonToSet || 0);
+            } else {
+                return Number(p.cartonToInner || 0);
+            }
+        }
+
+        // 💡 제품 사양에 따른 1파레트당 카톤(C/T) 수를 가져오는 함수
+        function getBoxPerPallet(p) {
+            if (!p) return 24;
+            return Number(p.palletToCarton || 24);
+        }
+
         // 💡 카톤 직접 추가 (입력한 C/T -> SET 환산 후 currentQty에 합산, history에 기록)
         function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
@@ -3942,13 +3958,19 @@
             let currentLog = packingLogsList.find(l => l.id === currentSelectedId);
             if (!currentLog) return;
 
-            let setsPerCarton = getSetsPerCarton(currentLog);
-            let addedSets = cartonQty * setsPerCarton; // 이번에 추가된 SET 수량
+            let p = productList.find(item => item.id === currentLog.productId);
+            if (!p) {
+                showToast('⚠️ 제품 정보가 없습니다.', 'error');
+                return;
+            }
 
-            // 1. 총 완료 SET 수량 누적 합산
+            let setsPerCarton = getSetsPerCarton(p);
+            let addedSets = cartonQty * setsPerCarton; // 이번에 추가된 총 SET 수량
+
+            // 일일작업현황(packing_logs)의 currentQty에 누적 합산
             currentLog.currentQty = (currentLog.currentQty || 0) + addedSets;
 
-            // 2. 우측 패널에 표시될 상세 기록 추가 (C/T와 이번 추가분 환산 SET 저장)
+            // 우측 패널(history) 기록용 데이터 추가
             if (!currentLog.history) currentLog.history = [];
             currentLog.history.push({
                 cartons: cartonQty,
@@ -3959,7 +3981,8 @@
             saveAndSyncData();
             showToast(`+${cartonQty} C/T (${addedSets} SET) 추가되었습니다.`, 'success');
 
-            inputEl.value = ''; // 입력창 공란 유지
+            inputEl.value = ''; // 입력창 초기화
+            updateRemoteStatusSummary(currentSelectedId);
         }
 
         // 💡 1파레트 추가
@@ -3968,21 +3991,40 @@
             let currentLog = packingLogsList.find(l => l.id === currentSelectedId);
             if (!currentLog) return;
 
-            let palletCartons = getBoxPerPallet(currentLog);
-            let setsPerCarton = getSetsPerCarton(currentLog);
-            let addedSets = palletCartons * setsPerCarton;
+            let p = productList.find(item => item.id === currentLog.productId);
+            if (!p) {
+                showToast('⚠️ 제품 정보가 없습니다.', 'error');
+                return;
+            }
 
-            currentLog.currentQty = (currentLog.currentQty || 0) + addedSets;
+            let cartonPerPallet = getBoxPerPallet(p); // 파레트당 C/T
+            let unitsPerPalletSet = 0;
 
+            // 제공해 준 기존 로직 그대로 적용!
+            if (p.hasSet === 'O') {
+                unitsPerPalletSet = cartonPerPallet * (p.cartonToSet || 0);
+            } else {
+                unitsPerPalletSet = cartonPerPallet * (p.cartonToInner || 0);
+            }
+
+            if (unitsPerPalletSet <= 0) {
+                alert('⚠️ 파레트 사양 값이 올바르지 않습니다.');
+                return;
+            }
+
+            // 총 완료 SET 수량 누적 합산
+            currentLog.currentQty = (currentLog.currentQty || 0) + unitsPerPalletSet;
+
+            // 우측 패널(history) 기록용 데이터 추가
             if (!currentLog.history) currentLog.history = [];
             currentLog.history.push({
-                cartons: palletCartons,
-                sets: addedSets,
+                cartons: cartonPerPallet,
+                sets: unitsPerPalletSet,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             });
 
             saveAndSyncData();
-            showToast(`1파레트 (+${palletCartons} C/T) 추가되었습니다.`, 'success');
+            showToast(`1파레트 (+${cartonPerPallet} C/T / ${unitsPerPalletSet} SET) 추가되었습니다.`, 'success');
             updateRemoteStatusSummary(currentSelectedId);
         }
 
