@@ -1994,6 +1994,17 @@
 
         function loadPackingLogs() {
             db.collection('packing_logs').orderBy('dueDate', 'asc').onSnapshot(snapshot => {
+
+                // 💡 핵심: 캐시(유령) 데이터라면 화면을 그리지 않고 건너뜁니다!
+                // (네트워크가 연결되어 있으면 서버에서 곧바로 진짜 최신 데이터를 다시 보내줍니다.)
+                if (snapshot.metadata.fromCache) {
+                    const waitingContainer = document.getElementById('dashWaitingListContainer');
+                    if (waitingContainer) {
+                        waitingContainer.innerHTML = '<div style="color:#888; text-align:center; padding:15px;">최신 데이터 동기화 중...</div>';
+                    }
+                    return; // 캐시 데이터일 경우 아래 렌더링 로직을 실행하지 않고 탈출!
+                }
+
                 packingLogsList = [];
                 snapshot.forEach(doc => {
                     packingLogsList.push({ id: doc.id, ...doc.data() });
