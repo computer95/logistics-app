@@ -3953,7 +3953,7 @@
         }
 
         // 💡 카톤 직접 추가 (입력한 C/T -> SET 환산 후 currentQty에 합산, history에 기록)
-        function remoteAddCartons() {
+        async function remoteAddCartons() {
             const inputEl = document.getElementById('remoteCartonInput');
             if (!inputEl) return;
             let cartonQty = parseInt(inputEl.value);
@@ -3962,80 +3962,83 @@
                 return;
             }
 
-            let currentSelectedId = localStorage.getItem('tvSelectedLogId');
-            let currentLog = packingLogsList.find(l => l.id === currentSelectedId);
-            if (!currentLog) {
+            let logId = localStorage.getItem('tvSelectedLogId');
+            let log = packingLogsList.find(l => l.id === logId);
+            if (!log) {
                 showToast('선택된 작업이 없습니다.', 'error');
                 return;
             }
 
-            let p = productList.find(item => item.id === currentLog.productId);
+            let p = productList.find(item => item.id === log.productId);
             if (!p) {
                 showToast('⚠️ 제품 정보가 없습니다.', 'error');
                 return;
             }
 
+            // 사양에 따른 1카톤당 세트 수량 계산
             let setsPerCarton = (p.hasSet === 'O') ? Number(p.cartonToSet || 0) : Number(p.cartonToInner || 0);
             let addedSets = cartonQty * setsPerCarton;
-            const today = getTodayString();
 
-            // 💡 핵심: packingLogsList에서 '같은 제품'이면서 '오늘 날짜'인 기록이 이미 있는지 검사
-            let existingLog = packingLogsList.find(l =>
-                l.productId === currentLog.productId &&
-                (l.dueDate === today || l.date === today)
-            );
+            if (addedSets <= 0) {
+                showToast('⚠️ 수량 계산 값이 올바르지 않습니다.', 'error');
+                return;
+            }
 
-            // 이미 오늘 날짜 기록이 있으면 그걸 쓰고, 없으면 현재 선택된 걸 씀
-            let targetLog = existingLog || currentLog;
+            // 오늘 날짜 생성 (기존 방식과 동일)
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-            // 총 완료 SET 수량 누적 합산
-            targetLog.currentQty = (targetLog.currentQty || 0) + addedSets;
+            // 이력이 없으면 초기화
+            if (!log.history) log.history = [];
 
-            // history 배열에 오늘 날짜 항목으로 추가
-            if (!targetLog.history) targetLog.history = [];
-            targetLog.history.push({
-                date: today,
-                memo: `C/T 입력 (${cartonQty} C/T)`,
-                qty: addedSets
-            });
+            // 같은 날짜의 기록이 있는지 찾기
+            let existingEntry = log.history.find(h => h.date === today);
 
-            // Firestore에 정확한 targetLog.id 문서로 업데이트
-            db.collection('packing_logs').doc(targetLog.id).update({
-                currentQty: targetLog.currentQty,
-                history: targetLog.history
-            }).then(() => {
-                showToast(`+${cartonQty} C/T (${addedSets} SET) 추가되었습니다.`, 'success');
+            if (existingEntry) {
+                existingEntry.qty += addedSets;
+                // 필요시 메모 갱신 (선택사항)
+                existingEntry.memo = `C/T 입력 (${cartonQty} C/T 추가)`;
+            } else {
+                log.history.push({ date: today, qty: addedSets, memo: `C/T 입력 (${cartonQty} C/T)` });
+            }
+
+            // 총 수량 재계산
+            log.currentQty = log.history.reduce((sum, h) => sum + h.qty, 0);
+
+            try {
+                await db.collection('packing_logs').doc(logId).update({
+                    history: log.history,
+                    currentQty: log.currentQty
+                });
+                showToast(`+${cartonQty} C/T (${addedSets.toLocaleString()} SET) 추가되었습니다.`, 'success');
                 inputEl.value = '';
-                localStorage.setItem('tvSelectedLogId', targetLog.id);
-                updateRemoteStatusSummary(targetLog.id);
-            }).catch((error) => {
-                console.error('데이터 저장 실패:', error);
-                showToast('저장 실패', 'error');
-            });
+                updateRemoteStatusSummary(logId);
+            } catch (e) {
+                showToast('❌ 작업 기록 업데이트 오류: ' + e.message, 'error');
+            }
         }
 
         // 💡 1파레트 추가
-        function remoteAddFullPallet() {
-            let currentSelectedId = localStorage.getItem('tvSelectedLogId');
-            let currentLog = packingLogsList.find(l => l.id === currentSelectedId);
-            if (!currentLog) {
+        async function remoteAddFullPallet() {
+            let logId = localStorage.getItem('tvSelectedLogId');
+            let log = packingLogsList.find(l => l.id === logId);
+            if (!log) {
                 showToast('선택된 작업이 없습니다.', 'error');
                 return;
             }
 
-            let p = productList.find(item => item.id === currentLog.productId);
+            let p = productList.find(item => item.id === log.productId);
             if (!p) {
                 showToast('⚠️ 제품 정보가 없습니다.', 'error');
                 return;
             }
 
-            let cartonPerPallet = Number(p.palletToCarton || 24);
+            let cartonPerPallet = p.palletToCarton || 24;
             let unitsPerPalletSet = 0;
-
             if (p.hasSet === 'O') {
-                unitsPerPalletSet = cartonPerPallet * Number(p.cartonToSet || 0);
+                unitsPerPalletSet = cartonPerPallet * (p.cartonToSet || 0);
             } else {
-                unitsPerPalletSet = cartonPerPallet * Number(p.cartonToInner || 0);
+                unitsPerPalletSet = cartonPerPallet * (p.cartonToInner || 0);
             }
 
             if (unitsPerPalletSet <= 0) {
@@ -4043,39 +4046,35 @@
                 return;
             }
 
-            const today = getTodayString();
+            // 오늘 날짜 생성
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-            // 💡 핵심: 동일 제품 & 오늘 날짜 기록 존재 여부 확인
-            let existingLog = packingLogsList.find(l =>
-                l.productId === currentLog.productId &&
-                (l.dueDate === today || l.date === today)
-            );
+            if (!log.history) log.history = [];
 
-            let targetLog = existingLog || currentLog;
+            // 같은 날짜의 기록이 있는지 찾기
+            let existingEntry = log.history.find(h => h.date === today);
 
-            // 총 완료 SET 수량 누적 합산
-            targetLog.currentQty = (targetLog.currentQty || 0) + unitsPerPalletSet;
+            if (existingEntry) {
+                existingEntry.qty += unitsPerPalletSet;
+                existingEntry.memo = `1파레트 추가 (${cartonPerPallet} C/T 추가)`;
+            } else {
+                log.history.push({ date: today, qty: unitsPerPalletSet, memo: `1파레트 추가 (${cartonPerPallet} C/T)` });
+            }
 
-            // history 배열에 추가
-            if (!targetLog.history) targetLog.history = [];
-            targetLog.history.push({
-                date: today,
-                memo: `1파레트 추가 (${cartonPerPallet} C/T)`,
-                qty: unitsPerPalletSet
-            });
+            // 총 수량 재계산
+            log.currentQty = log.history.reduce((sum, h) => sum + h.qty, 0);
 
-            // Firestore 업데이트
-            db.collection('packing_logs').doc(targetLog.id).update({
-                currentQty: targetLog.currentQty,
-                history: targetLog.history
-            }).then(() => {
-                showToast(`1파레트 (+${cartonPerPallet} C/T / ${unitsPerPalletSet} SET) 추가되었습니다.`, 'success');
-                localStorage.setItem('tvSelectedLogId', targetLog.id);
-                updateRemoteStatusSummary(targetLog.id);
-            }).catch((error) => {
-                console.error('데이터 저장 실패:', error);
-                showToast('저장 실패', 'error');
-            });
+            try {
+                await db.collection('packing_logs').doc(logId).update({
+                    history: log.history,
+                    currentQty: log.currentQty
+                });
+                showToast(`1파레트 (+${cartonPerPallet} C/T / ${unitsPerPalletSet.toLocaleString()} SET) 추가되었습니다.`, 'success');
+                updateRemoteStatusSummary(logId);
+            } catch (e) {
+                showToast('❌ 작업 기록 업데이트 오류: ' + e.message, 'error');
+            }
         }
 
         // 리모컨 하단 상태 요약 갱신
