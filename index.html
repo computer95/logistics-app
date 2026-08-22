@@ -3703,11 +3703,10 @@
             document.getElementById('digitalClock').innerText = `${hours}:${minutes}`;
         }
 
-        // 이미지 구상도에 맞춘 전광판 데이터 렌더링 함수
+        // 65인치 대화면 비율 및 CSS 원형 번호가 적용된 렌더링 함수
         function renderTVDataBoard() {
-            // 현재 작업 중인 첫 번째 항목을 기준 제품으로 표시
             const activeLog = packingLogsList.find(log => !log.isHold && ((log.currentQty < log.targetQty) || !log.isForceDone)) || packingLogsList[0];
-            
+
             if (!activeLog) {
                 document.getElementById('tvProductName').innerText = '등록된 제품이 없습니다';
                 document.getElementById('tvProgressTitle').innerText = '진행률 (0 / 0)';
@@ -3715,7 +3714,7 @@
                 document.getElementById('tvProgressBar').style.width = '0%';
                 document.getElementById('tvRemainingText').innerText = '⏳ 남은 수량: 0 세트 남음';
                 document.getElementById('tvPaletteSummary').innerText = '현재까지 총 0개 파레트 완료';
-                document.getElementById('tvPaletteList').innerHTML = '<div style="color: #666; font-size: 22px; text-align: center; margin-top: 50px;">표시할 데이터가 없습니다.</div>';
+                document.getElementById('tvPaletteList').innerHTML = '<div style="color: #666; font-size: 26px; text-align: center; margin-top: 80px;">표시할 데이터가 없습니다.</div>';
                 return;
             }
 
@@ -3724,7 +3723,7 @@
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
             const remaining = Math.max(0, target - current);
 
-            // 좌측 진행률 업데이트
+            // 좌측 진행률 업데이트 (65인치용 폰트 확대)
             document.getElementById('tvProgressTitle').innerText = `진행률 (${current.toLocaleString()} / ${target.toLocaleString()})`;
             document.getElementById('tvProgressPercent').innerText = `${percent}%`;
             document.getElementById('tvProgressBar').style.width = `${percent}%`;
@@ -3732,38 +3731,40 @@
 
             // 우측 제품명 및 파레트 요약 업데이트
             document.getElementById('tvProductName').innerText = activeLog.productName;
-            
-            let paletteSize = 360; // 파레트당 기준 수량 예시 (상황에 맞게 조절 가능)
-            let completedPalettes = Math.floor(current / paletteSize);
+
+            let boxPerPallet = activeLog.boxPerPallet || 36; // 파레트당 박스 수량 기준 (기본 36)
+            let completedPalettes = Math.floor(current / boxPerPallet);
             document.getElementById('tvPaletteSummary').innerText = `현재까지 총 ${completedPalettes}개 파레트 완료`;
 
-            // 우측 세부 리스트 (①, ②, ③...) 생성
+            // 우측 세부 리스트 (CSS 원형 번호 사용으로 무제한 지원 & 65인치에 맞게 큼직하게 구성)
             let listHtml = '';
-            const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
-            let displayCount = Math.max(4, completedPalettes + (current > 0 ? 1 : 0));
+            let displayCount = Math.max(5, completedPalettes + (current > 0 ? 1 : 0)); // 최소 5개 이상 꽉 차게 표시
 
             for (let i = 0; i < displayCount; i++) {
-                let cNum = circleNums[i] || `(${i+1})`;
                 let isLatest = (i === completedPalettes);
-                
+                let paletteSeq = i + 1;
+
+                // CSS로 만든 깔끔한 원형 숫자 (100개 넘어도 깨지지 않음)
+                let circleNumberHtml = `
+                    <div style="width: 45px; height: 45px; background: ${isLatest ? '#ff3b30' : '#222'}; color: ${isLatest ? '#fff' : '#aaa'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; flex-shrink: 0;">
+                        ${paletteSeq}
+                    </div>
+                `;
+
                 listHtml += `
-                    <div style="background: #1a1a1a; border-left: 6px solid ${isLatest ? '#ff3b30' : '#333'}; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <span style="font-size: 24px; font-weight: bold; color: ${isLatest ? '#ff3b30' : '#aaa'};">${cNum}</span>
-                            <span style="font-size: 22px; font-weight: bold; color: #fff;">36 C/T</span>
-                        </div>
+                    <div style="background: #121212; border: 1px solid ${isLatest ? '#ff3b30' : '#222'}; padding: 22px 25px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: ${isLatest ? '0 0 15px rgba(255,59,48,0.2)' : 'none'};">
                         <div style="display: flex; align-items: center; gap: 20px;">
-                            <span style="font-size: 20px; color: #aaa;">(${((i+1) * 36).toLocaleString()} C/T)</span>
-                            <span style="font-size: 18px; color: #888;">${activeLog.dueDate || '마감'}</span>
+                            ${circleNumberHtml}
+                            <span style="font-size: 26px; font-weight: bold; color: #fff;">${boxPerPallet} C/T</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 30px;">
+                            <span style="font-size: 22px; color: #aaa;">(${(paletteSeq * boxPerPallet).toLocaleString()} C/T)</span>
+                            <span style="font-size: 20px; color: ${isLatest ? '#ff8888' : '#777'}; font-weight: bold; background: #1a1a1a; padding: 6px 14px; border-radius: 6px;">${activeLog.dueDate || '마감'}</span>
                         </div>
                     </div>
                 `;
             }
 
-            if (displayCount === 0) {
-                listHtml = '<div style="color: #666; font-size: 20px; text-align: center; margin-top: 40px;">진행된 파레트 기록이 없습니다.</div>';
-            }
-            
             document.getElementById('tvPaletteList').innerHTML = listHtml;
         }
 
