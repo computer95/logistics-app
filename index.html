@@ -3997,9 +3997,9 @@
             if (existingEntry) {
                 existingEntry.qty += addedSets;
                 // 필요시 메모 갱신 (선택사항)
-                existingEntry.memo = `C/T 입력 (${cartonQty} C/T 추가)`;
+                existingEntry.memo = '';
             } else {
-                log.history.push({ date: today, qty: addedSets, memo: `C/T 입력 (${cartonQty} C/T)` });
+                log.history.push({ date: today, qty: addedSets, memo: '' });
             }
 
             // 총 수량 재계산
@@ -4057,9 +4057,9 @@
 
             if (existingEntry) {
                 existingEntry.qty += unitsPerPalletSet;
-                existingEntry.memo = `1파레트 추가 (${cartonPerPallet} C/T 추가)`;
+                existingEntry.memo = '';
             } else {
-                log.history.push({ date: today, qty: unitsPerPalletSet, memo: `1파레트 추가 (${cartonPerPallet} C/T)` });
+                log.history.push({ date: today, qty: unitsPerPalletSet, memo: '' });
             }
 
             // 총 수량 재계산
