@@ -1653,11 +1653,23 @@
         initDietSystem();
         initRealtimeProductListener();
 
-        // 💡 파이어베이스가 캐시 데이터를 띄우기 전에 목록 영역을 먼저 비웁니다.
+        // 💡 1. 포장일지 목록 영역 비우기
         const packingContainer = document.getElementById('packingLogContainer');
         if (packingContainer) {
             packingContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">데이터를 불러오는 중...</div>';
         }
+
+        // 💡 2. 일일작업현황(대시보드) 영역 비우기
+        const waitingContainer = document.getElementById('dashWaitingListContainer');
+        if (waitingContainer) {
+            waitingContainer.innerHTML = '<div style="color:#888; text-align:center; padding:15px;">대시보드를 불러오는 중...</div>';
+        }
+
+        const totalCountEl = document.getElementById('dashTotalCount');
+        if (totalCountEl) {
+            totalCountEl.innerText = '총 0건';
+        }
+
         loadPackingLogs();
 
         // 🔄 새로고침 시 마지막 탭 위치 복원
