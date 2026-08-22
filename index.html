@@ -4033,16 +4033,9 @@
             if (palletBoxSizeSpan) palletBoxSizeSpan.innerText = boxPerPallet;
 
             statusEl.innerHTML = `
-        <div style="font-size: 14px; line-height: 1.3;">
-            <div style="color: #aaa; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${log.productName || '제품명 없음'}</div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <b style="font-size: 16px; color: #fff;">${current.toLocaleString()} / ${target.toLocaleString()} SET</b>
-                <b style="font-size: 18px; color: #ff3b30;">${percent}%</b>
-            </div>
-            
-            <div style="color: #00e676; font-size: 15px;">남은 수량: <b>${remaining.toLocaleString()} SET</b></div>
-        </div>
+        현재 제품: <span style="color:#ff3b30;">${log.productName || '제품명 없음'}</span><br>
+        진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} SET (${percent}%)<br>
+        <span style="color: #00e676;">남은 수량: <b>${remaining.toLocaleString()} SET</b></span>
     `;
         }
 
