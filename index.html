@@ -1499,7 +1499,7 @@
 
                 <!-- 시:분 대형 시계 -->
                 <div id="digitalClock"
-                    style="font-family: 'DS-Digital', sans-serif; font-size: 10vw; font-weight: bold; color: #b30000; text-shadow: 0 0 10px rgba(255, 0, 0, 0.3); user-select: none; line-height: 1;">
+                    style="font-family: 'DS-Digital', sans-serif; font-size: 20vw; font-weight: bold; color: #b30000; text-shadow: 0 0 10px rgba(255, 0, 0, 0.3); user-select: none; line-height: 1;">
                     00:00
                 </div>
 
@@ -3862,10 +3862,28 @@
             const barEl = document.getElementById('tvProgressBar');
             if (barEl) barEl.style.width = `${percent}%`;
 
-            // 남은 수량 계산
-            const remaining = total - current;
+            // 💡 잔여 수량 및 환산 계산 로직 추가
+            const remaining = Math.max(0, total - current);
+
+            // 제품 정보 찾기
+            let product = productList.find(p => p.id === logData.productId);
+            let cartonPerPallet = product && product.palletToCarton ? product.palletToCarton : 0;
+            let unitsPerCarton = product ? (product.hasSet === 'O' ? (product.cartonToSet || 0) : (product.cartonToInner || 0)) : 0;
+
+            // 계산
+            let totalBoxes = unitsPerCarton > 0 ? Math.floor(remaining / unitsPerCarton) : 0;
+            let restEa = unitsPerCarton > 0 ? remaining % unitsPerCarton : 0;
+            let pallets = (cartonPerPallet > 0 && totalBoxes > 0) ? (totalBoxes / cartonPerPallet).toFixed(1) : '0.0';
+
             const remainingEl = document.getElementById('tvRemainingText');
-            if (remainingEl) remainingEl.innerText = `⏳ 남은 수량: ${Math.max(0, remaining).toLocaleString()}개`;
+            if (remainingEl) {
+                remainingEl.innerHTML = `
+            <div>⏳ 남은 수량: ${remaining.toLocaleString()}개</div>
+            <div style="font-size: 14px; color: #aaa; margin-top: 5px;">
+                📦 ${totalBoxes.toLocaleString()}박스 (${restEa}개) | 📍 ${pallets} 파레트
+            </div>
+        `;
+            }
 
             // 3. 파레트 요약
             const palletsList = logData.pallets || [];
@@ -3883,9 +3901,9 @@
                         const div = document.createElement('div');
                         div.style.cssText = "background: #1a1a1a; padding: 15px; border-radius: 8px; color: #fff; border-left: 4px solid #ff3b30;";
                         div.innerHTML = `
-                            <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">📦 파레트 #${index + 1}</div>
-                            <div style="color: #aaa; font-size: 16px;">수량: ${pallet.qty}개 | 시간: ${pallet.time}</div>
-                        `;
+                    <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">📦 파레트 #${index + 1}</div>
+                    <div style="color: #aaa; font-size: 16px;">수량: ${pallet.qty}개 | 시간: ${pallet.time}</div>
+                `;
                         listContainer.appendChild(div);
                     });
                 } else {
