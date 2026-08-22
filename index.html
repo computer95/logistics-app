@@ -4113,6 +4113,11 @@
                 titleEl.style.fontSize = '22px'; // 💡 진행률 타이틀 폰트 확대
             }
 
+            const percentEl = document.getElementById('tvProgressPercent');
+            if (percentEl) {
+                percentEl.innerText = `${percent}%`;
+            }
+
             const barEl = document.getElementById('tvProgressBar');
             if (barEl) barEl.style.width = `${percent}%`;
 
