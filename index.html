@@ -3862,25 +3862,30 @@
             const barEl = document.getElementById('tvProgressBar');
             if (barEl) barEl.style.width = `${percent}%`;
 
-            // 💡 잔여 수량 및 환산 계산 로직 추가
+            // 💡 네가 알려준 정확한 환산 로직 적용
             const remaining = Math.max(0, total - current);
+            let totalPallets = '0.0';
+            let totalCartons = '0.0';
 
-            // 제품 정보 찾기
-            let product = productList.find(p => p.id === logData.productId);
-            let cartonPerPallet = product && product.palletToCarton ? product.palletToCarton : 0;
-            let unitsPerCarton = product ? (product.hasSet === 'O' ? (product.cartonToSet || 0) : (product.cartonToInner || 0)) : 0;
+            const p = productList.find(item => item.id === logData.productId);
+            if (p && remaining > 0) {
+                let cToI = (p.hasSet === 'O') ? ((p.cartonToSet || 0) * (p.setToInner || 0)) : (p.cartonToInner || 0);
+                let innerPerCarton = cToI;
+                let unitPerSet = (p.hasSet === 'O') ? ((p.setToInner || 0) * (p.innerToUnit || 1)) : (p.innerToUnit || 1);
+                let totalEa = remaining * unitPerSet;
+                let unitsPerPallet = (p.palletToCarton || 24) * innerPerCarton * (p.innerToUnit || 1);
 
-            // 계산
-            let totalBoxes = unitsPerCarton > 0 ? Math.floor(remaining / unitsPerCarton) : 0;
-            let restEa = unitsPerCarton > 0 ? remaining % unitsPerCarton : 0;
-            let pallets = (cartonPerPallet > 0 && totalBoxes > 0) ? (totalBoxes / cartonPerPallet).toFixed(1) : '0.0';
+                let pf = typeof formatVal === 'function' ? formatVal : (val, d) => val.toFixed(d);
+                totalPallets = pf(unitsPerPallet > 0 ? (totalEa / unitsPerPallet) : 0, 1);
+                totalCartons = pf((innerPerCarton * (p.innerToUnit || 1)) > 0 ? (totalEa / (innerPerCarton * (p.innerToUnit || 1))) : 0, 1);
+            }
 
             const remainingEl = document.getElementById('tvRemainingText');
             if (remainingEl) {
                 remainingEl.innerHTML = `
-            <div>⏳ 남은 수량: ${remaining.toLocaleString()}개</div>
-            <div style="font-size: 14px; color: #aaa; margin-top: 5px;">
-                📦 ${totalBoxes.toLocaleString()}박스 (${restEa}개) | 📍 ${pallets} 파레트
+            <div>⏳ 남은 수량: ${remaining.toLocaleString()} SET</div>
+            <div style="font-size: 15px; color: #aaa; margin-top: 6px;">
+                🅿️ 파레트: <strong>${totalPallets} 개</strong> | 📦 카톤: <strong>${totalCartons} 개</strong>
             </div>
         `;
             }
