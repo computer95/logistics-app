@@ -1650,11 +1650,11 @@
         let currentDetailId = null;
         let completedOpenMonths = {};
 
+        const tableBody = document.getElementById('packingLogsTableBody');
+        if (tableBody) tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">데이터를 불러오는 중...</td></tr>';
+
         initDietSystem();
         initRealtimeProductListener();
-
-        localStorage.removeItem('packingLogsList');
-
         loadPackingLogs();
 
         // 🔄 새로고침 시 마지막 탭 위치 복원
