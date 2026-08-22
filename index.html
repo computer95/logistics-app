@@ -1493,33 +1493,36 @@
         <!-- 전체 좌우 2분할 레이아웃 -->
         <div style="display: flex; width: 100%; height: 100%; gap: 50px; align-items: stretch;">
 
-            <!-- 왼쪽 영역: 대형 시계 + 진행률 박스 -->
-            <div style="flex: 1.1; display: flex; flex-direction: column; justify-content: center;">
-                <!-- 시:분 대형 시계 -->
+            <!-- 왼쪽 영역: 대형 시계 + 진행률 박스가 같이 들어가는 곳 -->
+            <div style="flex: 1.1; display: flex; flex-direction: column; justify-content: center; gap: 30px;">
 
-                <!-- 기존에 디지털 시계 스타일이 지정된 곳에서 font-size를 키워줍니다 -->
+                <!-- 시:분 대형 시계 (숫자 10vw 추가!) -->
                 <div id="digitalClock"
-                    style="font-family: 'DS-Digital', sans-serif; font-size: 35vw; font-weight: bold; color: #b30000; text-shadow: 0 0 10px rgba(255, 0, 0, 0.3); user-select: none;">
-                    00:00</div>
+                    style="font-family: 'DS-Digital', sans-serif; font-size: 10vw; font-weight: bold; color: #b30000; text-shadow: 0 0 10px rgba(255, 0, 0, 0.3); user-select: none; line-height: 1;">
+                    00:00
+                </div>
+
+                <!-- 진행률 박스를 왼쪽 영역 안으로 쏙 집어넣음 -->
+                <div
+                    style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 30px; box-sizing: border-box;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 26px; font-weight: bold;">
+                        <span id="tvProgressTitle">진행률 (0 / 0)</span>
+                        <span id="tvProgressPercent" style="color: #ff3b30;">0%</span>
+                    </div>
+                    <div
+                        style="width: 100%; background: #222; height: 16px; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                        <div id="tvProgressBar"
+                            style="width: 0%; height: 100%; background: #ff3b30; transition: width 0.5s ease;"></div>
+                    </div>
+                    <div id="tvRemainingText" style="color: #888; font-size: 20px;">
+                        ⏳ 남은 수량: 계산 중...
+                    </div>
+                </div>
+
             </div>
 
-            <!-- 진행률 박스 -->
-            <div
-                style="background: #111; border: 1px solid #222; border-radius: 12px; padding: 30px; box-sizing: border-box;">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 26px; font-weight: bold;">
-                    <span id="tvProgressTitle">진행률 (0 / 0)</span>
-                    <span id="tvProgressPercent" style="color: #ff3b30;">0%</span>
-                </div>
-                <div
-                    style="width: 100%; background: #222; height: 16px; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                    <div id="tvProgressBar"
-                        style="width: 0%; height: 100%; background: #ff3b30; transition: width 0.5s ease;"></div>
-                </div>
-                <div id="tvRemainingText" style="color: #888; font-size: 20px;">
-                    ⏳ 남은 수량: 계산 중...
-                </div>
-            </div>
+            <!-- 우측 패널 영역은 이 뒤에 바로 이어지면 됨 -->
         </div>
 
         <!-- 오른쪽 영역: 제품 정보 및 파레트 세부 현황 -->
