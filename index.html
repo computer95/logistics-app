@@ -1560,7 +1560,7 @@
             <!-- 리모컨 헤더 -->
             <div
                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px;">
-                <span style="font-size: 20px; font-weight: bold; color: #fff;">📱 파레트 작업 현황 제어</span>
+                <span style="font-size: 20px; font-weight: bold; color: #fff;">📱 리모컨</span>
                 <span
                     style="color: #888; font-size: 16px; cursor: pointer; padding: 5px 10px; background: #222; border-radius: 6px;"
                     onclick="closeTvRemoteModal()">✕ 닫기</span>
@@ -1601,7 +1601,8 @@
                     <span>📦</span>
                     <span style="text-align: center; line-height: 1.3;">
                         1 파레트 추가<br>
-                        <span style="font-size: 14px; color: #aaa;">(+<span id="remotePalletBoxSize">36</span> C/T)</span>
+                        <span style="font-size: 14px; color: #aaa;">(+<span id="remotePalletBoxSize">36</span>
+                            C/T)</span>
                     </span>
                 </button>
             </div>
@@ -3945,6 +3946,9 @@
 
             saveAndSyncData();
             showToast(`+${addQty} C/T 추가되었습니다.`, 'success');
+
+            // 💡 추가 완료 후 입력창 비우기
+            inputEl.value = '';
         }
 
         // 1파레트 추가
@@ -3976,14 +3980,12 @@
             const current = log.currentQty || 0;
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
 
+            // 파레트 당 박스 수는 버튼용(#remotePalletBoxSize)에만 반영
             const boxPerPallet = getBoxPerPallet(log);
             const palletBoxSizeSpan = document.getElementById('remotePalletBoxSize');
             if (palletBoxSizeSpan) palletBoxSizeSpan.innerText = boxPerPallet;
 
-            const inputEl = document.getElementById('remoteCartonInput');
-            if (inputEl && !inputEl.value) {
-                inputEl.value = boxPerPallet;
-            }
+            // 💡 입력창(remoteCartonInput)에 값을 넣던 코드는 삭제했으므로 항상 공란으로 유지됨!
 
             statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName || '제품명 없음'}</span><br>진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} C/T (${percent}%)`;
         }
