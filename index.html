@@ -4000,12 +4000,16 @@
             if (!inputEl) return;
             let addQty = parseInt(inputEl.value);
             if (isNaN(addQty) || addQty <= 0) return showToast('올바른 수량을 입력해주세요.', 'error');
+
             let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
             if (!packingLogsList[currentIndex]) return;
+
             let currentLog = packingLogsList[currentIndex];
             currentLog.currentQty = (currentLog.currentQty || 0) + addQty;
+
             if (!currentLog.pallets) currentLog.pallets = [];
             currentLog.pallets.push({ qty: addQty, time: new Date().toLocaleTimeString() });
+
             saveAndSyncData();
             showToast(`+${addQty} C/T 추가되었습니다.`, 'success');
         }
@@ -4013,23 +4017,49 @@
         function remoteAddFullPallet() {
             let currentIndex = parseInt(localStorage.getItem('tvSelectedProductIndex') || '0');
             if (!packingLogsList[currentIndex]) return;
+
             let currentLog = packingLogsList[currentIndex];
-            let boxPerPallet = currentLog.boxPerPallet || 36;
+            let boxPerPallet = getBoxPerPallet(currentLog);
+
             currentLog.currentQty = (currentLog.currentQty || 0) + boxPerPallet;
+
             if (!currentLog.pallets) currentLog.pallets = [];
             currentLog.pallets.push({ qty: boxPerPallet, time: new Date().toLocaleTimeString() });
+
             saveAndSyncData();
             showToast(`1파레트 (+${boxPerPallet} C/T) 추가되었습니다.`, 'success');
+            updateRemoteStatusSummary(currentIndex);
         }
 
         function updateRemoteStatusSummary(index) {
             const statusEl = document.getElementById('remoteStatusText');
             if (!statusEl || !packingLogsList[index]) return;
+
             const log = packingLogsList[index];
-            const target = Number(log.targetQty) || 0, current = log.currentQty || 0;
+            const target = Number(log.targetQty) || 0;
+            const current = log.currentQty || 0;
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+
+            // UI 업데이트: 파레트 박스 수
+            const boxPerPallet = getBoxPerPallet(log);
+            const palletBoxSizeSpan = document.getElementById('remotePalletBoxSize');
+            if (palletBoxSizeSpan) palletBoxSizeSpan.innerText = boxPerPallet;
+
+            // UI 업데이트: 카톤 입력창 기본값
+            const inputEl = document.getElementById('remoteCartonInput');
+            if (inputEl) inputEl.value = boxPerPallet;
+
             statusEl.innerHTML = `현재 제품: <span style="color:#ff3b30;">${log.productName || '제품명 없음'}</span><br>진행 상황: <b>${current.toLocaleString()}</b> / ${target.toLocaleString()} C/T (${percent}%)`;
         }
+
+        function getBoxPerPallet(log) {
+            if (!log || !log.productId) return 36;
+            // productList는 전역 변수로 이미 선언되어 있다고 가정합니다.
+            const p = productList.find(item => item.id === log.productId);
+            return p ? Number(p.palletToCarton || p.boxPerPallet || 36) : 36;
+        }
+
+
     </script>
 </body>
 
