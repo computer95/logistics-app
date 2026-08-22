@@ -1683,6 +1683,9 @@
 
         function initRealtimeProductListener() {
             db.collection('products').orderBy('name').onSnapshot(snapshot => {
+                // 💡 핵심: 캐시(유령) 데이터면 무시하고 서버에서 진짜 데이터가 올 때까지 대기!
+                if (snapshot.metadata.fromCache) return;
+
                 productList = [];
                 snapshot.forEach(doc => {
                     productList.push({ id: doc.id, ...doc.data() });
