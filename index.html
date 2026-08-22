@@ -957,11 +957,6 @@
                 <div class="mode-slider" id="modeSlider"></div>
             </div>
             <span class="mode-label" id="labelPC" onclick="setMode('pc')">PC 버전</span>
-
-            <!-- 추가된 TV전광판 버튼 -->
-            <button onclick="openTVDashboard()"
-                style="position: absolute; right: -110px; top: 0; height: 100%; border: none; background: #34c759; color: white; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; padding: 0 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">📺
-                TV전광판</button>
         </div>
 
         <!-- ========================================== -->
@@ -1551,9 +1546,9 @@
         </div>
     </div>
 
-    <!-- 모바일/PC 겸용 TV 전광판 실행 플로팅 버튼 (반투명 원형 + 하단 탭 위로 배치) -->
+    <!-- TV 전광판 실행 플로팅 버튼 (회색 반투명 원형 / 하단 탭 위 배치) -->
     <div onclick="openTVDashboard()"
-        style="position: fixed; bottom: 90px; right: 25px; background: rgba(255, 59, 48, 0.85); color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); cursor: pointer; z-index: 998; opacity: 0.75; backdrop-filter: blur(4px); transition: transform 0.2s, opacity 0.2s;"
+        style="position: fixed; bottom: 90px; right: 25px; background: rgba(50, 50, 50, 0.85); color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); cursor: pointer; z-index: 998; opacity: 0.75; backdrop-filter: blur(4px); border: 1px solid rgba(255, 255, 255, 0.15); transition: transform 0.2s, opacity 0.2s;"
         onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.75'"
         onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'"
         ontouchstart="this.style.opacity='1'; this.style.transform='scale(0.92)';"
