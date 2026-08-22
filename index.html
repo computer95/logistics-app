@@ -1509,7 +1509,7 @@
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 26px; font-weight: bold;">
                         <span id="tvProgressTitle">진행률 (0 / 0)</span>
-                        <span id="tvProgressPercent" style="color: #ff3b30;">0%</span>
+                        <span id="tvProgressPercent">0%</span>
                     </div>
                     <div
                         style="width: 100%; background: #222; height: 16px; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
@@ -4116,6 +4116,7 @@
             const percentEl = document.getElementById('tvProgressPercent');
             if (percentEl) {
                 percentEl.innerText = `${percent}%`;
+                percentEl.style.fontSize = '22px'; // 💡 진행률 퍼센트 폰트 확대
             }
 
             const barEl = document.getElementById('tvProgressBar');
