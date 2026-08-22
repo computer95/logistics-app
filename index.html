@@ -1650,11 +1650,14 @@
         let currentDetailId = null;
         let completedOpenMonths = {};
 
-        const tableBody = document.getElementById('packingLogsTableBody');
-        if (tableBody) tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">데이터를 불러오는 중...</td></tr>';
-
         initDietSystem();
         initRealtimeProductListener();
+
+        // 💡 파이어베이스가 캐시 데이터를 띄우기 전에 목록 영역을 먼저 비웁니다.
+        const packingContainer = document.getElementById('packingLogContainer');
+        if (packingContainer) {
+            packingContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">데이터를 불러오는 중...</div>';
+        }
         loadPackingLogs();
 
         // 🔄 새로고침 시 마지막 탭 위치 복원
